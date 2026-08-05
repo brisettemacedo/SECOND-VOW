@@ -1,3 +1,4 @@
+Secondvow nuevo proyecto
 # SecondVow — Guía de lanzamiento (Fase 2 + 3 + 4)
 
 Checklist único, en orden. No necesitas saber programar — cada paso es
