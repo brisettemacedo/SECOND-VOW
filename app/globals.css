@@ -1,0 +1,137 @@
+/* ==========================================================
+   SecondVow — Design tokens
+   Nombres funcionales, no solo estéticos, para que el propósito
+   de cada color sea claro sin tener que recordar su tono exacto.
+
+   Paleta: rich & earthy, evitando la combinación por defecto
+   beige + terracota + dorado + verde salvia. Aquí usamos tonos
+   minerales más reales: papel de algodón, tinta, nogal profundo
+   y verde bosque oscuro casi negro.
+   ========================================================== */
+:root {
+  /* Fondo */
+  --color-background-primary: #F7F2E7;   /* blanco cálido tipo papel algodón */
+  --color-background-secondary: #EAE0C9; /* panel secundario, un tono más profundo */
+  --color-surface: #FCFAF3;              /* tarjetas / superficies elevadas */
+
+  /* Texto */
+  --color-text-primary: #221D18;         /* tinta/carbón, no negro puro */
+  --color-text-muted: #6B5F4E;           /* texto secundario, gris-nogal */
+  --color-text-inverse: #F7F2E7;
+
+  /* Bordes */
+  --color-border: #D9CBA9;
+  --color-border-strong: #B9A87D;
+
+  /* Acción (acento distintivo — nogal/cognac, no dorado ni terracota brillante) */
+  --color-action-primary: #7A4A2B;
+  --color-action-primary-hover: #5F3A21;
+  --color-action-on-primary: #FCFAF3;
+
+  /* Acento secundario — verde bosque oscuro, no verde salvia */
+  --color-accent-secondary: #33402F;
+
+  /* Estados */
+  --color-success: #3F5B3F;
+  --color-success-bg: #E4E9DD;
+  --color-warning: #8A5A2B;
+  --color-warning-bg: #F1E4D2;
+  --color-error: #7A2E2E;
+  --color-error-bg: #F1DEDA;
+
+  /* Foco / accesibilidad */
+  --color-focus-ring: #7A4A2B;
+
+  /* Tipografía — Spectral (encabezados) + Archivo (cuerpo),
+     cargadas vía next/font en app/layout.tsx. Los valores exactos
+     de --font-heading / --font-body los inyecta next/font; aquí
+     solo se agregan los respaldos por si algo falla al cargar. */
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading), Georgia, serif;
+  font-weight: 600;
+  margin: 0;
+}
+
+a { color: inherit; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 4px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.15s ease;
+}
+.btn-primary {
+  background: var(--color-action-primary);
+  color: var(--color-action-on-primary);
+}
+.btn-primary:hover { background: var(--color-action-primary-hover); }
+.btn-secondary {
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-strong);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.field input {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.alert-error {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  margin-bottom: 16px;
+}
+.alert-success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  margin-bottom: 16px;
+}

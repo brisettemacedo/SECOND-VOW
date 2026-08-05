@@ -1,0 +1,223 @@
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { dressImageUrl } from "@/lib/storage";
+import DressCard, { type CatalogDress } from "@/components/DressCard";
+import FavoriteButton from "@/components/FavoriteButton";
+import {
+  SILUETAS, ESCOTES, ESPALDAS, MANGAS, TELAS, COLORES, COLAS, CONDICIONES, STATUS_LABELS,
+} from "@/lib/catalogs";
+
+export const dynamic = "force-dynamic";
+
+function labelFor(list: { value: string; label: string }[], value: string | null) {
+  if (!value) return "—";
+  return list.find((o) => o.value === value)?.label ?? value;
+}
+
+function fmtPrice(v: number | null) {
+  if (v === null) return "—";
+  return v.toLocaleString("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 });
+}
+
+export default async function DressDetailPage({ params }: { params: { id: string } }) {
+  const supabase = await createClient();
+
+  const { data: dress, error } = await supabase
+    .from("dresses")
+    .select(`
+      id, model, collection, year_approx, talla_etiqueta, sistema_talla,
+      busto_cm, cintura_cm, cadera_cm, largo_hombro_piso_cm,
+      altura_persona_cm, altura_tacon_cm, puede_ampliarse, puede_reducirse,
+      silueta, escote, espalda, manga, tela_principal, tela_secundaria,
+      color_principal, color_forro, cola, cola_largo_cm,
+      condicion, tiene_manchas, tiene_jalones, tiene_roturas, dano_dobladillo,
+      falta_aplicaciones, tiene_reparaciones, tiene_decoloracion, descripcion_danos,
+      tuvo_ajustes, ajustes_detalle,
+      precio_original_mxn, precio_venta_mxn, ciudad, estado,
+      envio_nacional, entrega_presencial, prueba_presencial,
+      descripcion, status, created_at,
+      brands ( name ),
+      dress_photos ( id, storage_path, is_primary, position, classification ),
+      dress_characteristics ( characteristics ( id, label ) ),
+      profiles:seller_id ( id, full_name, city, created_at )
+    `)
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (error || !dress) {
+    notFound();
+  }
+
+  const photos = [...(dress.dress_photos ?? [])].sort((a, b) => {
+    if (a.is_primary) return -1;
+    if (b.is_primary) return 1;
+    return a.position - b.position;
+  });
+
+  const brandName = Array.isArray(dress.brands)
+    ? (dress.brands as any[])[0]?.name
+    : (dress.brands as any)?.name;
+  const seller: { id: string; full_name: string | null; city: string | null } | null =
+    Array.isArray(dress.profiles) ? (dress.profiles as any[])[0] ?? null : (dress.profiles as any) ?? null;
+  const characteristics = (dress.dress_characteristics ?? [])
+    .map((dc: any) => (Array.isArray(dc.characteristics) ? dc.characteristics[0] : dc.characteristics))
+    .filter(Boolean);
+
+  const { data: similares } = await supabase
+    .from("dresses")
+    .select(`
+      id, model, talla_etiqueta, silueta, condicion, precio_original_mxn,
+      precio_venta_mxn, ciudad, estado, envio_nacional,
+      brands ( name ), dress_photos ( storage_path, is_primary, position )
+    `)
+    .eq("status", "approved")
+    .eq("silueta", dress.silueta)
+    .neq("id", dress.id)
+    .limit(4);
+
+  return (
+    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px" }}>
+      {dress.status !== "approved" && (
+        <div className="alert-error" style={{ marginBottom: 20 }}>
+          Vista previa — esta publicación está en estado &quot;{STATUS_LABELS[dress.status]}&quot; y todavía no es visible públicamente.
+        </div>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40 }}>
+        {/* Galería */}
+        <div>
+          <div style={{ aspectRatio: "3/4", background: "var(--color-background-secondary)", borderRadius: 4, overflow: "hidden", marginBottom: 10 }}>
+            {photos[0] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={dressImageUrl(photos[0].storage_path)} alt={brandName ?? "Vestido"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <div style={{ display: "flex", height: "100%", alignItems: "center", justifyContent: "center", color: "var(--color-text-muted)" }}>
+                Sin fotografías
+              </div>
+            )}
+          </div>
+          {photos.length > 1 && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
+              {photos.slice(1).map((p) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={p.id} src={dressImageUrl(p.storage_path)} alt={p.classification ?? ""} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 3 }} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Datos */}
+        <div>
+          <div style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 0.5, color: "var(--color-action-primary)" }}>
+            {brandName ?? "Marca no especificada"}
+          </div>
+          <h1 style={{ fontSize: 26, margin: "6px 0 4px" }}>{dress.model || labelFor(SILUETAS, dress.silueta)}</h1>
+
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, margin: "14px 0 20px" }}>
+            {dress.precio_original_mxn && (
+              <span style={{ fontSize: 13, color: "var(--color-text-muted)", textDecoration: "line-through" }}>
+                {fmtPrice(dress.precio_original_mxn)}
+              </span>
+            )}
+            <span style={{ fontFamily: "var(--font-heading)", fontSize: 28, fontWeight: 600 }}>
+              {fmtPrice(dress.precio_venta_mxn)}
+            </span>
+          </div>
+
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5, marginBottom: 24 }}>
+            <tbody>
+              {[
+                ["Talla (etiqueta)", `${dress.talla_etiqueta} (${dress.sistema_talla})`],
+                ["Silueta", labelFor(SILUETAS, dress.silueta)],
+                ["Escote", labelFor(ESCOTES, dress.escote)],
+                ["Espalda", labelFor(ESPALDAS, dress.espalda)],
+                ["Mangas", labelFor(MANGAS, dress.manga)],
+                ["Tela principal", labelFor(TELAS, dress.tela_principal)],
+                ["Color", labelFor(COLORES, dress.color_principal)],
+                ["Cola", labelFor(COLAS, dress.cola)],
+                ["Condición", labelFor(CONDICIONES, dress.condicion)],
+                ["Busto / cintura / cadera",
+                  [dress.busto_cm, dress.cintura_cm, dress.cadera_cm].some(Boolean)
+                    ? `${dress.busto_cm ?? "—"} / ${dress.cintura_cm ?? "—"} / ${dress.cadera_cm ?? "—"} cm`
+                    : "No especificado"],
+                ["Altura de la persona que lo usó", dress.altura_persona_cm ? `${dress.altura_persona_cm} cm` : "No especificado"],
+                ["¿Tuvo ajustes?", dress.tuvo_ajustes ? (dress.ajustes_detalle || "Sí, ver descripción") : "No"],
+                ["Ciudad / Estado", `${dress.ciudad}, ${dress.estado}`],
+                ["Envío", dress.envio_nacional ? "Envío nacional disponible" : "Solo entrega presencial"],
+                ["Prueba presencial", dress.prueba_presencial ? "Disponible" : "No disponible"],
+              ].map(([label, value]) => (
+                <tr key={label} style={{ borderBottom: "1px solid var(--color-border)" }}>
+                  <td style={{ padding: "9px 0", color: "var(--color-text-muted)", width: "45%" }}>{label}</td>
+                  <td style={{ padding: "9px 0", fontWeight: 500, textAlign: "right" }}>{value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {characteristics.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <h3 style={{ fontSize: 14, marginBottom: 8 }}>Características</h3>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {characteristics.map((c: any) => (
+                  <span key={c.id} style={{ fontSize: 11.5, background: "var(--color-background-secondary)", padding: "4px 9px", borderRadius: 2 }}>
+                    {c.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(dress.tiene_manchas || dress.tiene_jalones || dress.tiene_roturas || dress.dano_dobladillo || dress.falta_aplicaciones || dress.tiene_decoloracion) && (
+            <div className="alert-error" style={{ marginBottom: 20 }}>
+              <strong>Imperfecciones declaradas:</strong>{" "}
+              {[
+                dress.tiene_manchas && "manchas",
+                dress.tiene_jalones && "jalones",
+                dress.tiene_roturas && "roturas",
+                dress.dano_dobladillo && "daño en el dobladillo",
+                dress.falta_aplicaciones && "faltan aplicaciones",
+                dress.tiene_decoloracion && "decoloración",
+              ].filter(Boolean).join(", ")}
+              {dress.descripcion_danos && <p style={{ marginTop: 6 }}>{dress.descripcion_danos}</p>}
+            </div>
+          )}
+
+          {dress.descripcion && (
+            <p style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>{dress.descripcion}</p>
+          )}
+
+          <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+            <button className="btn btn-primary">Contactar vendedora</button>
+            <FavoriteButton dressId={dress.id} />
+          </div>
+          <p style={{ fontSize: 11.5, color: "var(--color-text-muted)" }}>
+            Contactar a la vendedora se conecta en la Fase 6 (mensajería). Guardar ya funciona de verdad.
+          </p>
+
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--color-border)", fontSize: 13 }}>
+            {seller?.id ? (
+              <Link href={`/vendedoras/${seller.id}`} style={{ fontWeight: 600 }}>
+                {seller?.full_name ?? "Vendedora"}
+              </Link>
+            ) : (
+              <strong>Vendedora</strong>
+            )}
+            <div style={{ color: "var(--color-text-muted)" }}>{seller?.city ?? dress.ciudad}</div>
+          </div>
+        </div>
+      </div>
+
+      {similares && similares.length > 0 && (
+        <section style={{ marginTop: 60 }}>
+          <h2 style={{ fontSize: 20, marginBottom: 16 }}>Vestidos similares</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
+            {(similares as unknown as CatalogDress[]).map((d) => (
+              <DressCard key={d.id} dress={d} />
+            ))}
+          </div>
+        </section>
+      )}
+    </main>
+  );
+}
