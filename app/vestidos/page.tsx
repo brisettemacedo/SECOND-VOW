@@ -76,7 +76,7 @@ export default function CatalogPage({
     <main style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 24px" }}>
       <h1 style={{ fontSize: 28, marginBottom: 24 }}>Vestidos disponibles</h1>
 
-      <div style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
+      <div className="catalog-layout" style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
         <Suspense fallback={<div style={{ width: 260 }} />}>
           <FilterSidebar />
         </Suspense>

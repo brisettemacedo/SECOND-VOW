@@ -67,6 +67,8 @@ h1, h2, h3, h4 {
 
 a { color: inherit; }
 
+img { max-width: 100%; }
+
 button {
   font-family: inherit;
   cursor: pointer;
@@ -109,7 +111,7 @@ button {
   font-size: 13px;
   font-weight: 600;
 }
-.field input {
+.field input, .field select {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 10px 12px;
@@ -135,3 +137,10 @@ button {
   font-size: 13.5px;
   margin-bottom: 16px;
 }
+
+@media (max-width: 760px){ .catalog-layout{display:block!important}.catalog-sidebar{width:100%!important;margin-bottom:24px} }
+
+
+.site-header{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:16px 28px;background:rgba(247,242,231,.96);border-bottom:1px solid var(--color-border);backdrop-filter:blur(8px)}
+.site-header .brand{text-decoration:none;font-family:var(--font-heading);font-weight:700;letter-spacing:.12em}.site-header nav{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.site-header nav a,.link-button{font-size:13px;text-decoration:none;background:none;border:0;color:inherit;padding:0}.site-header form{display:inline}.page{max-width:1180px;margin:0 auto;padding:38px 24px}.narrow{max-width:760px}.panel{background:var(--color-surface);border:1px solid var(--color-border);border-radius:6px;padding:20px}.title-row,.actions,.wizard-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}.cards-list{display:grid;gap:16px;margin-top:24px}.card-link{text-decoration:none}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:var(--color-background-secondary);font-size:12px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field textarea,.panel textarea,.panel input,.panel select,.composer textarea,.inline-offer input{border:1px solid var(--color-border);border-radius:4px;padding:10px 12px;font:inherit;background:var(--color-surface);color:inherit;width:100%}.check{display:flex;gap:8px;align-items:center;margin:8px 0}.checks{display:grid;grid-template-columns:1fr 1fr;gap:4px}.muted{color:var(--color-text-muted);font-size:12.5px}.wizard{display:grid;grid-template-columns:230px 1fr;gap:24px}.stepper{display:flex;flex-direction:column;gap:4px}.stepper button{border:0;background:transparent;text-align:left;padding:9px;border-radius:4px;color:var(--color-text-muted)}.stepper button.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:600}.wizard h2{font-size:18px;margin:8px 0 24px}.wizard-actions{margin-top:24px}.photo-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}.photo-list div{background:var(--color-background-secondary);padding:12px}.messaging{display:grid;grid-template-columns:300px 1fr;gap:16px;margin-top:20px}.messaging aside{display:flex;flex-direction:column}.messaging aside button{text-align:left;border:0;border-bottom:1px solid var(--color-border);background:transparent;padding:14px;display:flex;flex-direction:column;gap:5px}.messaging aside button.active{background:var(--color-background-secondary)}.chat{min-height:560px;display:flex;flex-direction:column}.messages{flex:1;display:flex;flex-direction:column;gap:9px;overflow:auto}.bubble{max-width:75%;background:var(--color-background-secondary);padding:10px 12px;border-radius:8px}.bubble.mine{align-self:flex-end;background:var(--color-success-bg)}.bubble small{display:block;color:var(--color-text-muted);font-size:10px;margin-top:5px}.composer{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:16px}.inline-offer{display:flex;gap:8px;margin-top:8px}.admin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.admin-grid section{display:flex;flex-direction:column;gap:12px}.actions-stack{display:grid;gap:16px;margin-top:16px}.seller-public p{font-size:17px;padding:12px 0;border-bottom:1px solid var(--color-border)}
+@media(max-width:850px){.wizard,.messaging,.admin-grid{grid-template-columns:1fr}.stepper{flex-direction:row;overflow:auto}.stepper button{white-space:nowrap}.site-header{align-items:flex-start;gap:12px}.site-header nav{gap:10px}.grid-2,.checks{grid-template-columns:1fr}}

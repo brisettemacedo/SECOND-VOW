@@ -27,6 +27,6 @@ export default async function AccountPage() {
         initialCity={profile?.city ?? ""}
         initialState={profile?.state ?? ""}
       />
-    </main>
+    <div className="actions" style={{marginTop:20}}><a className="btn btn-secondary" href="/mis-vestidos">Mis vestidos</a><a className="btn btn-secondary" href="/verificar-identidad">Verificar identidad</a></div></main>
   );
 }

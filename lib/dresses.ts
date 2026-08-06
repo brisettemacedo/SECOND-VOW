@@ -9,7 +9,7 @@ const CATALOG_COLUMNS = `
   id, model, talla_etiqueta, silueta, escote, espalda, manga,
   tela_principal, color_principal, cola, condicion,
   precio_original_mxn, precio_venta_mxn, ciudad, estado,
-  envio_nacional, entrega_presencial, status, created_at,
+  envio_nacional, status, created_at,
   brands ( name ),
   dress_photos ( storage_path, is_primary, position )
 `;
@@ -28,7 +28,6 @@ export type DressSearchParams = {
   precio_min?: string;
   precio_max?: string;
   envio?: string; // "1" = solo con envío nacional
-  presencial?: string; // "1" = solo con entrega presencial
   sort?: string; // "recientes" | "precio-asc" | "precio-desc" | "descuento"
   page?: string;
 };
@@ -83,7 +82,6 @@ export async function searchDresses(
   if (params.precio_max) query = query.lte("precio_venta_mxn", Number(params.precio_max));
 
   if (params.envio === "1") query = query.eq("envio_nacional", true);
-  if (params.presencial === "1") query = query.eq("entrega_presencial", true);
 
   switch (params.sort) {
     case "precio-asc":

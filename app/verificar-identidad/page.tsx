@@ -1,0 +1,2 @@
+import {requireUser} from "@/lib/auth";import IdentityVerificationForm from "@/components/IdentityVerificationForm";
+export default async function Verify(){const {supabase,user}=await requireUser();const {data}=await supabase.from("identity_verifications").select("status,created_at").eq("user_id",user.id).order("created_at",{ascending:false}).limit(1).maybeSingle();return <main className="page narrow"><IdentityVerificationForm userId={user.id} current={data}/></main>}

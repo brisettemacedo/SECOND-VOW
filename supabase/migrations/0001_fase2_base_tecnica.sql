@@ -1,167 +1,313 @@
 -- ============================================================
--- SecondVow — Fase 2: Base técnica (auth, perfiles, storage)
--- Pegar en Supabase > SQL Editor > Run.
--- Esta migración reemplaza el esquema anterior más simple; NO la
--- mezcles con el SQL viejo de la conversación previa a esta fase.
+-- SECOND VOW — 0001 · Base técnica corregida
+-- Auth, perfiles, helpers de seguridad y Storage.
+-- Ejecutar primero en Supabase > SQL Editor.
 -- ============================================================
 
--- ---------- EXTENSIÓN NECESARIA PARA gen_random_uuid() ----------
+begin;
+
 create extension if not exists "pgcrypto";
 
--- ---------- PERFILES ----------
-create table if not exists profiles (
-  id uuid references auth.users(id) on delete cascade primary key,
+-- ------------------------------------------------------------
+-- Perfiles
+-- ------------------------------------------------------------
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
   full_name text,
   city text,
   state text,
   avatar_url text,
-  role text not null default 'user' check (role in ('user', 'admin')),
+  role text not null default 'user'
+    check (role in ('user', 'admin')),
   is_blocked boolean not null default false,
   blocked_reason text,
   blocked_at timestamptz,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  identity_verified boolean not null default false,
+  response_time_label text,
+  rating_average numeric(2,1) check (rating_average is null or rating_average between 1 and 5)
 );
 
-comment on table profiles is 'Extiende auth.users con datos públicos y de moderación. NUNCA confiar en role/is_blocked enviados desde el navegador.';
+comment on table public.profiles is
+  'Perfil de usuario. role y datos de bloqueo son administrativos y no deben exponerse públicamente.';
 
--- ---------- CREACIÓN AUTOMÁTICA DE PERFIL AL REGISTRARSE ----------
+-- Para proyectos donde ya existía la tabla sin updated_at.
+alter table public.profiles
+  add column if not exists updated_at timestamptz not null default now();
+alter table public.profiles
+  add column if not exists identity_verified boolean not null default false;
+alter table public.profiles
+  add column if not exists response_time_label text;
+alter table public.profiles
+  add column if not exists rating_average numeric(2,1);
+
+-- ------------------------------------------------------------
+-- Helpers SECURITY DEFINER
+-- Evitan políticas recursivas sobre profiles.
+-- ------------------------------------------------------------
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(
+    exists (
+      select 1
+      from public.profiles p
+      where p.id = auth.uid()
+        and p.role = 'admin'
+        and p.is_blocked = false
+    ),
+    false
+  );
+$$;
+
+create or replace function public.is_active_user()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(
+    exists (
+      select 1
+      from public.profiles p
+      where p.id = auth.uid()
+        and p.is_blocked = false
+    ),
+    false
+  );
+$$;
+
+revoke all on function public.is_admin() from public;
+revoke all on function public.is_active_user() from public;
+grant execute on function public.is_admin() to anon, authenticated;
+grant execute on function public.is_active_user() to authenticated;
+
+-- ------------------------------------------------------------
+-- Crear perfil automáticamente al registrarse
+-- ------------------------------------------------------------
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   insert into public.profiles (id, full_name)
-  values (new.id, new.raw_user_meta_data ->> 'full_name');
+  values (
+    new.id,
+    nullif(btrim(new.raw_user_meta_data ->> 'full_name'), '')
+  )
+  on conflict (id) do nothing;
+
   return new;
 end;
 $$;
 
+revoke all on function public.handle_new_user() from public;
+
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+  for each row
+  execute function public.handle_new_user();
 
--- ============================================================
--- SEGURIDAD (RLS)
--- ============================================================
-alter table profiles enable row level security;
+-- ------------------------------------------------------------
+-- updated_at de perfiles
+-- ------------------------------------------------------------
+create or replace function public.set_profiles_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
 
--- Lectura pública: solo de datos que son seguros de mostrar.
--- (En Next.js, selecciona explícitamente las columnas públicas al
--- consultar esta tabla — no hagas "select *" desde el cliente.)
-create policy "perfiles lectura publica"
-  on profiles for select
-  using (true);
+drop trigger if exists profiles_set_updated_at on public.profiles;
+create trigger profiles_set_updated_at
+  before update on public.profiles
+  for each row
+  execute function public.set_profiles_updated_at();
 
--- Una usuaria puede actualizar su propio perfil, PERO no puede
--- cambiarse a sí misma el rol ni desbloquearse. Esto se hace
--- comparando el valor nuevo contra el valor ya guardado en la fila.
-create policy "usuarias editan su perfil sin escalar privilegios"
-  on profiles for update
-  using (auth.uid() = id)
-  with check (
-    auth.uid() = id
-    and role = (select p.role from profiles p where p.id = auth.uid())
-    and is_blocked = (select p.is_blocked from profiles p where p.id = auth.uid())
+-- ------------------------------------------------------------
+-- RLS de profiles
+-- ------------------------------------------------------------
+alter table public.profiles enable row level security;
+
+drop policy if exists "perfil propio o admin" on public.profiles;
+create policy "perfil propio o admin"
+  on public.profiles
+  for select
+  to authenticated
+  using (
+    id = auth.uid()
+    or public.is_admin()
   );
 
--- No se permite insertar perfiles manualmente desde el cliente:
--- se crean únicamente vía el trigger handle_new_user() (security definer).
--- (No se crea policy de insert => queda bloqueado por defecto con RLS activo.)
+drop policy if exists "usuaria actualiza perfil propio" on public.profiles;
+create policy "usuaria actualiza perfil propio"
+  on public.profiles
+  for update
+  to authenticated
+  using (
+    id = auth.uid()
+    and public.is_active_user()
+  )
+  with check (
+    id = auth.uid()
+    and public.is_active_user()
+  );
 
--- ============================================================
--- STORAGE — buckets
--- ============================================================
+-- Impide que el navegador actualice campos administrativos.
+revoke all on table public.profiles from anon;
+revoke all on table public.profiles from authenticated;
 
--- Avatares: público para lectura (son fotos de perfil, no sensibles)
+grant select on table public.profiles to authenticated;
+grant update (full_name, city, state, avatar_url)
+  on table public.profiles
+  to authenticated;
+
+-- Vista pública con únicamente columnas seguras.
+drop view if exists public.public_profiles;
+create view public.public_profiles
+with (security_barrier = true)
+as
+select
+  id,
+  full_name,
+  city,
+  state,
+  identity_verified,
+  response_time_label,
+  rating_average
+from public.profiles
+where is_blocked = false;
+
+revoke all on table public.public_profiles from public;
+grant select on table public.public_profiles to anon, authenticated;
+
+-- ------------------------------------------------------------
+-- Storage buckets
+-- ------------------------------------------------------------
 insert into storage.buckets (id, name, public)
-values ('avatars', 'avatars', true)
-on conflict (id) do nothing;
+values
+  ('avatars', 'avatars', true),
+  ('dress-images', 'dress-images', false),
+  ('dispute-evidence', 'dispute-evidence', false)
+on conflict (id) do update
+set public = excluded.public;
 
--- Fotos de vestidos: privado por ahora. La lectura pública de fotos
--- de vestidos APROBADOS se habilitará en la Fase 3, cuando exista la
--- tabla "dresses" con su columna "status". Documentado como bloqueo
--- real, no un olvido.
-insert into storage.buckets (id, name, public)
-values ('dress-images', 'dress-images', false)
-on conflict (id) do nothing;
-
--- Evidencia de disputas: privado, sin políticas públicas. Solo
--- accesible vía service_role (Edge Functions), nunca desde el navegador.
-insert into storage.buckets (id, name, public)
-values ('dispute-evidence', 'dispute-evidence', false)
-on conflict (id) do nothing;
-
--- ---------- Políticas de Storage: avatars ----------
--- Convención de ruta: avatars/{user_id}/avatar.webp
+-- ------------------------------------------------------------
+-- Storage policies: avatars
+-- Ruta: {user_id}/avatar.webp
+-- ------------------------------------------------------------
+drop policy if exists "avatares lectura publica" on storage.objects;
 create policy "avatares lectura publica"
-  on storage.objects for select
+  on storage.objects
+  for select
+  to public
   using (bucket_id = 'avatars');
 
-create policy "avatares solo su propia carpeta (insert)"
-  on storage.objects for insert
+drop policy if exists "avatares insertar carpeta propia" on storage.objects;
+create policy "avatares insertar carpeta propia"
+  on storage.objects
+  for insert
+  to authenticated
   with check (
     bucket_id = 'avatars'
+    and public.is_active_user()
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
-create policy "avatares solo su propia carpeta (update)"
-  on storage.objects for update
+drop policy if exists "avatares actualizar carpeta propia" on storage.objects;
+create policy "avatares actualizar carpeta propia"
+  on storage.objects
+  for update
+  to authenticated
   using (
     bucket_id = 'avatars'
+    and public.is_active_user()
+    and (storage.foldername(name))[1] = auth.uid()::text
+  )
+  with check (
+    bucket_id = 'avatars'
+    and public.is_active_user()
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
-create policy "avatares solo su propia carpeta (delete)"
-  on storage.objects for delete
+drop policy if exists "avatares borrar carpeta propia" on storage.objects;
+create policy "avatares borrar carpeta propia"
+  on storage.objects
+  for delete
+  to authenticated
   using (
     bucket_id = 'avatars'
+    and public.is_active_user()
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
--- ---------- Políticas de Storage: dress-images ----------
--- Convención de ruta: dress-images/{user_id}/{dress_id}/{image_id}.webp
--- Por ahora SOLO la propia dueña puede leer/escribir sus fotos.
--- TODO Fase 3: agregar policy de "select" pública cuando exista
--- dresses.status = 'approved', uniendo contra la tabla dresses.
-create policy "fotos de vestido: propia carpeta (select)"
-  on storage.objects for select
+-- ------------------------------------------------------------
+-- Storage policies iniciales: dress-images
+-- Ruta: {user_id}/{dress_id}/{image_id}.webp
+-- La lectura pública de aprobados se añade en 0002.
+-- ------------------------------------------------------------
+drop policy if exists "imagenes vestido leer carpeta propia" on storage.objects;
+create policy "imagenes vestido leer carpeta propia"
+  on storage.objects
+  for select
+  to authenticated
   using (
     bucket_id = 'dress-images'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
-create policy "fotos de vestido: propia carpeta (insert)"
-  on storage.objects for insert
+drop policy if exists "imagenes vestido insertar carpeta propia" on storage.objects;
+create policy "imagenes vestido insertar carpeta propia"
+  on storage.objects
+  for insert
+  to authenticated
   with check (
     bucket_id = 'dress-images'
+    and public.is_active_user()
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
-create policy "fotos de vestido: propia carpeta (update)"
-  on storage.objects for update
+drop policy if exists "imagenes vestido actualizar carpeta propia" on storage.objects;
+create policy "imagenes vestido actualizar carpeta propia"
+  on storage.objects
+  for update
+  to authenticated
   using (
     bucket_id = 'dress-images'
+    and public.is_active_user()
+    and (storage.foldername(name))[1] = auth.uid()::text
+  )
+  with check (
+    bucket_id = 'dress-images'
+    and public.is_active_user()
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
-create policy "fotos de vestido: propia carpeta (delete)"
-  on storage.objects for delete
+drop policy if exists "imagenes vestido borrar carpeta propia" on storage.objects;
+create policy "imagenes vestido borrar carpeta propia"
+  on storage.objects
+  for delete
+  to authenticated
   using (
     bucket_id = 'dress-images'
+    and public.is_active_user()
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
--- "dispute-evidence" no recibe ninguna policy pública a propósito:
--- con RLS activo y cero policies, queda cerrado para todo el mundo
--- excepto llamadas hechas con la service_role key (Edge Functions).
+-- dispute-evidence queda sin políticas para anon/authenticated.
+-- Debe accederse únicamente desde backend con service_role.
 
--- ============================================================
--- CÓMO CONVERTIRTE EN ADMINISTRADORA (todavía manual en esta fase;
--- el panel de administración real llega en la Fase 7)
--- 1. Regístrate normalmente en el sitio.
--- 2. Supabase > Table Editor > tabla "profiles".
--- 3. Busca tu fila y cambia "role" de 'user' a 'admin'.
--- ============================================================
+commit;

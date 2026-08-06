@@ -73,7 +73,7 @@ export default function FilterSidebar() {
   }
 
   return (
-    <aside style={{ width: 260 }}>
+    <aside className="catalog-sidebar" style={{ width: 260 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <h2 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1 }}>Filtrar</h2>
         <button
@@ -124,23 +124,6 @@ export default function FilterSidebar() {
       <CheckboxGroup title="Tela" paramKey="tela" options={TELAS} searchParams={searchParams} onToggle={toggleMulti} />
       <CheckboxGroup title="Color" paramKey="color" options={COLORES} searchParams={searchParams} onToggle={toggleMulti} />
       <CheckboxGroup title="Condición" paramKey="condicion" options={CONDICIONES} searchParams={searchParams} onToggle={toggleMulti} />
-
-      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, marginBottom: 8 }}>
-        <input
-          type="checkbox"
-          checked={searchParams.get("envio") === "1"}
-          onChange={(e) => setSingle("envio", e.target.checked ? "1" : "")}
-        />
-        Envío nacional
-      </label>
-      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5 }}>
-        <input
-          type="checkbox"
-          checked={searchParams.get("presencial") === "1"}
-          onChange={(e) => setSingle("presencial", e.target.checked ? "1" : "")}
-        />
-        Entrega presencial
-      </label>
     </aside>
   );
 }

@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { dressImageUrl } from "@/lib/storage";
 import DressCard, { type CatalogDress } from "@/components/DressCard";
 import FavoriteButton from "@/components/FavoriteButton";
+import ContactSellerButton from "@/components/ContactSellerButton";
+import OfferButton from "@/components/OfferButton";
 import {
   SILUETAS, ESCOTES, ESPALDAS, MANGAS, TELAS, COLORES, COLAS, CONDICIONES, STATUS_LABELS,
 } from "@/lib/catalogs";
@@ -22,6 +24,7 @@ function fmtPrice(v: number | null) {
 
 export default async function DressDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { data: dress, error } = await supabase
     .from("dresses")
@@ -35,12 +38,11 @@ export default async function DressDetailPage({ params }: { params: { id: string
       falta_aplicaciones, tiene_reparaciones, tiene_decoloracion, descripcion_danos,
       tuvo_ajustes, ajustes_detalle,
       precio_original_mxn, precio_venta_mxn, ciudad, estado,
-      envio_nacional, entrega_presencial, prueba_presencial,
-      descripcion, status, created_at,
+      envio_nacional,
+      descripcion, status, created_at, seller_id,
       brands ( name ),
       dress_photos ( id, storage_path, is_primary, position, classification ),
-      dress_characteristics ( characteristics ( id, label ) ),
-      profiles:seller_id ( id, full_name, city, created_at )
+      dress_characteristics ( characteristics ( id, label ) )
     `)
     .eq("id", params.id)
     .maybeSingle();
@@ -58,8 +60,11 @@ export default async function DressDetailPage({ params }: { params: { id: string
   const brandName = Array.isArray(dress.brands)
     ? (dress.brands as any[])[0]?.name
     : (dress.brands as any)?.name;
-  const seller: { id: string; full_name: string | null; city: string | null } | null =
-    Array.isArray(dress.profiles) ? (dress.profiles as any[])[0] ?? null : (dress.profiles as any) ?? null;
+  const { data: seller } = await supabase
+    .from("public_profiles")
+    .select("id, identity_verified, response_time_label, rating_average")
+    .eq("id", dress.seller_id)
+    .maybeSingle();
   const characteristics = (dress.dress_characteristics ?? [])
     .map((dc: any) => (Array.isArray(dc.characteristics) ? dc.characteristics[0] : dc.characteristics))
     .filter(Boolean);
@@ -144,8 +149,7 @@ export default async function DressDetailPage({ params }: { params: { id: string
                 ["Altura de la persona que lo usó", dress.altura_persona_cm ? `${dress.altura_persona_cm} cm` : "No especificado"],
                 ["¿Tuvo ajustes?", dress.tuvo_ajustes ? (dress.ajustes_detalle || "Sí, ver descripción") : "No"],
                 ["Ciudad / Estado", `${dress.ciudad}, ${dress.estado}`],
-                ["Envío", dress.envio_nacional ? "Envío nacional disponible" : "Solo entrega presencial"],
-                ["Prueba presencial", dress.prueba_presencial ? "Disponible" : "No disponible"],
+                ["Envío", dress.envio_nacional ? "Envío nacional disponible" : "Envío no disponible"],
               ].map(([label, value]) => (
                 <tr key={label} style={{ borderBottom: "1px solid var(--color-border)" }}>
                   <td style={{ padding: "9px 0", color: "var(--color-text-muted)", width: "45%" }}>{label}</td>
@@ -188,22 +192,21 @@ export default async function DressDetailPage({ params }: { params: { id: string
           )}
 
           <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-            <button className="btn btn-primary">Contactar vendedora</button>
+            <ContactSellerButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} />
+            <OfferButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} price={dress.precio_venta_mxn} />
             <FavoriteButton dressId={dress.id} />
           </div>
-          <p style={{ fontSize: 11.5, color: "var(--color-text-muted)" }}>
-            Contactar a la vendedora se conecta en la Fase 6 (mensajería). Guardar ya funciona de verdad.
-          </p>
+          
 
           <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--color-border)", fontSize: 13 }}>
             {seller?.id ? (
               <Link href={`/vendedoras/${seller.id}`} style={{ fontWeight: 600 }}>
-                {seller?.full_name ?? "Vendedora"}
+                Perfil de vendedora
               </Link>
             ) : (
               <strong>Vendedora</strong>
             )}
-            <div style={{ color: "var(--color-text-muted)" }}>{seller?.city ?? dress.ciudad}</div>
+            <div style={{ color: "var(--color-text-muted)" }}>{seller?.identity_verified ? "Identidad verificada" : "Identidad pendiente"}</div>
           </div>
         </div>
       </div>

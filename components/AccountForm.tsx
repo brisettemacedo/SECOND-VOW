@@ -76,7 +76,7 @@ export default function AccountForm({
   return (
     <div>
       <form onSubmit={saveProfile} style={{ marginBottom: 40 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 16 }}>Perfil público</h2>
+        <h2 style={{ fontSize: 16, marginBottom: 16 }}>Datos de cuenta</h2>
 
         {profileMsg && (
           <div className={profileMsg.type === "success" ? "alert-success" : "alert-error"}>
@@ -85,19 +85,19 @@ export default function AccountForm({
         )}
 
         <div className="field">
-          <label>Correo (privado, no se muestra públicamente)</label>
+          <label>Correo (privado)</label>
           <input type="email" value={email} disabled style={{ opacity: 0.6 }} />
         </div>
         <div className="field">
-          <label htmlFor="fullName">Nombre visible</label>
+          <label htmlFor="fullName">Nombre para tu cuenta</label>
           <input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </div>
         <div className="field">
-          <label htmlFor="city">Ciudad</label>
+          <label htmlFor="city">Ciudad (privada)</label>
           <input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
         </div>
         <div className="field">
-          <label htmlFor="state">Estado</label>
+          <label htmlFor="state">Estado (privado)</label>
           <select id="state" value={state} onChange={(e) => setState(e.target.value)}>
             <option value="">Selecciona un estado</option>
             {ESTADOS_MX.map((s) => (

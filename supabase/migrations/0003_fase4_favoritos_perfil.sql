@@ -1,28 +1,56 @@
 -- ============================================================
--- SecondVow — Fase 4: Cuenta, favoritos y perfil
--- Requiere haber corrido antes 0001 y 0002.
+-- SECOND VOW — 0003 · Favoritos corregidos
+-- Requiere 0001 y 0002.
 -- ============================================================
 
-create table if not exists favorites (
-  user_id uuid references profiles(id) on delete cascade not null,
-  dress_id uuid references dresses(id) on delete cascade not null,
+begin;
+
+create table if not exists public.favorites (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  dress_id uuid not null references public.dresses(id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (user_id, dress_id)
 );
 
-create index if not exists idx_favorites_user on favorites (user_id, created_at desc);
+create index if not exists idx_favorites_user_created
+  on public.favorites (user_id, created_at desc);
 
-alter table favorites enable row level security;
+create index if not exists idx_favorites_dress
+  on public.favorites (dress_id);
 
--- Cada usuaria ve, crea y borra únicamente sus propios favoritos.
-create policy "ver mis favoritos" on favorites
-  for select using (user_id = auth.uid());
+alter table public.favorites enable row level security;
 
-create policy "crear mi favorito" on favorites
-  for insert with check (user_id = auth.uid());
+drop policy if exists "ver favoritos propios" on public.favorites;
+create policy "ver favoritos propios"
+  on public.favorites
+  for select
+  to authenticated
+  using (user_id = auth.uid());
 
-create policy "borrar mi favorito" on favorites
-  for delete using (user_id = auth.uid());
+drop policy if exists "crear favorito propio" on public.favorites;
+create policy "crear favorito propio"
+  on public.favorites
+  for insert
+  to authenticated
+  with check (
+    user_id = auth.uid()
+    and public.is_active_user()
+    and exists (
+      select 1
+      from public.dresses d
+      where d.id = dress_id
+        and d.status in ('approved', 'reserved', 'sold')
+    )
+  );
 
--- Índice de apoyo para "número de publicaciones activas" en el perfil público
-create index if not exists idx_dresses_seller_status on dresses (seller_id, status);
+drop policy if exists "borrar favorito propio" on public.favorites;
+create policy "borrar favorito propio"
+  on public.favorites
+  for delete
+  to authenticated
+  using (user_id = auth.uid());
+
+revoke all on table public.favorites from anon, authenticated;
+grant select, insert, delete on table public.favorites to authenticated;
+
+commit;
