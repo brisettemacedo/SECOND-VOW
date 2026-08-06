@@ -1,4 +1,3 @@
-  const [email, setEmail] = useState("");
 import { Suspense } from "react";
 import LoginForm from "@/components/LoginForm";
 export const dynamic = "force-dynamic";
