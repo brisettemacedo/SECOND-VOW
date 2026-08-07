@@ -13,7 +13,7 @@ export default async function HomePage() {
         SecondVow
       </h1>
       <p style={{ color: "var(--color-text-muted)", marginBottom: 32 }}>
-        Encuentra vestidos por talla, medidas, ciudad y características.
+        Encuentra vestidos por talla, medidas, marca y características.
       </p>
 
       {user ? (

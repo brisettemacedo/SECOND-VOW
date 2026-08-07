@@ -148,7 +148,6 @@ export default async function DressDetailPage({ params }: { params: { id: string
                     : "No especificado"],
                 ["Altura de la persona que lo usó", dress.altura_persona_cm ? `${dress.altura_persona_cm} cm` : "No especificado"],
                 ["¿Tuvo ajustes?", dress.tuvo_ajustes ? (dress.ajustes_detalle || "Sí, ver descripción") : "No"],
-                ["Ciudad / Estado", `${dress.ciudad}, ${dress.estado}`],
                 ["Envío", dress.envio_nacional ? "Envío nacional disponible" : "Envío no disponible"],
               ].map(([label, value]) => (
                 <tr key={label} style={{ borderBottom: "1px solid var(--color-border)" }}>

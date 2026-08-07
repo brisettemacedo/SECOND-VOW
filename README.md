@@ -43,3 +43,7 @@ Registra tu cuenta y cambia su `profiles.role` a `admin` desde Supabase Table Ed
 - Plazo de 60 días naturales desde la entrega.
 - El vestido debe devolverse en el mismo estado recibido.
 - Perfil público limitado a identidad verificada, rango de respuesta y calificación.
+
+
+## Cambio 0006 — talla controlada y sin ubicación
+Si ya ejecutaste 0001-0005, ejecuta únicamente `supabase/migrations/0006_talla_controlada_sin_ubicacion.sql`. La publicación usa una lista controlada de tallas y ciudad/estado dejan de ser requisitos del vestido.

@@ -13,8 +13,6 @@ export type CatalogDress = {
   condicion: string;
   precio_original_mxn: number | null;
   precio_venta_mxn: number;
-  ciudad: string;
-  estado: string;
   envio_nacional: boolean;
   brands: { name: string } | { name: string }[] | null;
   dress_photos: DressPhoto[];
@@ -89,7 +87,7 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
           {labelFor(SILUETAS, dress.silueta)}
         </h3>
         <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 8 }}>
-          Talla {dress.talla_etiqueta} · {dress.ciudad}, {dress.estado}
+          Talla {dress.talla_etiqueta}
         </div>
         <div style={{ fontSize: 11.5, color: "var(--color-text-muted)", marginBottom: 8 }}>
           {labelFor(CONDICIONES, dress.condicion)}
