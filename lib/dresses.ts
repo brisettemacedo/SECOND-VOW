@@ -22,8 +22,7 @@ export type DressSearchParams = {
   tela?: string;
   color?: string;
   condicion?: string;
-  ciudad?: string;
-  estado?: string;
+  brand?: string;
   talla?: string;
   precio_min?: string;
   precio_max?: string;
@@ -72,11 +71,10 @@ export async function searchDresses(
   const condicion = multi(params.condicion);
   if (condicion) query = query.in("condicion", condicion);
 
+  if (params.brand) query = query.eq("brand_id", params.brand);
+
   const talla = multi(params.talla);
   if (talla) query = query.in("talla_etiqueta", talla);
-
-  if (params.ciudad) query = query.ilike("ciudad", `%${params.ciudad}%`);
-  if (params.estado) query = query.eq("estado", params.estado);
 
   if (params.precio_min) query = query.gte("precio_venta_mxn", Number(params.precio_min));
   if (params.precio_max) query = query.lte("precio_venta_mxn", Number(params.precio_max));

@@ -5,7 +5,18 @@ import { searchDresses, type DressSearchParams } from "@/lib/dresses";
 import DressCard, { type CatalogDress } from "@/components/DressCard";
 import FilterSidebar from "@/components/FilterSidebar";
 
-export const dynamic = "force-dynamic"; // los filtros dependen de la URL en cada visita
+export const dynamic = "force-dynamic";
+
+async function CatalogFilters() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("brands")
+    .select("id, name")
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+
+  return <FilterSidebar brands={data ?? []} />;
+}
 
 async function CatalogResults({ searchParams }: { searchParams: DressSearchParams }) {
   const supabase = await createClient();
@@ -21,8 +32,8 @@ async function CatalogResults({ searchParams }: { searchParams: DressSearchParam
 
   if (dresses.length === 0) {
     return (
-      <div style={{ padding: "60px 20px", textAlign: "center", color: "var(--color-text-muted)" }}>
-        <h3 style={{ marginBottom: 8 }}>Ningún vestido coincide con esos filtros</h3>
+      <div className="catalog-empty">
+        <h3>Ningún vestido coincide con esos filtros</h3>
         <p>Prueba ampliando el rango de precio o quitando alguna opción.</p>
       </div>
     );
@@ -30,34 +41,28 @@ async function CatalogResults({ searchParams }: { searchParams: DressSearchParam
 
   return (
     <>
-      <p style={{ fontSize: 13.5, color: "var(--color-text-muted)", marginBottom: 16 }}>
-        <strong style={{ color: "var(--color-text-primary)" }}>{count}</strong> vestido{count === 1 ? "" : "s"} encontrado{count === 1 ? "" : "s"}
+      <p className="catalog-count">
+        <strong>{count}</strong> vestido{count === 1 ? "" : "s"} encontrado{count === 1 ? "" : "s"}
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
-        {(dresses as unknown as CatalogDress[]).map((d) => (
-          <DressCard key={d.id} dress={d} />
+      <div className="catalog-grid">
+        {(dresses as unknown as CatalogDress[]).map((dress) => (
+          <DressCard key={dress.id} dress={dress} />
         ))}
       </div>
 
       {totalPages > 1 && (
-        <nav style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 32 }}>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+        <nav className="catalog-pagination" aria-label="Paginación del catálogo">
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => {
             const params = new URLSearchParams(searchParams as Record<string, string>);
-            params.set("page", String(p));
+            params.set("page", String(pageNumber));
             return (
               <Link
-                key={p}
+                key={pageNumber}
                 href={`/vestidos?${params.toString()}`}
-                className="btn"
-                style={{
-                  border: "1px solid var(--color-border)",
-                  background: p === page ? "var(--color-action-primary)" : "transparent",
-                  color: p === page ? "var(--color-action-on-primary)" : "inherit",
-                  padding: "8px 14px",
-                }}
+                className={`btn catalog-page-button${pageNumber === page ? " active" : ""}`}
               >
-                {p}
+                {pageNumber}
               </Link>
             );
           })}
@@ -67,26 +72,22 @@ async function CatalogResults({ searchParams }: { searchParams: DressSearchParam
   );
 }
 
-export default function CatalogPage({
-  searchParams,
-}: {
-  searchParams: DressSearchParams;
-}) {
+export default function CatalogPage({ searchParams }: { searchParams: DressSearchParams }) {
   return (
-    <main style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 24px" }}>
-      <h1 style={{ fontSize: 28, marginBottom: 24 }}>Vestidos disponibles</h1>
-
-      <div className="catalog-layout" style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
-        <Suspense fallback={<div style={{ width: 260 }} />}>
-          <FilterSidebar />
-        </Suspense>
-
-        <div style={{ flex: 1 }}>
-          <Suspense fallback={<p style={{ color: "var(--color-text-muted)" }}>Cargando vestidos...</p>}>
-            <CatalogResults searchParams={searchParams} />
-          </Suspense>
+    <main className="catalog-page">
+      <div className="catalog-heading-row">
+        <div>
+          <p className="catalog-eyebrow">Encuentra el vestido indicado</p>
+          <h1>Vestidos disponibles</h1>
         </div>
+        <Suspense fallback={<div className="filter-trigger-placeholder" />}>
+          <CatalogFilters />
+        </Suspense>
       </div>
+
+      <Suspense fallback={<p className="muted">Cargando vestidos...</p>}>
+        <CatalogResults searchParams={searchParams} />
+      </Suspense>
     </main>
   );
 }
