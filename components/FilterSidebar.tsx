@@ -2,16 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import {
-  SILUETAS,
-  ESCOTES,
-  ESPALDAS,
-  MANGAS,
-  TELAS,
-  COLORES,
-  CONDICIONES,
-  TALLAS_VESTIDO,
-} from "@/lib/catalogs";
+import type { DressCatalogData } from "@/lib/dressCatalogData";
 
 type BrandOption = { id: string; name: string };
 
@@ -49,7 +40,7 @@ function CheckboxGroup({
   );
 }
 
-export default function FilterSidebar({ brands }: { brands: BrandOption[] }) {
+export default function FilterSidebar({ brands, catalogs }: { brands: BrandOption[]; catalogs: DressCatalogData }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -202,14 +193,14 @@ export default function FilterSidebar({ brands }: { brands: BrandOption[] }) {
                 </div>
               </div>
 
-              <CheckboxGroup title="Talla" paramKey="talla" options={TALLAS_VESTIDO} draftParams={draftParams} onToggle={toggleMulti} />
-              <CheckboxGroup title="Silueta" paramKey="silueta" options={SILUETAS} draftParams={draftParams} onToggle={toggleMulti} />
-              <CheckboxGroup title="Escote" paramKey="escote" options={ESCOTES} draftParams={draftParams} onToggle={toggleMulti} />
-              <CheckboxGroup title="Espalda" paramKey="espalda" options={ESPALDAS} draftParams={draftParams} onToggle={toggleMulti} />
-              <CheckboxGroup title="Mangas" paramKey="manga" options={MANGAS} draftParams={draftParams} onToggle={toggleMulti} />
-              <CheckboxGroup title="Tela" paramKey="tela" options={TELAS} draftParams={draftParams} onToggle={toggleMulti} />
-              <CheckboxGroup title="Color" paramKey="color" options={COLORES} draftParams={draftParams} onToggle={toggleMulti} />
-              <CheckboxGroup title="Condición" paramKey="condicion" options={CONDICIONES} draftParams={draftParams} onToggle={toggleMulti} />
+              <CheckboxGroup title="Talla" paramKey="talla" options={catalogs.sizes} draftParams={draftParams} onToggle={toggleMulti} />
+              <CheckboxGroup title="Silueta" paramKey="silueta" options={catalogs.silhouettes} draftParams={draftParams} onToggle={toggleMulti} />
+              <CheckboxGroup title="Escote" paramKey="escote" options={catalogs.necklines} draftParams={draftParams} onToggle={toggleMulti} />
+              <CheckboxGroup title="Espalda" paramKey="espalda" options={catalogs.backs} draftParams={draftParams} onToggle={toggleMulti} />
+              <CheckboxGroup title="Mangas" paramKey="manga" options={catalogs.sleeves} draftParams={draftParams} onToggle={toggleMulti} />
+              <CheckboxGroup title="Tela" paramKey="tela" options={catalogs.fabrics} draftParams={draftParams} onToggle={toggleMulti} />
+              <CheckboxGroup title="Color" paramKey="color" options={catalogs.colors} draftParams={draftParams} onToggle={toggleMulti} />
+              <CheckboxGroup title="Condición" paramKey="condicion" options={catalogs.conditions} draftParams={draftParams} onToggle={toggleMulti} />
             </div>
 
             <footer className="filter-modal-footer">

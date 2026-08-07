@@ -1,49 +1,62 @@
-# SECOND VOW — Marketplace MVP
+# SECOND VOW — v1.0 unificada
 
-Esta versión integra catálogo, publicación de vestidos, mensajería, ofertas, pedidos, registro de envío, reclamaciones, verificación de identidad, reputación y panel administrativo.
+Esta carpeta es la versión única de referencia del proyecto. Sustituye los ZIP anteriores.
 
-## Lo que funciona con Supabase
-- Registro, login y recuperación de contraseña.
-- Formulario de publicación en 10 pasos con borradores y fotografías.
-- Moderación de vestidos.
-- Favoritos.
-- Mensajería en tiempo real.
-- Ofertas y aceptación de ofertas.
-- Creación de pedidos.
-- Registro manual de paquetería y rastreo.
-- Reclamaciones por incumplimiento dentro de 60 días.
-- Solicitud y revisión de identidad.
-- Calificaciones vinculadas a pedidos reales.
+## Estado de la base de datos
 
-## Integraciones externas pendientes de credenciales y contrato
-El código deja preparado el modelo de datos, pero no inventa una integración real con dinero o paqueterías. Antes de producción debes elegir y contratar:
-- proveedor de pagos con marketplace/split payments;
-- agregador o paquetería para generar guías y rastreo;
-- proveedor KYC para verificación documental.
+Las migraciones `0001` a `0010` incluidas en `supabase/migrations/` son el historial del esquema. Si ya fueron ejecutadas con éxito en el proyecto actual de Supabase, **NO se vuelven a ejecutar**. Cualquier cambio futuro debe añadirse como `0011`, `0012`, etc.
 
-Hasta configurar pagos reales, los pedidos aceptados permanecen en `awaiting_payment`. No habilites transferencias por fuera de la plataforma.
+## Variables de Vercel
 
-## Supabase
-En un proyecto nuevo ejecuta, en orden, todos los archivos de `supabase/migrations`.
+Configura en Vercel, para Production y Preview:
 
-## Vercel
-Variables:
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (o temporalmente `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-Después conecta el repositorio y despliega.
+La aplicación también admite temporalmente `NEXT_PUBLIC_SUPABASE_ANON_KEY` como fallback, pero la publishable key es la opción preferida.
 
-## Administración
-Registra tu cuenta y cambia su `profiles.role` a `admin` desde Supabase Table Editor. Entra a `/admin`.
+Nunca publiques `service_role`, claves secretas de Supabase ni una secret key de Stripe con prefijo `NEXT_PUBLIC_`.
 
-## Política de operación incorporada
-- Solo envío remoto; sin pruebas ni entrega presencial.
-- Comisión base de 5% al aceptar oferta (ajustable en `accept_offer`).
-- Reclamación únicamente por incumplimiento sustancial.
-- Plazo de 60 días naturales desde la entrega.
-- El vestido debe devolverse en el mismo estado recibido.
-- Perfil público limitado a identidad verificada, rango de respuesta y calificación.
+## Funcionalidad sincronizada con 0001–0010
 
+- Registro, login y recuperación de contraseña.
+- Catálogo público: no requiere cuenta.
+- Filtros en modal, sin ciudad ni estado.
+- Marca, talla, precio, silueta, escote, espalda, mangas, tela, color y condición.
+- Catálogos controlados leídos desde Supabase (`0007`), evitando texto libre para valores filtrables.
+- Publicación de vestidos por pasos.
+- Selección controlada de características y campo libre adicional de descripción.
+- Fotografías en Storage.
+- Favoritos.
+- Mensajería y lectura de conversaciones.
+- Ofertas de 48 horas, contraofertas, aceptación y rechazo mediante RPCs seguras.
+- Pedidos y envío manual con paquetería de libre elección y número de guía.
+- Reclamación únicamente durante 72 horas desde la recepción registrada.
+- Devolución autorizada: 5 días naturales para entregar a paquetería.
+- Reputación e identidad según el esquema actual.
+- Estructura de comisión: 15% + cargo administrativo fijo configurado en `0010`.
+- Estructura de saldos y retiros preparada para Stripe Connect.
 
-## Cambio 0006 — talla controlada y sin ubicación
-Si ya ejecutaste 0001-0005, ejecuta únicamente `supabase/migrations/0006_talla_controlada_sin_ubicacion.sql`. La publicación usa una lista controlada de tallas y ciudad/estado dejan de ser requisitos del vestido.
+## Stripe
+
+`0010` prepara la base de datos, pero no se incluyen claves secretas de Stripe en el repositorio. La activación real de cobros, onboarding bancario y webhooks debe hacerse desde rutas de servidor con variables secretas de Vercel antes de aceptar dinero real.
+
+La pantalla `/cuenta/pagos` muestra el estado del banco y saldos disponibles conforme a la base. La vinculación bancaria se mantiene inactiva hasta conectar Stripe Connect del lado servidor.
+
+## Deploy
+
+1. Copia el contenido completo de esta carpeta sobre el repositorio local `SECOND-VOW` (no sustituyas la carpeta `.git`).
+2. GitHub Desktop → selecciona todos los cambios → `Commit to main`.
+3. `Push origin`.
+4. Vercel debe crear automáticamente un nuevo deployment desde `main`.
+5. Verifica que el commit del deployment coincida con el commit más reciente de GitHub.
+
+## Pruebas mínimas después del deploy
+
+1. Sin iniciar sesión: `/`, `/vestidos`, filtros y ficha de un vestido aprobado.
+2. Crear cuenta e iniciar sesión.
+3. Crear borrador de vestido, seleccionar talla/características y escribir descripción libre.
+4. Subir fotos y enviar a revisión.
+5. Aprobar desde admin.
+6. Abrir dos cuentas y probar mensaje → oferta → contraoferta/aceptación → pedido.
+7. No probar pagos reales hasta completar la integración secreta de Stripe.

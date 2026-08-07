@@ -137,16 +137,6 @@ export const CONDICIONES: CatalogOption[] = [
   { value: "requiere-limpieza", label: "Requiere limpieza" },
 ];
 
-export const ESTADOS_MX: string[] = [
-  "Aguascalientes", "Baja California", "Baja California Sur", "Campeche",
-  "Chiapas", "Chihuahua", "Ciudad de México", "Coahuila", "Colima",
-  "Durango", "Estado de México", "Guanajuato", "Guerrero", "Hidalgo",
-  "Jalisco", "Michoacán", "Morelos", "Nayarit", "Nuevo León", "Oaxaca",
-  "Puebla", "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa",
-  "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz",
-  "Yucatán", "Zacatecas",
-];
-
 // Etiquetas legibles para mostrar el estado de moderación de una publicación
 export const STATUS_LABELS: Record<string, string> = {
   draft: "Borrador",

@@ -20,7 +20,7 @@ export default async function FavoritesPage() {
       created_at,
       dresses (
         id, model, talla_etiqueta, silueta, condicion, precio_original_mxn,
-        precio_venta_mxn, ciudad, estado, envio_nacional, status,
+        precio_venta_mxn, envio_nacional, status,
         brands ( name ), dress_photos ( storage_path, is_primary, position )
       )
     `)

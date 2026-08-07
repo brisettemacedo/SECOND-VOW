@@ -8,7 +8,7 @@ export const PAGE_SIZE = 24;
 const CATALOG_COLUMNS = `
   id, model, talla_etiqueta, silueta, escote, espalda, manga,
   tela_principal, color_principal, cola, condicion,
-  precio_original_mxn, precio_venta_mxn, ciudad, estado,
+  precio_original_mxn, precio_venta_mxn,
   envio_nacional, status, created_at,
   brands ( name ),
   dress_photos ( storage_path, is_primary, position )
@@ -26,7 +26,6 @@ export type DressSearchParams = {
   talla?: string;
   precio_min?: string;
   precio_max?: string;
-  envio?: string; // "1" = solo con envío nacional
   sort?: string; // "recientes" | "precio-asc" | "precio-desc" | "descuento"
   page?: string;
 };
@@ -79,7 +78,6 @@ export async function searchDresses(
   if (params.precio_min) query = query.gte("precio_venta_mxn", Number(params.precio_min));
   if (params.precio_max) query = query.lte("precio_venta_mxn", Number(params.precio_max));
 
-  if (params.envio === "1") query = query.eq("envio_nacional", true);
 
   switch (params.sort) {
     case "precio-asc":

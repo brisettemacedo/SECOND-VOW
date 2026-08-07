@@ -37,7 +37,7 @@ export default async function DressDetailPage({ params }: { params: { id: string
       condicion, tiene_manchas, tiene_jalones, tiene_roturas, dano_dobladillo,
       falta_aplicaciones, tiene_reparaciones, tiene_decoloracion, descripcion_danos,
       tuvo_ajustes, ajustes_detalle,
-      precio_original_mxn, precio_venta_mxn, ciudad, estado,
+      precio_original_mxn, precio_venta_mxn,
       envio_nacional,
       descripcion, status, created_at, seller_id,
       brands ( name ),
@@ -62,7 +62,7 @@ export default async function DressDetailPage({ params }: { params: { id: string
     : (dress.brands as any)?.name;
   const { data: seller } = await supabase
     .from("public_profiles")
-    .select("id, identity_verified, response_time_label, rating_average")
+    .select("id, identity_verified, response_time_minutes, rating_average")
     .eq("id", dress.seller_id)
     .maybeSingle();
   const characteristics = (dress.dress_characteristics ?? [])
@@ -73,7 +73,7 @@ export default async function DressDetailPage({ params }: { params: { id: string
     .from("dresses")
     .select(`
       id, model, talla_etiqueta, silueta, condicion, precio_original_mxn,
-      precio_venta_mxn, ciudad, estado, envio_nacional,
+      precio_venta_mxn, envio_nacional,
       brands ( name ), dress_photos ( storage_path, is_primary, position )
     `)
     .eq("status", "approved")

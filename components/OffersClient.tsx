@@ -1,2 +1,65 @@
-"use client"; import {useMemo,useState} from "react"; import {createClient} from "@/lib/supabase/client"; import {useRouter} from "next/navigation";
-export default function OffersClient({offers,userId}:{offers:any[];userId:string}){const supabase=useMemo(()=>createClient(),[]);const router=useRouter();const [busy,setBusy]=useState("");async function action(id:string,status:string){setBusy(id);const {error}=status==="accepted"?await supabase.rpc("accept_offer",{p_offer_id:id}):await supabase.from("offers").update({status}).eq("id",id);setBusy("");if(error)alert(error.message);else router.refresh()}return <div className="cards-list">{offers.map(o=><article className="panel" key={o.id}><h2>{o.dresses?.model||"Vestido"}</h2><p>${Number(o.amount_mxn).toLocaleString("es-MX")} MXN · <span className="badge">{o.status}</span></p><p>{o.buyer_id===userId?"Oferta enviada":"Oferta recibida"}</p>{o.seller_id===userId&&o.status==="pending"&&<div className="actions"><button className="btn btn-primary" disabled={busy===o.id} onClick={()=>action(o.id,"accepted")}>Aceptar</button><button className="btn btn-secondary" onClick={()=>action(o.id,"rejected")}>Rechazar</button></div>}{o.buyer_id===userId&&o.status==="pending"&&<button className="btn btn-secondary" onClick={()=>action(o.id,"cancelled")}>Cancelar</button>}</article>)}{!offers.length&&<p>No hay ofertas todavía.</p>}</div>}
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
+export default function OffersClient({ offers, userId }: { offers: any[]; userId: string }) {
+  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
+  const [busy, setBusy] = useState("");
+  const [counterAmounts, setCounterAmounts] = useState<Record<string, string>>({});
+
+  async function accept(id: string) {
+    setBusy(id);
+    const { data, error } = await supabase.rpc("accept_offer", { p_offer_id: id });
+    setBusy("");
+    if (error) alert(error.message);
+    else {
+      router.push(`/pedidos/${data}`);
+      router.refresh();
+    }
+  }
+
+  async function decline(id: string) {
+    setBusy(id);
+    const { error } = await supabase.rpc("decline_offer", { p_offer_id: id });
+    setBusy("");
+    if (error) alert(error.message); else router.refresh();
+  }
+
+  async function counter(id: string) {
+    const amount = Number(counterAmounts[id]);
+    if (!amount) return;
+    setBusy(id);
+    const { error } = await supabase.rpc("counter_offer", { p_offer_id: id, p_amount_mxn: amount, p_note: null });
+    setBusy("");
+    if (error) alert(error.message); else router.refresh();
+  }
+
+  return <div className="cards-list">
+    {offers.map(o => {
+      const isCreator = o.created_by === userId;
+      const canRespond = o.status === "pending" && !isCreator;
+      const canCancel = o.status === "pending" && isCreator;
+      return <article className="panel" key={o.id}>
+        <h2>{o.dresses?.model || "Vestido"}</h2>
+        <p>${Number(o.amount_mxn).toLocaleString("es-MX")} MXN · <span className="badge">{o.status}</span></p>
+        {o.note && <p>{o.note}</p>}
+        <p className="muted">Expira: {new Date(o.expires_at).toLocaleString("es-MX")}</p>
+        {canRespond && <div className="actions-stack">
+          <div className="actions">
+            <button className="btn btn-primary" disabled={busy === o.id} onClick={() => accept(o.id)}>Aceptar</button>
+            <button className="btn btn-secondary" disabled={busy === o.id} onClick={() => decline(o.id)}>Rechazar</button>
+          </div>
+          <div className="inline-offer">
+            <input type="number" min={1} value={counterAmounts[o.id] ?? ""} onChange={e => setCounterAmounts(v => ({ ...v, [o.id]: e.target.value }))} placeholder="Contraoferta MXN" />
+            <button className="btn btn-secondary" disabled={busy === o.id || !counterAmounts[o.id]} onClick={() => counter(o.id)}>Contraofertar</button>
+          </div>
+        </div>}
+        {canCancel && <button className="btn btn-secondary" disabled={busy === o.id} onClick={() => decline(o.id)}>Cancelar oferta</button>}
+      </article>;
+    })}
+    {!offers.length && <p>No hay ofertas todavía.</p>}
+  </div>;
+}
