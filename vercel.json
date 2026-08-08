@@ -1,5 +1,5 @@
 {
   "crons": [
-    { "path": "/api/cron/finalize", "schedule": "0 * * * *" }
+    { "path": "/api/cron/finalize", "schedule": "0 6 * * *" }
   ]
 }
