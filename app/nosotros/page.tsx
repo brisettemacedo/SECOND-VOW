@@ -1,0 +1,1 @@
+export default function About(){return <main className="legal-page"><h1>Quiénes somos</h1><p>SECOND VOW es un marketplace especializado en dar una segunda vida a vestidos de novia, conectando vendedoras y compradoras en México mediante un catálogo estructurado, mensajería y herramientas de operación segura.</p></main>}

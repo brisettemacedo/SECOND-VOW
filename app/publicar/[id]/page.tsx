@@ -8,7 +8,7 @@ export default async function EditDress({ params }: { params: { id: string } }) 
   const [{ data: dress }, { data: brands }, catalogs] = await Promise.all([
     supabase
       .from("dresses")
-      .select("*,dress_photos(*),dress_characteristics(characteristic_id)")
+      .select("*,dress_photos(*),dress_characteristics(characteristic_id),brand_suggestions(suggested_name,status)")
       .eq("id", params.id)
       .eq("seller_id", user.id)
       .maybeSingle(),

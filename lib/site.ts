@@ -1,0 +1,9 @@
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://secondvow-seven.vercel.app").replace(/\/$/, "");
+export const LEGAL_NAME = process.env.NEXT_PUBLIC_LEGAL_NAME || "SECOND VOW";
+export const LEGAL_ADDRESS = process.env.NEXT_PUBLIC_LEGAL_ADDRESS || "[COMPLETAR DOMICILIO DEL RESPONSABLE ANTES DEL LANZAMIENTO COMERCIAL]";
+export const LEGAL_PHONE = process.env.NEXT_PUBLIC_LEGAL_PHONE || "[COMPLETAR TELÉFONO DE CONTACTO]";
+export const PRIVACY_EMAIL = process.env.NEXT_PUBLIC_PRIVACY_EMAIL || "privacidad@secondvow.com";
+export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hola@secondvow.com";
+export const TERMS_VERSION = "2026-08-07";
+export const PRIVACY_VERSION = "2026-08-07";
+export const COOKIES_VERSION = "2026-08-07";

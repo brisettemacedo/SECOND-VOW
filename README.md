@@ -60,3 +60,12 @@ La pantalla `/cuenta/pagos` muestra el estado del banco y saldos disponibles con
 5. Aprobar desde admin.
 6. Abrir dos cuentas y probar mensaje → oferta → contraoferta/aceptación → pedido.
 7. No probar pagos reales hasta completar la integración secreta de Stripe.
+
+
+## Actualización v1.1
+
+Si Supabase ya tiene 0001–0010 aplicadas, ejecuta **solamente** `supabase/migrations/0011_cumplimiento_marcas_admin_seguridad.sql`.
+
+En Vercel agrega `NEXT_PUBLIC_SITE_URL` con la URL estable de producción y completa las variables legales indicadas en `.env.example`. En Supabase Authentication > URL Configuration, configura la misma URL estable como Site URL y agrega `https://TU-DOMINIO/**` como Redirect URL.
+
+**Antes del lanzamiento comercial** sustituye `NEXT_PUBLIC_LEGAL_NAME` y `NEXT_PUBLIC_LEGAL_ADDRESS` por los datos exactos del responsable. No inventes esos datos.
