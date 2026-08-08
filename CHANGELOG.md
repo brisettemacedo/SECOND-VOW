@@ -25,3 +25,12 @@
 - Reclamación limitada a 72 horas desde recepción; devolución autorizada con 5 días naturales para entregar a paquetería.
 - Vista de pagos/retiros alineada con 0010.
 - Eliminación de archivos `.DS_Store` y artefactos de TypeScript.
+
+## v1.2 — 0012
+- Modelo Stripe cambiado a separate charges and transfers.
+- Endpoints de Connect onboarding, Checkout, webhook y payout.
+- Integración Ship24: alta de tracker y webhook autenticado.
+- `buyer_confirmed_at` y `carrier_delivered_at`; el primero fija `delivered_at`.
+- Ventana de reclamación de 72 horas y cierre automático horario.
+- Tracking events idempotentes y ordenados por fecha real del evento.
+- Nuevo texto de Quiénes somos solicitado para SECOND VOW.

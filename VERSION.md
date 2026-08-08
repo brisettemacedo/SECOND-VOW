@@ -1,3 +1,5 @@
-# SECOND VOW v1.1
+# SECOND VOW v1.2
 
-Base oficial posterior a las migraciones 0001–0010. Esta versión agrega la migración incremental 0011 y cambios de cumplimiento, marcas, administración y seguridad.
+Incluye 0001–0012. La migración nueva de esta entrega es `0012_pagos_tracking_72h.sql`.
+
+Cambios principales: Stripe Connect/Checkout conectable, Ship24 Tracking API + webhook, doble disparador de entrega, ventana automática de 72 horas, liberación de saldo y nuevo texto de “Quiénes somos”.

@@ -11,9 +11,10 @@ export default function PayoutsClient({ orders }: { orders: any[] }) {
 
   async function request(orderId: string) {
     setBusy(orderId);
-    const { error } = await supabase.rpc("request_seller_payout", { p_order_id: orderId });
+    const res = await fetch("/api/stripe/payout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId }) });
+    const json = await res.json();
     setBusy("");
-    if (error) alert(error.message); else router.refresh();
+    if (!res.ok) alert(json.error || "No fue posible solicitar el retiro"); else router.refresh();
   }
 
   return <div className="cards-list">

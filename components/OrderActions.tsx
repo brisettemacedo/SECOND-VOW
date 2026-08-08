@@ -31,7 +31,22 @@ export default function OrderActions({ order, userId }: { order: any; userId: st
   }
 
   async function ship() {
-    await rpc("mark_order_shipped", { p_order_id: order.id, p_carrier: carrier, p_tracking_number: tracking });
+    setBusy(true);
+    const res = await fetch("/api/tracking/register", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: order.id, carrier, trackingNumber: tracking }),
+    });
+    const json = await res.json(); setBusy(false);
+    if (!res.ok) alert(json.error || "No fue posible registrar el envío");
+    else { if (json.warning) alert(json.warning); router.refresh(); }
+  }
+
+  async function checkout() {
+    setBusy(true);
+    const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: order.id }) });
+    const json = await res.json(); setBusy(false);
+    if (!res.ok) alert(json.error || "No fue posible iniciar el pago");
+    else if (json.url) window.location.href = json.url;
   }
 
   async function delivered() {
@@ -48,8 +63,8 @@ export default function OrderActions({ order, userId }: { order: any; userId: st
   }
 
   return <div className="actions-stack">
-    {order.buyer_id === userId && order.status === "awaiting_payment" &&
-      <div className="alert-error">El pedido está pendiente de pago. La integración real de Stripe Connect debe activarse antes de aceptar pagos reales.</div>}
+    {order.buyer_id === userId && ["awaiting_payment","payment_processing"].includes(order.status) &&
+      <div className="panel"><h3>Pago protegido</h3><p>El pago se procesa dentro de SECOND VOW. La vendedora no recibe el dinero hasta que termine el periodo de protección.</p><button className="btn btn-primary" disabled={busy} onClick={checkout}>Pagar de forma segura</button></div>}
 
     {order.seller_id === userId && ["paid", "preparing_shipment"].includes(order.status) &&
       <div className="panel">
@@ -69,8 +84,7 @@ export default function OrderActions({ order, userId }: { order: any; userId: st
       <div className="panel">
         <h3>Revisa tu vestido</h3>
         <p>Tienes 72 horas desde la recepción registrada para reportar un incumplimiento sustancial.</p>
-        {order.inspection_deadline_at && <p className="muted">Plazo: {new Date(order.inspection_deadline_at).toLocaleString("es-MX")}</p>}
-        <button className="btn btn-primary" disabled={busy} onClick={acceptCondition}>Todo está correcto</button>
+        {(order.dispute_deadline_at || order.inspection_deadline_at) && <p className="muted">Protección hasta: {new Date(order.dispute_deadline_at || order.inspection_deadline_at).toLocaleString("es-MX")}</p>}
         <hr />
         <h3>Abrir reclamación</h3>
         <div className="field"><label>Motivo</label><select value={reasonCode} onChange={e => setReasonCode(e.target.value)}><option value="">Selecciona</option>{CLAIM_REASONS.map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></div>

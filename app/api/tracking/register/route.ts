@@ -1,0 +1,34 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/server/adminSupabase";
+import { createShip24Tracker } from "@/lib/server/ship24";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(req: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const { orderId, carrier, trackingNumber } = await req.json();
+  if (!orderId || !carrier?.trim() || !trackingNumber?.trim()) return NextResponse.json({ error: "Faltan datos del envío" }, { status: 400 });
+
+  const { error: shipError } = await supabase.rpc("mark_order_shipped", {
+    p_order_id: orderId, p_carrier: carrier.trim(), p_tracking_number: trackingNumber.trim(),
+  });
+  if (shipError) return NextResponse.json({ error: shipError.message }, { status: 400 });
+
+  const admin = createAdminClient();
+  const { data: shipment, error } = await admin.from("shipments").select("id").eq("order_id", orderId).eq("direction", "outbound").single();
+  if (error || !shipment) return NextResponse.json({ error: "No se encontró el envío creado" }, { status: 500 });
+
+  try {
+    const result = await createShip24Tracker({ trackingNumber: trackingNumber.trim(), clientTrackerId: shipment.id });
+    const trackerId = result?.data?.tracker?.trackerId ?? result?.tracker?.trackerId ?? result?.data?.trackerId ?? result?.trackerId;
+    if (!trackerId) throw new Error("Ship24 no devolvió trackerId");
+    await admin.rpc("backend_register_tracking_provider", { p_order_id: orderId, p_provider: "ship24", p_provider_tracker_id: trackerId, p_error: null });
+    return NextResponse.json({ ok: true, trackerId });
+  } catch (e: any) {
+    await admin.rpc("backend_register_tracking_provider", { p_order_id: orderId, p_provider: "ship24", p_provider_tracker_id: null, p_error: e?.message ?? "Error Ship24" });
+    return NextResponse.json({ ok: true, trackingPending: true, warning: "El envío quedó registrado, pero el rastreo automático está pendiente." });
+  }
+}

@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import PayoutsClient from "@/components/PayoutsClient";
+import ConnectStripeButton from "@/components/ConnectStripeButton";
 
 export default async function PaymentsAccountPage() {
   const { supabase, user } = await requireUser();
@@ -17,7 +18,7 @@ export default async function PaymentsAccountPage() {
         <p><span className="badge">{paymentAccount.payouts_enabled ? "Lista para retiros" : paymentAccount.onboarding_status}</span></p>
       </> : <>
         <p>Todavía no hay una cuenta bancaria vinculada.</p>
-        <p className="muted">El botón de vinculación se activará al conectar Stripe Connect en el backend de producción. SECOND VOW no almacenará tu CLABE completa.</p>
+        <p className="muted">Stripe recopila de forma segura los datos bancarios y de verificación. SECOND VOW no almacena tu CLABE completa.</p><ConnectStripeButton />
       </>}
     </section>
     <h2>Saldos</h2>

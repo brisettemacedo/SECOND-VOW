@@ -1,0 +1,24 @@
+const BASE = "https://api.ship24.com";
+
+function key() {
+  if (!process.env.SHIP24_API_KEY) throw new Error("Falta SHIP24_API_KEY");
+  return process.env.SHIP24_API_KEY;
+}
+
+export async function createShip24Tracker(input: { trackingNumber: string; clientTrackerId: string; courierCode?: string }) {
+  const body: Record<string, string> = {
+    trackingNumber: input.trackingNumber,
+    clientTrackerId: input.clientTrackerId,
+    destinationCountryCode: "MX",
+  };
+  if (input.courierCode) body.courierCode = input.courierCode;
+  const res = await fetch(`${BASE}/trackers`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key()}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.message || json?.error || `Ship24 respondió ${res.status}`);
+  return json;
+}
