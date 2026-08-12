@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { dressImageUrl } from "@/lib/storage";
 import { SILUETAS, ESCOTES, ESPALDAS, MANGAS, TELAS, COLORES, COLAS, CONDICIONES } from "@/lib/catalogs";
 import AdminDressModeration from "@/components/AdminDressModeration";
+import { resolveDressBrandNames } from "@/lib/server/dressBrands";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export default async function AdminPublicationDetail({ params }: { params: { id:
   // no convierta toda la revisión administrativa en un 404.
   const { data: dress, error: dressError } = await supabase
     .from("dresses")
-    .select("*,brands(name),brand_suggestions(suggested_name,status)")
+    .select("*")
     .eq("id", id)
     .maybeSingle();
 
@@ -44,9 +45,8 @@ export default async function AdminPublicationDetail({ params }: { params: { id:
   ]);
 
   const photos = [...(photoRows ?? [])].sort((a: any, b: any) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0) || a.position - b.position);
-  const brandRel = Array.isArray(dress.brands) ? dress.brands[0] : dress.brands;
-  const suggestionRel = Array.isArray(dress.brand_suggestions) ? dress.brand_suggestions[0] : dress.brand_suggestions;
-  const brand = brandRel?.name ?? suggestionRel?.suggested_name ?? "Marca pendiente";
+  const brandResolver = await resolveDressBrandNames(supabase, [dress]);
+  const brand = brandResolver.nameFor(dress) || "Marca pendiente";
   const cleanModel = (value: any) => {
     const text = String(value ?? "").trim();
     return /^(na|n\/a|no aplica|sin modelo)$/i.test(text) ? "" : text;

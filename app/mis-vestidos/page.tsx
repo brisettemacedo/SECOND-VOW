@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { resolveDressBrandNames } from "@/lib/server/dressBrands";
 
 const labels: Record<string, string> = {
   draft: "Borrador",
@@ -12,24 +13,41 @@ const labels: Record<string, string> = {
   sold: "Vendido",
 };
 
+function cleanModel(value: any) {
+  const text = String(value ?? "").trim();
+  return /^(na|n\/a|no aplica|sin modelo)$/i.test(text) ? "" : text;
+}
+
 export default async function MyDresses() {
   const { supabase, user } = await requireUser();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("dresses")
-    .select("id,model,status,updated_at,precio_venta_mxn,moderation_notes,moderated_at,brands(name),brand_suggestions(suggested_name)")
+    .select("id,brand_id,brand_suggestion_id,model,status,updated_at,precio_venta_mxn,moderation_notes,moderated_at")
     .eq("seller_id", user.id)
     .order("updated_at", { ascending: false });
 
+  let brandNames: Awaited<ReturnType<typeof resolveDressBrandNames>> | null = null;
+  let brandError = "";
+  if (!error) {
+    try {
+      brandNames = await resolveDressBrandNames(supabase, data ?? []);
+    } catch (e: any) {
+      brandError = e?.message || "No fue posible cargar las marcas.";
+    }
+  }
+
+  const loadError = error?.message || brandError;
+
   return <main className="page">
     <div className="title-row"><h1>Mis vestidos</h1><Link className="btn btn-primary" href="/publicar">Publicar vestido</Link></div>
+    {loadError && <div className="alert-error"><strong>No pudimos cargar tus publicaciones.</strong><p>{loadError}</p></div>}
     <div className="cards-list">
-      {(data ?? []).map((d: any) => {
+      {!loadError && (data ?? []).map((d: any) => {
         const editable = ["draft", "changes_requested", "rejected"].includes(d.status);
-        const brandRel = Array.isArray(d.brands) ? d.brands[0] : d.brands;
-        const suggestionRel = Array.isArray(d.brand_suggestions) ? d.brand_suggestions[0] : d.brand_suggestions;
-        const brand = brandRel?.name ?? suggestionRel?.suggested_name ?? "Sin marca";
+        const brand = brandNames?.nameFor(d) ?? "Sin marca";
+        const model = cleanModel(d.model);
         return <article className="panel" key={d.id}>
-          <h2>{brand}{d.model && !/^(na|n\/a|no aplica|sin modelo)$/i.test(String(d.model).trim()) ? ` ${d.model}` : ""}</h2>
+          <h2>{brand}{model ? ` ${model}` : ""}</h2>
           <p><span className="badge">{labels[d.status] ?? d.status}</span></p>
           <p>{d.precio_venta_mxn ? `$${Number(d.precio_venta_mxn).toLocaleString("es-MX")} MXN` : "Precio pendiente"}</p>
           {d.status === "pending_review" && <div className="alert-success">Tu vestido está en revisión administrativa. No necesitas hacer nada por ahora.</div>}
@@ -42,7 +60,7 @@ export default async function MyDresses() {
           </div>
         </article>;
       })}
-      {!data?.length && <p>No tienes publicaciones todavía.</p>}
+      {!loadError && !data?.length && <p>No tienes publicaciones todavía.</p>}
     </div>
   </main>;
 }

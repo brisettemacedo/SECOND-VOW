@@ -57,3 +57,10 @@
 - UX-01 reforzada y visible.
 - Guardados accesibles desde navegación y cuenta.
 - Limpieza visual de modelo no aplicable.
+
+## v1.2.5 — 2026-08-12
+
+- Eliminadas consultas PostgREST ambiguas entre `dresses` y `brand_suggestions`.
+- Mis vestidos preserva publicaciones en cualquier estado y distingue errores de listas vacías.
+- Administración resuelve marcas en consultas separadas y deja de reportar falsamente “sin pendientes” cuando falla una consulta.
+- Stripe Connect ahora captura y muestra errores de backend/Stripe y valida la URL de onboarding.

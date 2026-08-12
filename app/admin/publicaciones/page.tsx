@@ -1,15 +1,29 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
+import { resolveDressBrandNames } from "@/lib/server/dressBrands";
 
 export const dynamic = "force-dynamic";
+
+function cleanModel(value: any) {
+  const text = String(value ?? "").trim();
+  return /^(na|n\/a|no aplica|sin modelo)$/i.test(text) ? "" : text;
+}
 
 export default async function AdminPublicationsPage() {
   const { supabase } = await requireAdmin();
   const { data: dresses, error } = await supabase
     .from("dresses")
-    .select("id,model,status,created_at,updated_at,talla_etiqueta,precio_venta_mxn,brands(name),brand_suggestions(suggested_name,status),dress_photos(id)")
+    .select("id,brand_id,brand_suggestion_id,model,status,created_at,updated_at,talla_etiqueta,precio_venta_mxn,dress_photos(id)")
     .eq("status", "pending_review")
     .order("updated_at", { ascending: true });
+
+  let resolver: Awaited<ReturnType<typeof resolveDressBrandNames>> | null = null;
+  let brandError = "";
+  if (!error) {
+    try { resolver = await resolveDressBrandNames(supabase, dresses ?? []); }
+    catch (e: any) { brandError = e?.message || "No fue posible cargar las marcas."; }
+  }
+  const loadError = error?.message || brandError;
 
   return (
     <main className="page">
@@ -21,19 +35,18 @@ export default async function AdminPublicationsPage() {
         <Link className="btn btn-secondary" href="/admin">Volver a administración</Link>
       </div>
 
-      {error && <div className="alert-error">{error.message}</div>}
+      {loadError && <div className="alert-error"><strong>No pudimos cargar las publicaciones pendientes.</strong><p>{loadError}</p></div>}
       <div className="cards-list">
-        {(dresses ?? []).map((dress: any) => {
-          const brandRel = Array.isArray(dress.brands) ? dress.brands[0] : dress.brands;
-          const suggestionRel = Array.isArray(dress.brand_suggestions) ? dress.brand_suggestions[0] : dress.brand_suggestions;
-          const brand = brandRel?.name ?? suggestionRel?.suggested_name ?? "Marca pendiente";
+        {!loadError && (dresses ?? []).map((dress: any) => {
+          const brand = resolver?.nameFor(dress) ?? "Marca pendiente";
+          const model = cleanModel(dress.model);
           const photoCount = dress.dress_photos?.length ?? 0;
           return (
             <article className="panel" key={dress.id}>
               <div className="admin-publication-row">
                 <div>
                   <span className="badge">En revisión</span>
-                  <h2>{brand}{dress.model && !/^(na|n\/a|no aplica|sin modelo)$/i.test(String(dress.model).trim()) ? ` ${dress.model}` : ""}</h2>
+                  <h2>{brand}{model ? ` ${model}` : ""}</h2>
                   <p className="muted">Talla {dress.talla_etiqueta ?? "—"} · {photoCount} fotografías · {dress.precio_venta_mxn ? `$${Number(dress.precio_venta_mxn).toLocaleString("es-MX")} MXN` : "Precio pendiente"}</p>
                   <p className="muted">Enviado/actualizado: {new Date(dress.updated_at).toLocaleString("es-MX")}</p>
                 </div>
@@ -42,7 +55,7 @@ export default async function AdminPublicationsPage() {
             </article>
           );
         })}
-        {!dresses?.length && <div className="panel"><p>No hay publicaciones pendientes de revisión.</p></div>}
+        {!loadError && !dresses?.length && <div className="panel"><p>No hay publicaciones pendientes de revisión.</p></div>}
       </div>
     </main>
   );
