@@ -64,3 +64,10 @@
 - Mis vestidos preserva publicaciones en cualquier estado y distingue errores de listas vacías.
 - Administración resuelve marcas en consultas separadas y deja de reportar falsamente “sin pendientes” cuando falla una consulta.
 - Stripe Connect ahora captura y muestra errores de backend/Stripe y valida la URL de onboarding.
+
+
+## v1.2.6 — 2026-08-12
+- Borrado de borradores propios desde Mis vestidos.
+- Tipografía unificada en DM Sans.
+- Paleta Olive Leaf, Cornsilk y Black Forest.
+- Eliminación de guiones largos en textos visibles.

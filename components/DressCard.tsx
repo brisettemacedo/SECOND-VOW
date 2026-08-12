@@ -91,7 +91,7 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
         </div>
         <div style={{ fontSize: 11.5, color: "var(--color-text-muted)", marginBottom: 8 }}>
           {labelFor(CONDICIONES, dress.condicion)}
-          {dress.envio_nacional ? " · Envío nacional" : ""}
+          {dress.envio_nacional ? " | Envío nacional" : ""}
         </div>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
           <div>

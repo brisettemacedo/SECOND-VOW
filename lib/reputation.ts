@@ -1,1 +1,1 @@
-export function responseTimeLabel(minutes:number|null|undefined){if(minutes==null)return "Aún sin datos";if(minutes<60)return "Menos de 1 hora";if(minutes<240)return "Menos de 4 horas";if(minutes<1440)return "Durante el día";return "En 1–2 días"}
+export function responseTimeLabel(minutes:number|null|undefined){if(minutes==null)return "Aún sin datos";if(minutes<60)return "Menos de 1 hora";if(minutes<240)return "Menos de 4 horas";if(minutes<1440)return "Durante el día";return "En 1 a 2 días"}

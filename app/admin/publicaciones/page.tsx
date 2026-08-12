@@ -47,7 +47,7 @@ export default async function AdminPublicationsPage() {
                 <div>
                   <span className="badge">En revisión</span>
                   <h2>{brand}{model ? ` ${model}` : ""}</h2>
-                  <p className="muted">Talla {dress.talla_etiqueta ?? "—"} · {photoCount} fotografías · {dress.precio_venta_mxn ? `$${Number(dress.precio_venta_mxn).toLocaleString("es-MX")} MXN` : "Precio pendiente"}</p>
+                  <p className="muted">Talla {dress.talla_etiqueta ?? "No especificado"} | {photoCount} fotografías | {dress.precio_venta_mxn ? `$${Number(dress.precio_venta_mxn).toLocaleString("es-MX")} MXN` : "Precio pendiente"}</p>
                   <p className="muted">Enviado/actualizado: {new Date(dress.updated_at).toLocaleString("es-MX")}</p>
                 </div>
                 <Link className="btn btn-primary" href={`/admin/publicaciones/${dress.id}`}>Revisar publicación</Link>

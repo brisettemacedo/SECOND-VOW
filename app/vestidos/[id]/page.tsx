@@ -13,12 +13,12 @@ import {
 export const dynamic = "force-dynamic";
 
 function labelFor(list: { value: string; label: string }[], value: string | null) {
-  if (!value) return "—";
+  if (!value) return "No especificado";
   return list.find((o) => o.value === value)?.label ?? value;
 }
 
 function fmtPrice(v: number | null) {
-  if (v === null) return "—";
+  if (v === null) return "No especificado";
   return v.toLocaleString("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 });
 }
 
@@ -87,7 +87,7 @@ export default async function DressDetailPage({ params }: { params: { id: string
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px" }}>
       {dress.status !== "approved" && (
         <div className="alert-error" style={{ marginBottom: 20 }}>
-          Vista previa — esta publicación está en estado &quot;{STATUS_LABELS[dress.status]}&quot; y todavía no es visible públicamente.
+          Vista previa: esta publicación está en estado &quot;{STATUS_LABELS[dress.status]}&quot; y todavía no es visible públicamente.
         </div>
       )}
 
@@ -146,7 +146,7 @@ export default async function DressDetailPage({ params }: { params: { id: string
                 ["Condición", labelFor(CONDICIONES, dress.condicion)],
                 ["Busto / cintura / cadera",
                   [dress.busto_cm, dress.cintura_cm, dress.cadera_cm].some(Boolean)
-                    ? `${dress.busto_cm ?? "—"} / ${dress.cintura_cm ?? "—"} / ${dress.cadera_cm ?? "—"} cm`
+                    ? `${dress.busto_cm ?? "No especificado"} / ${dress.cintura_cm ?? "No especificado"} / ${dress.cadera_cm ?? "No especificado"} cm`
                     : "No especificado"],
                 ["Altura de la persona que lo usó", dress.altura_persona_cm ? `${dress.altura_persona_cm} cm` : "No especificado"],
                 ["¿Tuvo ajustes?", dress.tuvo_ajustes ? (dress.ajustes_detalle || "Sí, ver descripción") : "No"],

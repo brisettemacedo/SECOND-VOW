@@ -9,7 +9,7 @@ import { resolveDressBrandNames } from "@/lib/server/dressBrands";
 export const dynamic = "force-dynamic";
 
 function labelFor(list: { value: string; label: string }[], value: string | null | undefined) {
-  if (!value) return "—";
+  if (!value) return "No especificado";
   return list.find((item) => item.value === value)?.label ?? value;
 }
 
@@ -65,20 +65,20 @@ export default async function AdminPublicationDetail({ params }: { params: { id:
     ["ID de vendedora", dress.seller_id],
     ["Cuenta bloqueada", seller?.is_blocked ? "Sí" : "No"],
     ["Estado", dress.status],
-    ["Enviado a revisión / última actualización", dress.updated_at ? new Date(dress.updated_at).toLocaleString("es-MX") : "—"],
-    ["Creado", dress.created_at ? new Date(dress.created_at).toLocaleString("es-MX") : "—"],
-    ["Marca", brand], ["Modelo", model || "—"], ["Colección", dress.collection || "—"], ["Año aproximado", dress.year_approx || "—"],
-    ["Talla de etiqueta", dress.talla_etiqueta || "—"], ["Sistema de talla", dress.sistema_talla || "—"],
-    ["Busto", dress.busto_cm ? `${dress.busto_cm} cm` : "—"], ["Cintura", dress.cintura_cm ? `${dress.cintura_cm} cm` : "—"], ["Cadera", dress.cadera_cm ? `${dress.cadera_cm} cm` : "—"],
-    ["Hombro a piso", dress.largo_hombro_piso_cm ? `${dress.largo_hombro_piso_cm} cm` : "—"], ["Altura de quien lo usó", dress.altura_persona_cm ? `${dress.altura_persona_cm} cm` : "—"], ["Tacón", dress.altura_tacon_cm != null ? `${dress.altura_tacon_cm} cm` : "—"],
+    ["Enviado a revisión / última actualización", dress.updated_at ? new Date(dress.updated_at).toLocaleString("es-MX") : "No especificado"],
+    ["Creado", dress.created_at ? new Date(dress.created_at).toLocaleString("es-MX") : "No especificado"],
+    ["Marca", brand], ["Modelo", model || "No especificado"], ["Colección", dress.collection || "No especificado"], ["Año aproximado", dress.year_approx || "No especificado"],
+    ["Talla de etiqueta", dress.talla_etiqueta || "No especificado"], ["Sistema de talla", dress.sistema_talla || "No especificado"],
+    ["Busto", dress.busto_cm ? `${dress.busto_cm} cm` : "No especificado"], ["Cintura", dress.cintura_cm ? `${dress.cintura_cm} cm` : "No especificado"], ["Cadera", dress.cadera_cm ? `${dress.cadera_cm} cm` : "No especificado"],
+    ["Hombro a piso", dress.largo_hombro_piso_cm ? `${dress.largo_hombro_piso_cm} cm` : "No especificado"], ["Altura de quien lo usó", dress.altura_persona_cm ? `${dress.altura_persona_cm} cm` : "No especificado"], ["Tacón", dress.altura_tacon_cm != null ? `${dress.altura_tacon_cm} cm` : "No especificado"],
     ["Puede ampliarse", yesNo(dress.puede_ampliarse)], ["Puede reducirse", yesNo(dress.puede_reducirse)],
     ["Silueta", labelFor(SILUETAS, dress.silueta)], ["Escote", labelFor(ESCOTES, dress.escote)], ["Espalda", labelFor(ESPALDAS, dress.espalda)], ["Manga", labelFor(MANGAS, dress.manga)],
-    ["Tela principal", labelFor(TELAS, dress.tela_principal)], ["Tela secundaria", labelFor(TELAS, dress.tela_secundaria)], ["Color principal", labelFor(COLORES, dress.color_principal)], ["Color de forro", dress.color_forro || "—"],
-    ["Cola", labelFor(COLAS, dress.cola)], ["Largo de cola", dress.cola_largo_cm != null ? `${dress.cola_largo_cm} cm` : "—"],
-    ["Condición", labelFor(CONDICIONES, dress.condicion)], ["Manchas", yesNo(dress.tiene_manchas)], ["Jalones", yesNo(dress.tiene_jalones)], ["Roturas", yesNo(dress.tiene_roturas)], ["Daño en dobladillo", yesNo(dress.dano_dobladillo)], ["Faltan aplicaciones", yesNo(dress.falta_aplicaciones)], ["Reparaciones", yesNo(dress.tiene_reparaciones)], ["Decoloración", yesNo(dress.tiene_decoloracion)], ["Descripción de daños", dress.descripcion_danos || "—"],
-    ["Tuvo ajustes", yesNo(dress.tuvo_ajustes)], ["Detalle de ajustes", dress.ajustes_detalle || "—"], ["Conserva margen de costura", dress.conserva_margen_costura == null ? "—" : yesNo(dress.conserva_margen_costura)],
-    ["Precio original", dress.precio_original_mxn ? `$${Number(dress.precio_original_mxn).toLocaleString("es-MX")} MXN` : "—"], ["Precio de venta", dress.precio_venta_mxn ? `$${Number(dress.precio_venta_mxn).toLocaleString("es-MX")} MXN` : "—"],
-    ["Envío nacional", yesNo(dress.envio_nacional)], ["Descripción adicional", dress.descripcion || "—"],
+    ["Tela principal", labelFor(TELAS, dress.tela_principal)], ["Tela secundaria", labelFor(TELAS, dress.tela_secundaria)], ["Color principal", labelFor(COLORES, dress.color_principal)], ["Color de forro", dress.color_forro || "No especificado"],
+    ["Cola", labelFor(COLAS, dress.cola)], ["Largo de cola", dress.cola_largo_cm != null ? `${dress.cola_largo_cm} cm` : "No especificado"],
+    ["Condición", labelFor(CONDICIONES, dress.condicion)], ["Manchas", yesNo(dress.tiene_manchas)], ["Jalones", yesNo(dress.tiene_jalones)], ["Roturas", yesNo(dress.tiene_roturas)], ["Daño en dobladillo", yesNo(dress.dano_dobladillo)], ["Faltan aplicaciones", yesNo(dress.falta_aplicaciones)], ["Reparaciones", yesNo(dress.tiene_reparaciones)], ["Decoloración", yesNo(dress.tiene_decoloracion)], ["Descripción de daños", dress.descripcion_danos || "No especificado"],
+    ["Tuvo ajustes", yesNo(dress.tuvo_ajustes)], ["Detalle de ajustes", dress.ajustes_detalle || "No especificado"], ["Conserva margen de costura", dress.conserva_margen_costura == null ? "No especificado" : yesNo(dress.conserva_margen_costura)],
+    ["Precio original", dress.precio_original_mxn ? `$${Number(dress.precio_original_mxn).toLocaleString("es-MX")} MXN` : "No especificado"], ["Precio de venta", dress.precio_venta_mxn ? `$${Number(dress.precio_venta_mxn).toLocaleString("es-MX")} MXN` : "No especificado"],
+    ["Envío nacional", yesNo(dress.envio_nacional)], ["Descripción adicional", dress.descripcion || "No especificado"],
   ];
 
   return (
@@ -117,8 +117,8 @@ export default async function AdminPublicationDetail({ params }: { params: { id:
           <li>{declarations.photos_correspond_declared ? "✓" : "✕"} Fotografías corresponden al vestido</li>
           <li>{declarations.right_to_sell_declared ? "✓" : "✕"} Derecho para vender</li>
           <li>{declarations.information_true_declared ? "✓" : "✕"} Información verdadera y completa</li>
-          <li>Versión de términos: {declarations.terms_version || "—"}</li>
-          <li>Declarado: {declarations.declared_at ? new Date(declarations.declared_at).toLocaleString("es-MX") : "—"}</li>
+          <li>Versión de términos: {declarations.terms_version || "No especificado"}</li>
+          <li>Declarado: {declarations.declared_at ? new Date(declarations.declared_at).toLocaleString("es-MX") : "No especificado"}</li>
         </ul> : <div className="alert-error">No hay declaraciones registradas para esta solicitud.</div>}
       </section>
 

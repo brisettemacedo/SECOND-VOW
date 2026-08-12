@@ -1,6 +1,6 @@
 // Espejo exacto de los valores permitidos en supabase/migrations/0002_fase3_catalogo.sql
 // Si agregas una opción aquí, agrégala también al CHECK constraint correspondiente
-// (y viceversa) — deben coincidir siempre.
+// (y viceversa) | deben coincidir siempre.
 
 export type CatalogOption = { value: string; label: string };
 

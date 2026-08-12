@@ -366,7 +366,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
           <input value={brandQuery} onChange={(e) => { setBrandQuery(e.target.value); setDress((d) => ({ ...d, brand_id: null, brand_suggestion_id: null })); clearError("brand"); }} placeholder="Empieza a escribir una marca…" aria-invalid={Boolean(errors.brand)} />
           <div className="brand-suggestions">{matches.map((b) => <button type="button" key={b.id} onClick={() => chooseBrand(b)}>{b.name}</button>)}</div>
           {brandQuery.trim() && !exactBrand && !dress.brand_suggestion_id && <div className="brand-new"><p>No encontramos una coincidencia exacta.</p><strong>Nombre de la marca</strong><div>{brandQuery}</div><button type="button" className="btn btn-secondary" disabled={busy} onClick={suggestBrand}>Enviar marca para revisión</button></div>}
-          {dress.brand_suggestion_id && <p className="muted">Marca sugerida: <strong>{dress.brand_suggestions?.suggested_name || brandQuery}</strong> · pendiente de revisión.</p>}
+          {dress.brand_suggestion_id && <p className="muted">Marca sugerida: <strong>{dress.brand_suggestions?.suggested_name || brandQuery}</strong> | pendiente de revisión.</p>}
           {errors.brand && <p className="field-error">{errors.brand}</p>}
         </div>
         {input("model", "Modelo")}{input("collection", "Colección")}{input("year_approx", "Año aproximado", "number")}
@@ -383,7 +383,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       {step === 5 && <div className="grid-2">{input("precio_original_mxn", "Precio original (MXN)", "number")}{input("precio_venta_mxn", "Precio de venta (MXN)", "number")}</div>}
       {step === 6 && <><p>Todos los vestidos publicados en SECOND VOW deben estar disponibles para envío.</p><p className="muted">No se ofrecen pruebas ni entregas presenciales.</p></>}
       {step === 7 && <div className="field"><label>Descripción adicional</label><textarea rows={10} value={dress.descripcion ?? ""} onChange={(e) => set("descripcion", e.target.value)} placeholder="Cuenta libremente la historia, detalles, accesorios incluidos o cualquier dato adicional relevante." /></div>}
-      {step === 8 && <><div className={`field ${errors.photos ? "field-invalid" : ""}`}><label>Fotografías (mínimo 3)<span className="required-mark"> *</span></label><input type="file" accept="image/*" multiple onChange={(e) => upload(e.target.files)} />{errors.photos && <p className="field-error">{errors.photos}</p>}</div><div className="photo-list">{photos.map((p, i) => <div key={p.id}>Foto {i + 1}{p.is_primary ? " · principal" : ""}</div>)}</div></>}
+      {step === 8 && <><div className={`field ${errors.photos ? "field-invalid" : ""}`}><label>Fotografías (mínimo 3)<span className="required-mark"> *</span></label><input type="file" accept="image/*" multiple onChange={(e) => upload(e.target.files)} />{errors.photos && <p className="field-error">{errors.photos}</p>}</div><div className="photo-list">{photos.map((p, i) => <div key={p.id}>Foto {i + 1}{p.is_primary ? " | principal" : ""}</div>)}</div></>}
 
       {step === 9 && <div className="publish-declarations">
         <div className={pendingByStep.length ? "review-summary review-summary-pending" : "review-summary review-summary-complete"}>

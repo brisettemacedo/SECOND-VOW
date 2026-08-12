@@ -1,52 +1,35 @@
 /* ==========================================================
-   SecondVow — Design tokens
-   Nombres funcionales, no solo estéticos, para que el propósito
-   de cada color sea claro sin tener que recordar su tono exacto.
-
-   Paleta: rich & earthy, evitando la combinación por defecto
-   beige + terracota + dorado + verde salvia. Aquí usamos tonos
-   minerales más reales: papel de algodón, tinta, nogal profundo
-   y verde bosque oscuro casi negro.
+   SECOND VOW design tokens
+   Paleta principal: Olive Leaf, Cornsilk y Black Forest.
    ========================================================== */
-:root {
-  /* Fondo */
-  --color-background-primary: #F7F2E7;   /* blanco cálido tipo papel algodón */
-  --color-background-secondary: #EAE0C9; /* panel secundario, un tono más profundo */
-  --color-surface: #FCFAF3;              /* tarjetas / superficies elevadas */
+ :root {
+  /* SECOND VOW palette: Olive Leaf, Cornsilk, Black Forest */
+  --color-background-primary: #FFF8DC;   /* Cornsilk */
+  --color-background-secondary: #F1ECCB; /* Cornsilk profundo */
+  --color-surface: #FFFDF2;
 
-  /* Texto */
-  --color-text-primary: #221D18;         /* tinta/carbón, no negro puro */
-  --color-text-muted: #6B5F4E;           /* texto secundario, gris-nogal */
-  --color-text-inverse: #F7F2E7;
+  --color-text-primary: #1B2A1E;         /* Black Forest */
+  --color-text-muted: #4D5A4F;
+  --color-text-inverse: #FFF8DC;
 
-  /* Bordes */
-  --color-border: #D9CBA9;
-  --color-border-strong: #B9A87D;
+  --color-border: #C9CEAA;
+  --color-border-strong: #98A36B;
 
-  /* Acción (acento distintivo — nogal/cognac, no dorado ni terracota brillante) */
-  --color-action-primary: #7A4A2B;
-  --color-action-primary-hover: #5F3A21;
-  --color-action-on-primary: #FCFAF3;
+  --color-action-primary: #6F7D3E;       /* Olive Leaf */
+  --color-action-primary-hover: #1B2A1E; /* Black Forest */
+  --color-action-on-primary: #FFF8DC;
+  --color-accent-secondary: #1B2A1E;
 
-  /* Acento secundario — verde bosque oscuro, no verde salvia */
-  --color-accent-secondary: #33402F;
-
-  /* Estados */
-  --color-success: #3F5B3F;
-  --color-success-bg: #E4E9DD;
-  --color-warning: #8A5A2B;
-  --color-warning-bg: #F1E4D2;
+  --color-success: #40552E;
+  --color-success-bg: #E9EDCF;
+  --color-warning: #6F5B2E;
+  --color-warning-bg: #F2E8C6;
   --color-error: #7A2E2E;
-  --color-error-bg: #F1DEDA;
+  --color-error-bg: #F3DEDA;
+  --color-focus-ring: #6F7D3E;
 
-  /* Foco / accesibilidad */
-  --color-focus-ring: #7A4A2B;
-
-  /* Tipografía — Spectral (encabezados) + Archivo (cuerpo),
-     cargadas vía next/font en app/layout.tsx. Los valores exactos
-     de --font-heading / --font-body los inyecta next/font; aquí
-     solo se agregan los respaldos por si algo falla al cargar. */
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --text-base: 14px;
 }
 
 * { box-sizing: border-box; }
@@ -56,11 +39,11 @@ html, body {
   padding: 0;
   background: var(--color-background-primary);
   color: var(--color-text-primary);
-  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-site), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 h1, h2, h3, h4 {
-  font-family: var(--font-heading), Georgia, serif;
+  font-family: var(--font-site), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-weight: 600;
   margin: 0;
 }
@@ -142,7 +125,7 @@ button {
 
 
 .site-header{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:16px 28px;background:rgba(247,242,231,.96);border-bottom:1px solid var(--color-border);backdrop-filter:blur(8px)}
-.site-header .brand{text-decoration:none;font-family:var(--font-heading);font-weight:700;letter-spacing:.12em}.site-header nav{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.site-header nav a,.link-button{font-size:13px;text-decoration:none;background:none;border:0;color:inherit;padding:0}.site-header form{display:inline}.page{max-width:1180px;margin:0 auto;padding:38px 24px}.narrow{max-width:760px}.panel{background:var(--color-surface);border:1px solid var(--color-border);border-radius:6px;padding:20px}.title-row,.actions,.wizard-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}.cards-list{display:grid;gap:16px;margin-top:24px}.card-link{text-decoration:none}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:var(--color-background-secondary);font-size:12px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field textarea,.panel textarea,.panel input,.panel select,.composer textarea,.inline-offer input{border:1px solid var(--color-border);border-radius:4px;padding:10px 12px;font:inherit;background:var(--color-surface);color:inherit;width:100%}.check{display:flex;gap:8px;align-items:center;margin:8px 0}.checks{display:grid;grid-template-columns:1fr 1fr;gap:4px}.muted{color:var(--color-text-muted);font-size:12.5px}.wizard{display:grid;grid-template-columns:230px 1fr;gap:24px}.stepper{display:flex;flex-direction:column;gap:4px}.stepper button{border:0;background:transparent;text-align:left;padding:9px;border-radius:4px;color:var(--color-text-muted)}.stepper button.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:600}.wizard h2{font-size:18px;margin:8px 0 24px}.wizard-actions{margin-top:24px}.photo-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}.photo-list div{background:var(--color-background-secondary);padding:12px}.messaging{display:grid;grid-template-columns:300px 1fr;gap:16px;margin-top:20px}.messaging aside{display:flex;flex-direction:column}.messaging aside button{text-align:left;border:0;border-bottom:1px solid var(--color-border);background:transparent;padding:14px;display:flex;flex-direction:column;gap:5px}.messaging aside button.active{background:var(--color-background-secondary)}.chat{min-height:560px;display:flex;flex-direction:column}.messages{flex:1;display:flex;flex-direction:column;gap:9px;overflow:auto}.bubble{max-width:75%;background:var(--color-background-secondary);padding:10px 12px;border-radius:8px}.bubble.mine{align-self:flex-end;background:var(--color-success-bg)}.bubble small{display:block;color:var(--color-text-muted);font-size:10px;margin-top:5px}.composer{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:16px}.inline-offer{display:flex;gap:8px;margin-top:8px}.admin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.admin-grid section{display:flex;flex-direction:column;gap:12px}.actions-stack{display:grid;gap:16px;margin-top:16px}.seller-public p{font-size:17px;padding:12px 0;border-bottom:1px solid var(--color-border)}
+.site-header .brand{text-decoration:none;font-family:var(--font-site);font-weight:700;letter-spacing:.12em}.site-header nav{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.site-header nav a,.link-button{font-size:13px;text-decoration:none;background:none;border:0;color:inherit;padding:0}.site-header form{display:inline}.page{max-width:1180px;margin:0 auto;padding:38px 24px}.narrow{max-width:760px}.panel{background:var(--color-surface);border:1px solid var(--color-border);border-radius:6px;padding:20px}.title-row,.actions,.wizard-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}.cards-list{display:grid;gap:16px;margin-top:24px}.card-link{text-decoration:none}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:var(--color-background-secondary);font-size:12px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field textarea,.panel textarea,.panel input,.panel select,.composer textarea,.inline-offer input{border:1px solid var(--color-border);border-radius:4px;padding:10px 12px;font:inherit;background:var(--color-surface);color:inherit;width:100%}.check{display:flex;gap:8px;align-items:center;margin:8px 0}.checks{display:grid;grid-template-columns:1fr 1fr;gap:4px}.muted{color:var(--color-text-muted);font-size:12.5px}.wizard{display:grid;grid-template-columns:230px 1fr;gap:24px}.stepper{display:flex;flex-direction:column;gap:4px}.stepper button{border:0;background:transparent;text-align:left;padding:9px;border-radius:4px;color:var(--color-text-muted)}.stepper button.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:600}.wizard h2{font-size:18px;margin:8px 0 24px}.wizard-actions{margin-top:24px}.photo-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}.photo-list div{background:var(--color-background-secondary);padding:12px}.messaging{display:grid;grid-template-columns:300px 1fr;gap:16px;margin-top:20px}.messaging aside{display:flex;flex-direction:column}.messaging aside button{text-align:left;border:0;border-bottom:1px solid var(--color-border);background:transparent;padding:14px;display:flex;flex-direction:column;gap:5px}.messaging aside button.active{background:var(--color-background-secondary)}.chat{min-height:560px;display:flex;flex-direction:column}.messages{flex:1;display:flex;flex-direction:column;gap:9px;overflow:auto}.bubble{max-width:75%;background:var(--color-background-secondary);padding:10px 12px;border-radius:8px}.bubble.mine{align-self:flex-end;background:var(--color-success-bg)}.bubble small{display:block;color:var(--color-text-muted);font-size:10px;margin-top:5px}.composer{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:16px}.inline-offer{display:flex;gap:8px;margin-top:8px}.admin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.admin-grid section{display:flex;flex-direction:column;gap:12px}.actions-stack{display:grid;gap:16px;margin-top:16px}.seller-public p{font-size:17px;padding:12px 0;border-bottom:1px solid var(--color-border)}
 @media(max-width:850px){.wizard,.messaging,.admin-grid{grid-template-columns:1fr}.stepper{flex-direction:row;overflow:auto}.stepper button{white-space:nowrap}.site-header{align-items:flex-start;gap:12px}.site-header nav{gap:10px}.grid-2,.checks{grid-template-columns:1fr}}
 
 /* Catálogo y filtros en modal */
@@ -160,7 +143,7 @@ button {
 .admin-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px;margin-top:24px}.admin-sections section{display:flex;flex-direction:column;gap:12px}.admin-title{display:flex;justify-content:space-between;align-items:center;gap:12px}
 @media(max-width:760px){.footer-grid,.admin-sections{grid-template-columns:1fr}.legal-page h1{font-size:30px}.site-footer{padding-left:20px;padding-right:20px}}
 
-/* v1.2.2 — validación de publicación y moderación administrativa */
+/* v1.2.2 : validación de publicación y moderación administrativa */
 .required-mark{color:#8b2f2f;font-weight:700}.field-error{margin:6px 0 0;color:#8b2f2f;font-size:12px}.field-invalid input,.field-invalid select,.field-invalid textarea{border-color:#a44747!important;box-shadow:0 0 0 1px rgba(164,71,71,.12)}.check-invalid{color:#8b2f2f}.review-summary{border:1px solid var(--color-border);border-radius:5px;padding:16px;margin-bottom:22px}.review-summary-pending{background:var(--color-error-bg)}.review-summary-complete{background:var(--color-success-bg)}.review-summary h3{margin:0 0 10px}.review-summary-step{padding:9px 0;border-top:1px solid var(--color-border)}.review-summary-step:first-of-type{border-top:0}.review-summary-step button{border:0;background:transparent;text-decoration:underline;font:inherit;font-weight:700;padding:0;cursor:pointer}.review-summary-step ul{margin:6px 0 0 18px;padding:0}.admin-primary-card{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:22px 0 28px}.admin-publication-row{display:flex;align-items:center;justify-content:space-between;gap:20px}.admin-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}.admin-photo-grid figure{margin:0}.admin-photo-grid img{display:block;width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:4px;background:var(--color-background-secondary)}.admin-photo-grid figcaption{font-size:12px;color:var(--color-text-muted);padding-top:5px}.admin-publication-detail{display:grid;gap:18px}.admin-publication-detail>.title-row{margin-bottom:4px}.admin-data-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px}.admin-data-item{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--color-border)}.admin-data-item span{color:var(--color-text-muted)}.admin-data-item strong{text-align:right;white-space:pre-wrap}.admin-characteristics{margin-top:22px}.admin-characteristics>div{display:flex;flex-wrap:wrap;gap:7px}.admin-declarations{display:grid;gap:8px;margin:0;padding-left:20px}.admin-moderation-box{position:sticky;bottom:12px;box-shadow:0 8px 28px rgba(0,0,0,.08)}.admin-moderation-actions{justify-content:flex-start;flex-wrap:wrap;margin-top:14px}.moderation-history-item{border-top:1px solid var(--color-border);padding:12px 0;display:grid;grid-template-columns:1fr auto;gap:6px}.moderation-history-item p{grid-column:1/-1;margin:0}.moderation-history-item span{font-size:12px;color:var(--color-text-muted)}
 @media(max-width:760px){.admin-primary-card,.admin-publication-row{align-items:stretch;flex-direction:column}.admin-data-grid{grid-template-columns:1fr}.admin-data-item strong{text-align:left}.admin-moderation-box{position:static}}
 
@@ -172,5 +155,96 @@ button {
 .admin-publication-preview{padding:14px 0;border-top:1px solid var(--color-border)}
 .admin-publication-preview:first-child{border-top:0}.admin-publication-preview h3{margin:7px 0 5px}
 
-/* v1.2.4 — UX-01 visible + navegación Guardados */
+/* v1.2.4 : UX-01 visible + navegación Guardados */
 .stepper button{position:relative}.step-missing-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;margin-left:7px;padding:0 5px;border-radius:999px;background:#8b2f2f;color:#fff;font-size:10px;font-weight:700}.step-complete:not(.active){opacity:.82}.step-has-missing:not(.active){font-weight:600}.required-note{font-weight:500}
+
+
+/* v1.2.6: tipografía unificada + Olive Leaf / Cornsilk / Black Forest */
+body,
+p,
+a,
+button,
+input,
+select,
+textarea,
+label,
+li,
+span,
+small,
+td,
+th,
+legend,
+figcaption,
+.link-button,
+.muted,
+.badge,
+.eyebrow,
+.catalog-eyebrow,
+.filter-kicker,
+.catalog-count,
+.footer-grid a,
+.footer-bottom,
+.legal-meta,
+.required-note,
+.field-error,
+.alert-error,
+.alert-success {
+  font-family: var(--font-site), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: var(--text-base);
+}
+
+h1, h2, h3, h4,
+.site-header .brand {
+  font-family: var(--font-site), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+h1 { font-size: 34px; line-height: 1.12; font-weight: 650; }
+h2 { font-size: 24px; line-height: 1.18; font-weight: 650; }
+h3 { font-size: 18px; line-height: 1.25; font-weight: 650; }
+h4 { font-size: 16px; line-height: 1.25; font-weight: 650; }
+
+.site-header { background: rgba(255,248,220,.96); }
+.btn { font-size: var(--text-base); }
+.site-header nav a, .link-button { font-size: var(--text-base); }
+.site-header .brand { font-size: 15px; }
+.field label { font-size: var(--text-base); }
+.field input, .field select { font-size: var(--text-base); }
+.wizard h2 { font-size: 24px; }
+.catalog-heading-row h1, .legal-page h1 { font-size: 34px; }
+.filter-modal-header h2, .legal-page h2 { font-size: 24px; }
+.footer-grid h3 { font-size: 18px; }
+.identity-card h1 { font-size: 34px; }
+.bubble small, .step-missing-count { font-size: 11px; }
+
+.btn-danger-outline {
+  background: transparent;
+  color: var(--color-error);
+  border: 1px solid currentColor;
+}
+.btn-danger-outline:hover { background: var(--color-error-bg); }
+.delete-draft-wrap { display: inline-flex; flex-direction: column; align-items: flex-start; }
+.delete-draft-wrap .field-error { margin: 6px 0 0; max-width: 260px; }
+
+/* En SECOND VOW, todo el texto funcional comparte tamaño. Solo títulos y marca escalan. */
+body p,
+body a,
+body button,
+body input,
+body select,
+body textarea,
+body label,
+body li,
+body span,
+body small,
+body td,
+body th,
+body legend,
+body figcaption {
+  font-size: var(--text-base) !important;
+}
+body h1 { font-size: 34px !important; }
+body h2 { font-size: 24px !important; }
+body h3 { font-size: 18px !important; }
+body h4 { font-size: 16px !important; }
+body .site-header .brand { font-size: 15px !important; }
+body .step-missing-count { font-size: 11px !important; }

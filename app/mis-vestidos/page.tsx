@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { resolveDressBrandNames } from "@/lib/server/dressBrands";
+import DeleteDraftButton from "@/components/DeleteDraftButton";
 
 const labels: Record<string, string> = {
   draft: "Borrador",
@@ -56,6 +57,7 @@ export default async function MyDresses() {
           {d.status === "approved" && <div className="alert-success">Tu vestido está publicado y visible en el marketplace.</div>}
           <div className="actions">
             {editable && <Link href={`/publicar/${d.id}`} className="btn btn-secondary">{d.status === "changes_requested" ? "Corregir y reenviar" : "Editar"}</Link>}
+            {d.status === "draft" && <DeleteDraftButton dressId={d.id} />}
             <Link href={`/vestidos/${d.id}`} className="btn btn-secondary">Ver</Link>
           </div>
         </article>;

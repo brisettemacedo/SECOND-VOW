@@ -44,7 +44,7 @@ export default function OffersClient({ offers, userId }: { offers: any[]; userId
       const canCancel = o.status === "pending" && isCreator;
       return <article className="panel" key={o.id}>
         <h2>{o.dresses?.model || "Vestido"}</h2>
-        <p>${Number(o.amount_mxn).toLocaleString("es-MX")} MXN · <span className="badge">{o.status}</span></p>
+        <p>${Number(o.amount_mxn).toLocaleString("es-MX")} MXN | <span className="badge">{o.status}</span></p>
         {o.note && <p>{o.note}</p>}
         <p className="muted">Expira: {new Date(o.expires_at).toLocaleString("es-MX")}</p>
         {canRespond && <div className="actions-stack">

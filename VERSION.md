@@ -9,3 +9,10 @@
 - Refuerza Stripe Connect para mostrar el error real y garantizar que el botón deje de quedarse en “Abriendo Stripe…”.
 - Mantiene UX-01, Guardados y la ficha administrativa detallada de v1.2.4.
 - No modifica migraciones 0011, 0012 ni 0013 y no requiere una migración nueva.
+
+
+## v1.2.6 — 2026-08-12
+- Borrado de borradores propios desde Mis vestidos.
+- Tipografía unificada en DM Sans.
+- Paleta Olive Leaf, Cornsilk y Black Forest.
+- Eliminación de guiones largos en textos visibles.

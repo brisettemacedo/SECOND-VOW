@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const PAGE_SIZE = 24;
 
-// Columnas explícitas para el catálogo público — nunca "select *" desde
+// Columnas explícitas para el catálogo público | nunca "select *" desde
 // el cliente (sección 6/18 de la especificación). Se excluyen a propósito
 // moderation_notes, moderated_by, moderated_at y cualquier dato interno.
 const CATALOG_COLUMNS = `

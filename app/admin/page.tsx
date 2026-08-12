@@ -65,7 +65,7 @@ export default async function Admin() {
               <span className="badge">En revisión</span>
               <h3>{brand}{model ? ` ${model}` : ""}</h3>
               <p className="muted">
-                Talla {dress.talla_etiqueta || "—"} · {(dress.dress_photos ?? []).length} fotografías · {dress.precio_venta_mxn ? `$${Number(dress.precio_venta_mxn).toLocaleString("es-MX")} MXN` : "Precio pendiente"}
+                Talla {dress.talla_etiqueta || "No especificado"} | {(dress.dress_photos ?? []).length} fotografías | {dress.precio_venta_mxn ? `$${Number(dress.precio_venta_mxn).toLocaleString("es-MX")} MXN` : "Precio pendiente"}
               </p>
             </div>
             <Link href={`/admin/publicaciones/${dress.id}`} className="btn btn-primary">Revisar solicitud completa</Link>
