@@ -142,7 +142,7 @@ export const STATUS_LABELS: Record<string, string> = {
   draft: "Borrador",
   pending_review: "Pendiente de revisión",
   changes_requested: "Requiere cambios",
-  approved: "Aprobado",
+  approved: "Publicado",
   rejected: "Rechazado",
   archived: "Archivado",
   reserved: "Reservado",

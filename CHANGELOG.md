@@ -34,3 +34,12 @@
 - Ventana de reclamación de 72 horas y cierre automático horario.
 - Tracking events idempotentes y ordenados por fecha real del evento.
 - Nuevo texto de Quiénes somos solicitado para SECOND VOW.
+
+## v1.2.2 — 0013
+- UX-01: validación obligatoria por paso y resumen final de pendientes.
+- Panel `/admin/publicaciones` protegido por rol admin.
+- Vista administrativa completa con fotografías, datos y declaraciones.
+- Moderación trazable: aprobar/publicar, solicitar cambios y rechazar.
+- Motivo obligatorio para cambios/rechazo.
+- Estado y comentarios de moderación visibles para la vendedora.
+- Re-edición y reenvío de publicaciones con cambios solicitados.
