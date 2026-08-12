@@ -48,3 +48,13 @@ Después de esto, cierra sesión y vuelve a entrar en SECOND VOW. El menú mostr
 ## Nota sobre el estado de publicación
 
 El esquema existente 0001–0012 utiliza `approved` como estado interno de una publicación visible y todas las políticas, ofertas e índices dependen de ese valor. Para no romper el marketplace ni reescribir migraciones previas, 0013 conserva `approved` internamente y la interfaz lo presenta a la vendedora como **Publicado**. El botón administrativo se llama **Aprobar y publicar** y hace el vestido visible inmediatamente mediante el flujo ya existente.
+
+## Corrección v1.2.3
+
+Si `0013_admin_moderacion.sql` ya fue ejecutada correctamente, **no vuelvas a ejecutarla** para instalar v1.2.3. Esta versión corrige únicamente frontend:
+
+- avisos obligatorios visibles por paso;
+- validación contra los datos realmente guardados antes de enviar;
+- eliminación del error técnico de check constraint para la vendedora;
+- acceso directo desde `/admin` a la solicitud completa;
+- ficha administrativa con vendedora, fechas, todos los datos y fotografías.

@@ -24,6 +24,8 @@ function fmtPrice(v: number | null) {
 
 export default async function DressDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
+  const id = params?.id;
+  if (!id) notFound();
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: dress, error } = await supabase
@@ -44,7 +46,7 @@ export default async function DressDetailPage({ params }: { params: { id: string
       dress_photos ( id, storage_path, is_primary, position, classification ),
       dress_characteristics ( characteristics ( id, label ) )
     `)
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle();
 
   if (error || !dress) {
@@ -117,7 +119,7 @@ export default async function DressDetailPage({ params }: { params: { id: string
           <div style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 0.5, color: "var(--color-action-primary)" }}>
             {brandName ?? "Marca no especificada"}
           </div>
-          <h1 style={{ fontSize: 26, margin: "6px 0 4px" }}>{dress.model || labelFor(SILUETAS, dress.silueta)}</h1>
+          <h1 style={{ fontSize: 26, margin: "6px 0 4px" }}>{dress.model && !/^(na|n\/a|no aplica|sin modelo)$/i.test(String(dress.model).trim()) ? dress.model : labelFor(SILUETAS, dress.silueta)}</h1>
 
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, margin: "14px 0 20px" }}>
             {dress.precio_original_mxn && (

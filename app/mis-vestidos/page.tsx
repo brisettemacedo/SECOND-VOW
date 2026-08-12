@@ -29,7 +29,7 @@ export default async function MyDresses() {
         const suggestionRel = Array.isArray(d.brand_suggestions) ? d.brand_suggestions[0] : d.brand_suggestions;
         const brand = brandRel?.name ?? suggestionRel?.suggested_name ?? "Sin marca";
         return <article className="panel" key={d.id}>
-          <h2>{brand} {d.model ?? ""}</h2>
+          <h2>{brand}{d.model && !/^(na|n\/a|no aplica|sin modelo)$/i.test(String(d.model).trim()) ? ` ${d.model}` : ""}</h2>
           <p><span className="badge">{labels[d.status] ?? d.status}</span></p>
           <p>{d.precio_venta_mxn ? `$${Number(d.precio_venta_mxn).toLocaleString("es-MX")} MXN` : "Precio pendiente"}</p>
           {d.status === "pending_review" && <div className="alert-success">Tu vestido está en revisión administrativa. No necesitas hacer nada por ahora.</div>}

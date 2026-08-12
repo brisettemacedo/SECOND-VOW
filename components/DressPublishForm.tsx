@@ -93,7 +93,45 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
 
   function applyIssues(issues: ValidationIssue[]) {
     setErrors(Object.fromEntries(issues.map((issue) => [issue.key, issue.message])));
-    if (issues.length) setMessage("Completa los campos obligatorios marcados antes de continuar.");
+    if (issues.length) {
+      setMessage(`Falta completar: ${issues.map((issue) => issue.label).join(", ")}.`);
+    }
+  }
+
+  function dbIssues(row: any): ValidationIssue[] {
+    const results: ValidationIssue[] = [];
+    const add = (stepIndex: number, key: string, label: string, value: any, message = "Este campo es obligatorio.") => {
+      if (value === null || value === undefined || String(value).trim() === "") {
+        results.push({ step: stepIndex, key, label, message });
+      }
+    };
+    if (!row?.brand_id && !row?.brand_suggestion_id) {
+      results.push({ step: 0, key: "brand", label: "Marca", message: "Selecciona una marca o envíala para revisión." });
+    }
+    add(1, "talla_etiqueta", "Talla de etiqueta", row?.talla_etiqueta);
+    add(2, "silueta", "Silueta", row?.silueta);
+    add(2, "escote", "Escote", row?.escote);
+    add(2, "espalda", "Espalda", row?.espalda);
+    add(2, "manga", "Manga", row?.manga);
+    add(2, "tela_principal", "Tela principal", row?.tela_principal);
+    add(2, "color_principal", "Color principal", row?.color_principal);
+    add(2, "cola", "Cola", row?.cola);
+    add(3, "condicion", "Condición", row?.condicion);
+    const price = Number(row?.precio_venta_mxn);
+    if (!row?.precio_venta_mxn || !Number.isFinite(price) || price <= 0) {
+      results.push({ step: 5, key: "precio_venta_mxn", label: "Precio de venta", message: "Ingresa un precio de venta mayor a cero." });
+    }
+    return results;
+  }
+
+  async function validateSavedDress(id: string) {
+    const { data, error } = await supabase
+      .from("dresses")
+      .select("brand_id,brand_suggestion_id,talla_etiqueta,silueta,escote,espalda,manga,tela_principal,color_principal,cola,condicion,precio_venta_mxn")
+      .eq("id", id)
+      .single();
+    if (error) throw error;
+    return dbIssues(data);
   }
 
   function clearError(key: string) {
@@ -210,12 +248,21 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     const issues = allIssues();
     if (issues.length) {
       applyIssues(issues);
-      setMessage("La publicación aún no está completa. Revisa el resumen de pendientes.");
+      setMessage(`La publicación aún no está completa. Falta: ${issues.map((issue) => issue.label).join(", ")}.`);
       return;
     }
     setBusy(true);
     try {
       const id = await save();
+
+      const persistedIssues = await validateSavedDress(id);
+      if (persistedIssues.length) {
+        applyIssues(persistedIssues);
+        setStep(persistedIssues[0].step);
+        setMessage(`No pudimos enviarlo a revisión porque faltan datos guardados: ${persistedIssues.map((issue) => issue.label).join(", ")}.`);
+        return;
+      }
+
       const { error: declarationError } = await supabase.from("dress_declarations").upsert({
         dress_id: id,
         seller_id: userId,
@@ -227,12 +274,26 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
         declared_at: new Date().toISOString(),
       }, { onConflict: "dress_id" });
       if (declarationError) throw declarationError;
+
       const { error } = await supabase.from("dresses").update({ status: "pending_review" }).eq("id", id);
-      if (error) throw error;
+      if (error) {
+        if (String(error.message || "").includes("dresses_completa_antes_de_revision")) {
+          const latestIssues = await validateSavedDress(id);
+          if (latestIssues.length) {
+            applyIssues(latestIssues);
+            setStep(latestIssues[0].step);
+            setMessage(`Antes de enviar a revisión completa: ${latestIssues.map((issue) => issue.label).join(", ")}.`);
+            return;
+          }
+          setMessage("La publicación todavía tiene información obligatoria pendiente. Revisa los campos marcados con *.");
+          return;
+        }
+        throw error;
+      }
       router.push("/mis-vestidos");
       router.refresh();
     } catch (e: any) {
-      setMessage(e.message);
+      setMessage(e?.message || "No fue posible enviar la publicación a revisión.");
     } finally {
       setBusy(false);
     }
@@ -246,7 +307,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
   function options(name: string, label: string, opts: { value: string; label: string }[]) {
     return <div className={`field ${errors[name] ? "field-invalid" : ""}`}>
       <label>{label}{requiredKeys.has(name) && <span className="required-mark"> *</span>}</label>
-      <select value={dress[name] ?? ""} onChange={(e) => set(name, e.target.value || null)} aria-invalid={Boolean(errors[name])}>
+      <select value={dress[name] ?? ""} onChange={(e) => set(name, e.target.value || null)} aria-invalid={Boolean(errors[name])} aria-required={requiredKeys.has(name)} required={requiredKeys.has(name)}>
         <option value="">Selecciona</option>
         {opts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -257,7 +318,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
   function input(name: string, label: string, type = "text") {
     return <div className={`field ${errors[name] ? "field-invalid" : ""}`}>
       <label>{label}{requiredKeys.has(name) && <span className="required-mark"> *</span>}</label>
-      <input type={type} value={dress[name] ?? ""} onChange={(e) => set(name, e.target.value)} aria-invalid={Boolean(errors[name])} />
+      <input type={type} value={dress[name] ?? ""} onChange={(e) => set(name, e.target.value)} aria-invalid={Boolean(errors[name])} aria-required={requiredKeys.has(name)} required={requiredKeys.has(name)} />
       {errors[name] && <p className="field-error">{errors[name]}</p>}
     </div>;
   }
@@ -284,10 +345,19 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
   const pendingByStep = stepNames.map((name, index) => ({ name, index, items: pending.filter((issue) => issue.step === index) })).filter((group) => group.items.length > 0);
 
   return <div className="wizard">
-    <div className="stepper">{stepNames.map((n, i) => <button key={n} type="button" className={i === step ? "active" : ""} onClick={() => stepClick(i)}>{i + 1}. {n}</button>)}</div>
+    <div className="stepper">{stepNames.map((n, i) => { const count = issuesForStep(i).length; return <button key={n} type="button" className={`${i === step ? "active" : ""} ${count ? "step-has-missing" : "step-complete"}`} onClick={() => stepClick(i)}>{i + 1}. {n}{count ? <span className="step-missing-count" aria-label={`${count} campos pendientes`}>{count}</span> : null}</button>; })}</div>
     <section className="panel">
       <h1>{initialDress?.id ? "Editar vestido" : "Publicar vestido"}</h1>
       <h2>{stepNames[step]}</h2>
+      <p className="required-note"><span className="required-mark">*</span> Campo obligatorio. No podrás pasar al siguiente paso si falta alguno de los requisitos marcados.</p>
+      {Object.keys(errors).length > 0 && (
+        <div className="validation-banner" role="alert">
+          <strong>Revisa este paso antes de continuar.</strong>
+          <ul>
+            {issuesForStep(step).filter((issue) => errors[issue.key]).map((issue) => <li key={issue.key}>{issue.label}: {errors[issue.key]}</li>)}
+          </ul>
+        </div>
+      )}
       {dress.status === "changes_requested" && dress.moderation_notes && <div className="alert-error"><strong>Cambios solicitados por SECOND VOW:</strong><p>{dress.moderation_notes}</p></div>}
 
       {step === 0 && <>
@@ -332,7 +402,13 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       <div className="wizard-actions">
         <button className="btn btn-secondary" disabled={step === 0 || busy} onClick={() => { setStep((s) => s - 1); setErrors({}); setMessage(""); }}>Anterior</button>
         <button className="btn btn-secondary" disabled={busy} onClick={save}>Guardar</button>
-        {step < 9 ? <button className="btn btn-primary" disabled={busy} onClick={nextStep}>Siguiente</button> : <button className="btn btn-primary" disabled={busy} onClick={submit}>{dress.status === "changes_requested" ? "Reenviar a revisión" : "Enviar a revisión"}</button>}
+        {step < 9 ? (
+          <button className="btn btn-primary" disabled={busy} onClick={nextStep}>Siguiente</button>
+        ) : (
+          <button className="btn btn-primary" disabled={busy || pending.length > 0} onClick={submit} title={pending.length ? "Completa todos los requisitos obligatorios antes de enviar." : undefined}>
+            {dress.status === "changes_requested" ? "Reenviar a revisión" : "Enviar a revisión"}
+          </button>
+        )}
       </div>
     </section>
   </div>;

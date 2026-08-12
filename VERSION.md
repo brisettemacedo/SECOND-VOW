@@ -1,5 +1,9 @@
-# SECOND VOW v1.2.2
+# SECOND VOW
 
-Administración de publicaciones + UX-01.
+**v1.2.4 — 2026-08-12**
 
-Incluye migración `0013_admin_moderacion.sql`.
+- Corrige ficha administrativa dinámica y evita 404 por relaciones opcionales.
+- Refuerza UX-01: validación por paso, campos obligatorios visibles y contador de pendientes.
+- Agrega acceso visible a Vestidos guardados/Favoritos.
+- Oculta valores de modelo tipo `na`, `n/a`, `no aplica` o `sin modelo`.
+- No agrega modo de simulación administrativa ni modifica migraciones SQL.

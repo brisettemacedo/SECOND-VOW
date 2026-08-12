@@ -5,11 +5,13 @@ import { loadDressCatalogData } from "@/lib/dressCatalogData";
 
 export default async function EditDress({ params }: { params: { id: string } }) {
   const { supabase, user } = await requireUser();
+  const id = params?.id;
+  if (!id) notFound();
   const [{ data: dress }, { data: brands }, catalogs] = await Promise.all([
     supabase
       .from("dresses")
       .select("*,dress_photos(*),dress_characteristics(characteristic_id),brand_suggestions(suggested_name,status),dress_declarations(*)")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("seller_id", user.id)
       .maybeSingle(),
     supabase.from("brands").select("id,name").eq("is_active", true).order("name"),

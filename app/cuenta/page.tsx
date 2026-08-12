@@ -14,6 +14,7 @@ export default async function AccountPage() {
     <AccountForm email={user.email ?? ""} initialFullName={profile?.full_name ?? ""} />
     <div className="actions" style={{ marginTop: 20 }}>
       <a className="btn btn-secondary" href="/mis-vestidos">Mis vestidos</a>
+      <a className="btn btn-secondary" href="/favoritos">Vestidos guardados</a>
       <a className="btn btn-secondary" href="/verificar-identidad">Obtén “Identidad verificada”</a>
       <a className="btn btn-secondary" href="/cuenta/pagos">Pagos y retiros</a>
     </div>

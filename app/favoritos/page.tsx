@@ -42,7 +42,7 @@ export default async function FavoritesPage() {
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px" }}>
-      <h1 style={{ fontSize: 26, marginBottom: 24 }}>Mis favoritos</h1>
+      <h1 style={{ fontSize: 26, marginBottom: 24 }}>Vestidos guardados</h1>
 
       {items.length === 0 && (
         <p style={{ color: "var(--color-text-muted)" }}>

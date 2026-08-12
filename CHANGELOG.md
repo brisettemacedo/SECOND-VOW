@@ -43,3 +43,17 @@
 - Motivo obligatorio para cambios/rechazo.
 - Estado y comentarios de moderación visibles para la vendedora.
 - Re-edición y reenvío de publicaciones con cambios solicitados.
+
+## v1.2.3 — corrección frontend
+- El panel `/admin` muestra las publicaciones pendientes con acceso directo a la solicitud completa.
+- `/admin/publicaciones/[id]` mantiene la revisión completa de fotografías, datos, declaraciones e historial.
+- UX-01 reforzado: avisos visibles por paso, listado concreto de campos faltantes y bloqueo del botón de envío mientras exista cualquier requisito pendiente.
+- Validación adicional contra los datos realmente persistidos en Supabase antes de cambiar a `pending_review`.
+- El error técnico `dresses_completa_antes_de_revision` deja de mostrarse a la vendedora y se sustituye por el listado de requisitos faltantes.
+- Corrección de un input duplicado en el formulario de publicación.
+
+## v1.2.4 — 2026-08-12
+- Ficha administrativa robusta con consultas separadas.
+- UX-01 reforzada y visible.
+- Guardados accesibles desde navegación y cuenta.
+- Limpieza visual de modelo no aplicable.

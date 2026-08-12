@@ -33,7 +33,7 @@ export default async function AdminPublicationsPage() {
               <div className="admin-publication-row">
                 <div>
                   <span className="badge">En revisión</span>
-                  <h2>{brand} {dress.model ?? ""}</h2>
+                  <h2>{brand}{dress.model && !/^(na|n\/a|no aplica|sin modelo)$/i.test(String(dress.model).trim()) ? ` ${dress.model}` : ""}</h2>
                   <p className="muted">Talla {dress.talla_etiqueta ?? "—"} · {photoCount} fotografías · {dress.precio_venta_mxn ? `$${Number(dress.precio_venta_mxn).toLocaleString("es-MX")} MXN` : "Precio pendiente"}</p>
                   <p className="muted">Enviado/actualizado: {new Date(dress.updated_at).toLocaleString("es-MX")}</p>
                 </div>

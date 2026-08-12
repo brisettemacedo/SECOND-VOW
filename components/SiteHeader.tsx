@@ -15,6 +15,7 @@ export default async function SiteHeader() {
       <nav>
         <Link href="/vestidos">Vestidos</Link>
         {user && <Link href="/publicar">Vender</Link>}
+        {user && <Link href="/favoritos">Guardados</Link>}
         {user && <Link href="/mensajes">Mensajes</Link>}
         {user && <Link href="/ofertas">Ofertas</Link>}
         {user && <Link href="/pedidos">Pedidos</Link>}
