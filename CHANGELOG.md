@@ -71,3 +71,13 @@
 - Tipografía unificada en DM Sans.
 - Paleta Olive Leaf, Cornsilk y Black Forest.
 - Eliminación de guiones largos en textos visibles.
+
+
+## v1.2.7 — 2026-08-12
+- Wordmark SECOND VOW en serif editorial; interfaz funcional conserva DM Sans.
+- Contadores de pendientes en Mensajes, Ofertas y Pedidos.
+- Campos de oferta y contraoferta con monto visible y etiquetado.
+- Flujo de cotización de envío por la vendedora antes del pago.
+- La compradora ve la cotización y solo puede pagar cuando exista.
+- Limpieza de modelos `na` en mensajes, ofertas y pedidos.
+- Migración 0014 para cotización segura de envío.

@@ -19,6 +19,8 @@ export default function OrderActions({ order, userId }: { order: any; userId: st
   const router = useRouter();
   const [tracking, setTracking] = useState(order.tracking_number ?? "");
   const [carrier, setCarrier] = useState(order.carrier ?? "");
+  const [shippingAmount, setShippingAmount] = useState(order.shipping_quote_set_at ? String(order.shipping_mxn ?? 0) : "");
+  const [shippingCarrier, setShippingCarrier] = useState(order.shipping_carrier_declared ?? "");
   const [reasonCode, setReasonCode] = useState("");
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
@@ -39,6 +41,21 @@ export default function OrderActions({ order, userId }: { order: any; userId: st
     const json = await res.json(); setBusy(false);
     if (!res.ok) alert(json.error || "No fue posible registrar el envío");
     else { if (json.warning) alert(json.warning); router.refresh(); }
+  }
+
+
+  async function quoteShipping() {
+    const amount = Number(shippingAmount);
+    if (!Number.isFinite(amount) || amount < 0) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("set_order_shipping_quote", {
+      p_order_id: order.id,
+      p_shipping_mxn: Math.round(amount),
+      p_carrier: shippingCarrier.trim() || null,
+    });
+    setBusy(false);
+    if (error) alert(error.message);
+    else router.refresh();
   }
 
   async function checkout() {
@@ -63,8 +80,20 @@ export default function OrderActions({ order, userId }: { order: any; userId: st
   }
 
   return <div className="actions-stack">
+    {order.seller_id === userId && order.status === "awaiting_payment" &&
+      <div className="panel">
+        <h3>Cotizar envío</h3>
+        <p>Antes de que la compradora pague, indica el costo de envío que acordaron. Puedes usar la paquetería que prefieras.</p>
+        <div className="grid-2">
+          <div className="field"><label>Costo de envío (MXN)</label><input type="number" min={0} step={1} value={shippingAmount} onChange={e=>setShippingAmount(e.target.value)} placeholder="Ej. 350" /></div>
+          <div className="field"><label>Paquetería estimada (opcional)</label><input value={shippingCarrier} onChange={e=>setShippingCarrier(e.target.value)} placeholder="Ej. DHL, FedEx, Estafeta" /></div>
+        </div>
+        <button className="btn btn-primary" disabled={busy || shippingAmount === "" || Number(shippingAmount) < 0} onClick={quoteShipping}>{order.shipping_quote_set_at ? "Actualizar cotización" : "Enviar cotización"}</button>
+        {order.shipping_quote_set_at && <p className="muted">Cotización enviada: ${Number(order.shipping_mxn).toLocaleString("es-MX")} MXN{order.shipping_carrier_declared ? `, ${order.shipping_carrier_declared}` : ""}.</p>}
+      </div>}
+
     {order.buyer_id === userId && ["awaiting_payment","payment_processing"].includes(order.status) &&
-      <div className="panel"><h3>Pago protegido</h3><p>El pago se procesa dentro de SECOND VOW. La vendedora no recibe el dinero hasta que termine el periodo de protección.</p><button className="btn btn-primary" disabled={busy} onClick={checkout}>Pagar de forma segura</button></div>}
+      <div className="panel"><h3>Pago protegido</h3><p>El pago se procesa dentro de SECOND VOW. La vendedora no recibe el dinero hasta que termine el periodo de protección.</p>{order.shipping_quote_set_at ? <><p><strong>Envío cotizado:</strong> ${Number(order.shipping_mxn).toLocaleString("es-MX")} MXN{order.shipping_carrier_declared ? `, ${order.shipping_carrier_declared}` : ""}</p><button className="btn btn-primary" disabled={busy} onClick={checkout}>Pagar de forma segura</button></> : <div className="alert-info">Esperando la cotización de envío de la vendedora. Cuando la envíe, podrás continuar con el pago.</div>}</div>}
 
     {order.seller_id === userId && ["paid", "preparing_shipment"].includes(order.status) &&
       <div className="panel">

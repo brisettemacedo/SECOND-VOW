@@ -39,9 +39,9 @@ export default function OfferButton({ dressId, price, userId, sellerId }: { dres
 
   return <div>
     {!open ? <button className="btn btn-secondary" onClick={() => setOpen(true)}>Hacer oferta</button> :
-      <div className="inline-offer">
-        <input type="number" min={1} max={price} value={amount} onChange={e => setAmount(Number(e.target.value))} />
-        <input type="text" maxLength={500} value={note} onChange={e => setNote(e.target.value)} placeholder="Nota opcional" />
+      <div className="inline-offer offer-entry">
+        <label className="offer-amount-field"><span>Monto de la oferta (MXN)</span><input aria-label="Monto de la oferta en MXN" type="number" min={1} max={price} value={amount} onChange={e => setAmount(Number(e.target.value))} /></label>
+        <label className="offer-note-field"><span>Mensaje opcional</span><input type="text" maxLength={500} value={note} onChange={e => setNote(e.target.value)} placeholder="Ej. ¿Aceptarías esta cantidad?" /></label>
         <button className="btn btn-primary" disabled={busy || amount <= 0 || amount > price} onClick={send}>Enviar oferta</button>
         <button className="btn btn-secondary" disabled={busy} onClick={() => setOpen(false)}>Cancelar</button>
       </div>}

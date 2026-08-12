@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+function dressTitle(d:any){const raw=String(d?.model??"").trim();const model=/^(na|n\/?a|no aplica|sin modelo)$/i.test(raw)?"":raw;return [d?.brands?.name,model].filter(Boolean).join(" ")||"Vestido"}
+
 export default function OffersClient({ offers, userId }: { offers: any[]; userId: string }) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
@@ -43,7 +45,7 @@ export default function OffersClient({ offers, userId }: { offers: any[]; userId
       const canRespond = o.status === "pending" && !isCreator;
       const canCancel = o.status === "pending" && isCreator;
       return <article className="panel" key={o.id}>
-        <h2>{o.dresses?.model || "Vestido"}</h2>
+        <h2>{dressTitle(o.dresses)}</h2>
         <p>${Number(o.amount_mxn).toLocaleString("es-MX")} MXN | <span className="badge">{o.status}</span></p>
         {o.note && <p>{o.note}</p>}
         <p className="muted">Expira: {new Date(o.expires_at).toLocaleString("es-MX")}</p>
@@ -52,8 +54,8 @@ export default function OffersClient({ offers, userId }: { offers: any[]; userId
             <button className="btn btn-primary" disabled={busy === o.id} onClick={() => accept(o.id)}>Aceptar</button>
             <button className="btn btn-secondary" disabled={busy === o.id} onClick={() => decline(o.id)}>Rechazar</button>
           </div>
-          <div className="inline-offer">
-            <input type="number" min={1} value={counterAmounts[o.id] ?? ""} onChange={e => setCounterAmounts(v => ({ ...v, [o.id]: e.target.value }))} placeholder="Contraoferta MXN" />
+          <div className="inline-offer offer-entry">
+            <label className="offer-amount-field"><span>Contraoferta (MXN)</span><input aria-label="Monto de contraoferta en MXN" type="number" min={1} value={counterAmounts[o.id] ?? ""} onChange={e => setCounterAmounts(v => ({ ...v, [o.id]: e.target.value }))} placeholder="Monto" /></label>
             <button className="btn btn-secondary" disabled={busy === o.id || !counterAmounts[o.id]} onClick={() => counter(o.id)}>Contraofertar</button>
           </div>
         </div>}

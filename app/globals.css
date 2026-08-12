@@ -248,3 +248,27 @@ body h3 { font-size: 18px !important; }
 body h4 { font-size: 16px !important; }
 body .site-header .brand { font-size: 15px !important; }
 body .step-missing-count { font-size: 11px !important; }
+
+
+/* v1.2.7: wordmark serif, notificaciones y negociación legible */
+.site-header .brand, .footer-wordmark {
+  font-family: var(--font-logo), Georgia, "Times New Roman", serif !important;
+  font-weight: 600 !important;
+  letter-spacing: .14em;
+}
+.site-header .brand { font-size: 17px !important; }
+.footer-wordmark { font-size: 19px !important; }
+.nav-with-count { display:inline-flex; align-items:center; gap:5px; }
+.nav-count {
+  display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;
+  border-radius:999px;background:var(--color-action-primary);color:var(--color-action-on-primary);
+  font-size:10px !important;font-weight:700;line-height:1;
+}
+.offer-entry { align-items:flex-end; flex-wrap:wrap; }
+.offer-entry label { display:flex; flex-direction:column; gap:5px; font-weight:600; }
+.offer-entry label span { font-size:12px !important; color:var(--color-text-muted); }
+.offer-amount-field { flex:0 0 190px; min-width:190px; }
+.offer-amount-field input { min-width:190px; font-variant-numeric:tabular-nums; }
+.offer-note-field { flex:1 1 260px; min-width:220px; }
+.alert-info { background:var(--color-background-secondary); border:1px solid var(--color-border); border-radius:4px; padding:12px 14px; }
+@media(max-width:640px){.offer-entry{display:grid;grid-template-columns:1fr}.offer-amount-field,.offer-note-field{min-width:0;width:100%;}.offer-amount-field input{min-width:0}}
