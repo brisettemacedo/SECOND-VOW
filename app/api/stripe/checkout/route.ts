@@ -9,11 +9,13 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const { orderId } = await req.json();
-  const { data: financials, error } = await supabase.rpc("prepare_order_financials", { p_order_id: orderId });
+  const { data: basicOrder } = await supabase.from("orders").select("id,buyer_id").eq("id", orderId).maybeSingle();
+  if (!basicOrder || basicOrder.buyer_id !== user.id) return NextResponse.json({ error: "Pedido inválido" }, { status: 400 });
+  const admin = createAdminClient();
+  const { data: financials, error } = await admin.rpc("backend_prepare_order_financials", { p_order_id: orderId });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   const o = Array.isArray(financials) ? financials[0] : financials;
-  if (!o || o.buyer_id !== user.id) return NextResponse.json({ error: "Pedido inválido" }, { status: 400 });
-  const admin = createAdminClient();
+  if (!o) return NextResponse.json({ error: "Pedido inválido" }, { status: 400 });
   const { data: sellerAccount } = await admin.from("seller_payment_accounts").select("onboarding_status,payouts_enabled,provider_account_id").eq("user_id", o.seller_id).maybeSingle();
   if (!sellerAccount?.provider_account_id || sellerAccount.onboarding_status !== "complete" || !sellerAccount.payouts_enabled) {
     return NextResponse.json({ error: "La vendedora debe completar la vinculación bancaria antes de recibir pagos." }, { status: 409 });

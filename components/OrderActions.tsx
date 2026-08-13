@@ -1,125 +1,18 @@
 "use client";
-
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-
-const CLAIM_REASONS = [
-  ["wrong_item", "Recibí un artículo diferente"],
-  ["counterfeit", "Posible falsificación"],
-  ["damaged_undisclosed", "Daño relevante no declarado"],
-  ["materially_not_as_described", "No coincide materialmente con la publicación"],
-  ["undisclosed_alteration", "Alteración no informada"],
-  ["measurements_materially_incorrect", "Medidas materialmente incorrectas"],
-  ["missing_included_component", "Falta un componente anunciado"],
-] as const;
-
-export default function OrderActions({ order, userId }: { order: any; userId: string }) {
-  const supabase = useMemo(() => createClient(), []);
-  const router = useRouter();
-  const [tracking, setTracking] = useState(order.tracking_number ?? "");
-  const [carrier, setCarrier] = useState(order.carrier ?? "");
-  const [shippingAmount, setShippingAmount] = useState(order.shipping_quote_set_at ? String(order.shipping_mxn ?? 0) : "");
-  const [shippingCarrier, setShippingCarrier] = useState(order.shipping_carrier_declared ?? "");
-  const [reasonCode, setReasonCode] = useState("");
-  const [description, setDescription] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  async function rpc(name: string, args: Record<string, any>) {
-    setBusy(true);
-    const { error } = await supabase.rpc(name, args);
-    setBusy(false);
-    if (error) alert(error.message); else router.refresh();
-  }
-
-  async function ship() {
-    setBusy(true);
-    const res = await fetch("/api/tracking/register", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: order.id, carrier, trackingNumber: tracking }),
-    });
-    const json = await res.json(); setBusy(false);
-    if (!res.ok) alert(json.error || "No fue posible registrar el envío");
-    else { if (json.warning) alert(json.warning); router.refresh(); }
-  }
-
-
-  async function quoteShipping() {
-    const amount = Number(shippingAmount);
-    if (!Number.isFinite(amount) || amount < 0) return;
-    setBusy(true);
-    const { error } = await supabase.rpc("set_order_shipping_quote", {
-      p_order_id: order.id,
-      p_shipping_mxn: Math.round(amount),
-      p_carrier: shippingCarrier.trim() || null,
-    });
-    setBusy(false);
-    if (error) alert(error.message);
-    else router.refresh();
-  }
-
-  async function checkout() {
-    setBusy(true);
-    const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: order.id }) });
-    const json = await res.json(); setBusy(false);
-    if (!res.ok) alert(json.error || "No fue posible iniciar el pago");
-    else if (json.url) window.location.href = json.url;
-  }
-
-  async function delivered() {
-    await rpc("confirm_order_delivered", { p_order_id: order.id });
-  }
-
-  async function acceptCondition() {
-    await rpc("accept_order_condition", { p_order_id: order.id });
-  }
-
-  async function claim() {
-    if (!reasonCode || !description.trim()) return;
-    await rpc("open_order_claim", { p_order_id: order.id, p_reason_code: reasonCode, p_description: description.trim() });
-  }
-
-  return <div className="actions-stack">
-    {order.seller_id === userId && order.status === "awaiting_payment" &&
-      <div className="panel">
-        <h3>Cotizar envío</h3>
-        <p>Antes de que la compradora pague, indica el costo de envío que acordaron. Puedes usar la paquetería que prefieras.</p>
-        <div className="grid-2">
-          <div className="field"><label>Costo de envío (MXN)</label><input type="number" min={0} step={1} value={shippingAmount} onChange={e=>setShippingAmount(e.target.value)} placeholder="Ej. 350" /></div>
-          <div className="field"><label>Paquetería estimada (opcional)</label><input value={shippingCarrier} onChange={e=>setShippingCarrier(e.target.value)} placeholder="Ej. DHL, FedEx, Estafeta" /></div>
-        </div>
-        <button className="btn btn-primary" disabled={busy || shippingAmount === "" || Number(shippingAmount) < 0} onClick={quoteShipping}>{order.shipping_quote_set_at ? "Actualizar cotización" : "Enviar cotización"}</button>
-        {order.shipping_quote_set_at && <p className="muted">Cotización enviada: ${Number(order.shipping_mxn).toLocaleString("es-MX")} MXN{order.shipping_carrier_declared ? `, ${order.shipping_carrier_declared}` : ""}.</p>}
-      </div>}
-
-    {order.buyer_id === userId && ["awaiting_payment","payment_processing"].includes(order.status) &&
-      <div className="panel"><h3>Pago protegido</h3><p>El pago se procesa dentro de SECOND VOW. La vendedora no recibe el dinero hasta que termine el periodo de protección.</p>{order.shipping_quote_set_at ? <><p><strong>Envío cotizado:</strong> ${Number(order.shipping_mxn).toLocaleString("es-MX")} MXN{order.shipping_carrier_declared ? `, ${order.shipping_carrier_declared}` : ""}</p><button className="btn btn-primary" disabled={busy} onClick={checkout}>Pagar de forma segura</button></> : <div className="alert-info">Esperando la cotización de envío de la vendedora. Cuando la envíe, podrás continuar con el pago.</div>}</div>}
-
-    {order.seller_id === userId && ["paid", "preparing_shipment"].includes(order.status) &&
-      <div className="panel">
-        <h3>Registrar envío</h3>
-        <p className="muted">Usa la paquetería de tu preferencia e ingresa el número de rastreo.</p>
-        <div className="grid-2">
-          <input placeholder="Paquetería" value={carrier} onChange={e => setCarrier(e.target.value)} />
-          <input placeholder="Número de rastreo" value={tracking} onChange={e => setTracking(e.target.value)} />
-        </div>
-        <button className="btn btn-primary" disabled={busy || !carrier.trim() || !tracking.trim()} onClick={ship}>Marcar enviado</button>
-      </div>}
-
-    {order.buyer_id === userId && order.status === "shipped" &&
-      <button className="btn btn-primary" disabled={busy} onClick={delivered}>Confirmar recepción</button>}
-
-    {order.buyer_id === userId && ["inspection", "delivered"].includes(order.status) &&
-      <div className="panel">
-        <h3>Revisa tu vestido</h3>
-        <p>Tienes 72 horas desde la recepción registrada para reportar un incumplimiento sustancial.</p>
-        {(order.dispute_deadline_at || order.inspection_deadline_at) && <p className="muted">Protección hasta: {new Date(order.dispute_deadline_at || order.inspection_deadline_at).toLocaleString("es-MX")}</p>}
-        <hr />
-        <h3>Abrir reclamación</h3>
-        <div className="field"><label>Motivo</label><select value={reasonCode} onChange={e => setReasonCode(e.target.value)}><option value="">Selecciona</option>{CLAIM_REASONS.map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></div>
-        <div className="field"><label>Descripción</label><textarea rows={5} value={description} onChange={e => setDescription(e.target.value)} /></div>
-        <button className="btn btn-secondary" disabled={busy || !reasonCode || !description.trim()} onClick={claim}>Abrir reclamación</button>
-        <p className="muted">No aplica por cambio de opinión ni porque el vestido no quede si las medidas publicadas son correctas. Si se autoriza devolución, debe entregarse a paquetería dentro de 5 días naturales.</p>
-      </div>}
-  </div>;
-}
+import {useMemo,useState} from "react";import {useRouter} from "next/navigation";import {createClient} from "@/lib/supabase/client";import OrderEvidenceUploader from "@/components/OrderEvidenceUploader";
+const CLAIM_REASONS=[["wrong_item","Recibí un artículo diferente"],["counterfeit","Posible falsificación"],["damaged_undisclosed","Daño relevante no declarado"],["materially_not_as_described","No coincide materialmente con la publicación"],["undisclosed_alteration","Alteración no informada"],["measurements_materially_incorrect","Medidas materialmente incorrectas"],["missing_included_component","Falta un componente anunciado"]] as const;
+export default function OrderActions({order,userId,evidence=[]}:{order:any;userId:string;evidence?:any[]}){const supabase=useMemo(()=>createClient(),[]);const router=useRouter();const[tracking,setTracking]=useState(order.tracking_number??"");const[carrier,setCarrier]=useState(order.carrier??"");const[shippingAmount,setShippingAmount]=useState(order.shipping_quote_set_at?String(order.shipping_mxn??0):"");const[shippingCarrier,setShippingCarrier]=useState(order.shipping_carrier_declared??"");const[reasonCode,setReasonCode]=useState("");const[description,setDescription]=useState("");const[busy,setBusy]=useState(false);
+ async function rpc(name:string,args:any){setBusy(true);const{error}=await supabase.rpc(name,args);setBusy(false);if(error)alert(error.message);else router.refresh()}
+ async function quoteShipping(){const amount=Number(shippingAmount);if(!Number.isFinite(amount)||amount<0)return;setBusy(true);const{error}=await supabase.rpc("set_order_shipping_quote",{p_order_id:order.id,p_shipping_mxn:Math.round(amount),p_carrier:shippingCarrier.trim()||null});setBusy(false);if(error)alert(error.message);else router.refresh()}
+ async function checkout(){setBusy(true);const res=await fetch("/api/stripe/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderId:order.id})});const json=await res.json();setBusy(false);if(!res.ok)alert(json.error||"No fue posible iniciar el pago");else if(json.url)window.location.href=json.url}
+ async function ship(){setBusy(true);const res=await fetch("/api/tracking/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderId:order.id,carrier,trackingNumber:tracking})});const json=await res.json();setBusy(false);if(!res.ok)alert(json.error||"No fue posible registrar el envío");else{if(json.warning)alert(json.warning);router.refresh()}}
+ async function claim(){if(!reasonCode||!description.trim())return;await rpc("open_order_claim",{p_order_id:order.id,p_reason_code:reasonCode,p_description:description.trim()})}
+ const deadline=order.dispute_deadline_at||order.inspection_deadline_at||order.claim_deadline_at;
+ return <div className="actions-stack">
+  <div className="safety-callout"><strong>Seguridad de la operación</strong><span>Mantén pagos, acuerdos y evidencia dentro de SECOND VOW. No recomendamos reuniones presenciales. En una disputa, la evidencia del estado, empaque, envío y recepción puede ser determinante.</span></div>
+  {order.seller_id===userId&&order.status==="awaiting_payment"&&<div className="panel"><h3>Cotizar envío</h3><p>Consulta por tu cuenta la paquetería que prefieras y envía aquí el costo. La compradora pagará vestido y envío dentro de SECOND VOW.</p><div className="grid-2"><div className="field"><label>Costo de envío (MXN)</label><input type="number" min={0} value={shippingAmount} onChange={e=>setShippingAmount(e.target.value)} placeholder="Ej. 350"/></div><div className="field"><label>Paquetería estimada (opcional)</label><input value={shippingCarrier} onChange={e=>setShippingCarrier(e.target.value)} placeholder="Ej. DHL"/></div></div><button className="btn btn-primary" disabled={busy||shippingAmount===""} onClick={quoteShipping}>{order.shipping_quote_set_at?"Actualizar cotización":"Enviar cotización"}</button>{order.shipping_quote_set_at&&<p className="muted">Cotización enviada: ${Number(order.shipping_mxn).toLocaleString("es-MX")} MXN{order.shipping_carrier_declared?` con ${order.shipping_carrier_declared}`:""}.</p>}</div>}
+  {order.buyer_id===userId&&["awaiting_payment","payment_processing"].includes(order.status)&&<div className="panel"><h3>Pago dentro de SECOND VOW</h3><p>No realices transferencias directamente a la vendedora. Los pagos fuera de SECOND VOW no forman parte de nuestro proceso de reclamación.</p>{order.shipping_quote_set_at?<><p><strong>Envío:</strong> ${Number(order.shipping_mxn).toLocaleString("es-MX")} MXN{order.shipping_carrier_declared?` con ${order.shipping_carrier_declared}`:""}</p><button className="btn btn-primary" disabled={busy} onClick={checkout}>Pagar de forma segura</button></>:<div className="alert-info">Esperando la cotización de envío de la vendedora. Cuando la envíe, podrás continuar.</div>}</div>}
+  {order.seller_id===userId&&["paid","preparing_shipment"].includes(order.status)&&<div className="panel"><h3>Prepara y documenta el envío</h3><div className="evidence-guidance"><strong>Antes de entregar el paquete:</strong><ol><li>Fotografía el vestido completo y sus detalles.</li><li>Fotografía el vestido dentro del empaque.</li><li>Fotografía el paquete cerrado y conserva el comprobante.</li><li>Usa siempre un servicio con número de rastreo. Considera asegurar envíos de alto valor.</li></ol></div><div className="evidence-grid"><OrderEvidenceUploader orderId={order.id} userId={userId} stage="seller_pre_ship" existing={evidence.filter((x:any)=>x.evidence_type==="seller_pre_ship")}/><OrderEvidenceUploader orderId={order.id} userId={userId} stage="seller_packed" existing={evidence.filter((x:any)=>x.evidence_type==="seller_packed")}/><OrderEvidenceUploader orderId={order.id} userId={userId} stage="seller_shipping_receipt" existing={evidence.filter((x:any)=>x.evidence_type==="seller_shipping_receipt")}/></div><h3>Registrar guía</h3><div className="grid-2"><input placeholder="Paquetería" value={carrier} onChange={e=>setCarrier(e.target.value)}/><input placeholder="Número de rastreo" value={tracking} onChange={e=>setTracking(e.target.value)}/></div><button className="btn btn-primary" disabled={busy||!carrier.trim()||!tracking.trim()} onClick={ship}>Registrar envío</button></div>}
+  {order.buyer_id===userId&&order.status==="shipped"&&<div className="panel"><h3>Cuando recibas el paquete</h3><p>Antes de abrirlo, fotografía todos sus lados y cualquier señal de daño o manipulación. Te recomendamos grabar la apertura de principio a fin.</p><OrderEvidenceUploader orderId={order.id} userId={userId} stage="buyer_package_received" existing={evidence.filter((x:any)=>x.evidence_type==="buyer_package_received")}/><OrderEvidenceUploader orderId={order.id} userId={userId} stage="buyer_unboxing" existing={evidence.filter((x:any)=>x.evidence_type==="buyer_unboxing")}/><button className="btn btn-primary" disabled={busy} onClick={()=>rpc("confirm_order_delivered",{p_order_id:order.id})}>Confirmar recepción</button></div>}
+  {order.buyer_id===userId&&["inspection","delivered"].includes(order.status)&&<div className="panel"><h3>Revisa tu vestido</h3><p>Compara el vestido con la publicación y conserva el empaque. El plazo para reportar un incumplimiento sustancial es de 72 horas desde la recepción registrada.</p>{deadline&&<div className="protection-deadline"><span>Protección hasta</span><strong>{new Date(deadline).toLocaleString("es-MX")}</strong></div>}<OrderEvidenceUploader orderId={order.id} userId={userId} stage="buyer_dress_received" existing={evidence.filter((x:any)=>x.evidence_type==="buyer_dress_received")}/><hr/><h3>Abrir reclamación</h3><div className="field"><label>Motivo</label><select value={reasonCode} onChange={e=>setReasonCode(e.target.value)}><option value="">Selecciona</option>{CLAIM_REASONS.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></div><div className="field"><label>Descripción</label><textarea rows={5} value={description} onChange={e=>setDescription(e.target.value)}/></div><button className="btn btn-secondary" disabled={busy||!reasonCode||!description.trim()} onClick={claim}>Abrir reclamación</button><p className="muted">No aplica por cambio de opinión ni porque el vestido no quede si las medidas publicadas son correctas. Si se autoriza devolución, debe entregarse a paquetería dentro de 5 días naturales.</p></div>}
+ </div>}

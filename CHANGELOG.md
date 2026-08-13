@@ -1,3 +1,14 @@
+# v1.3.0
+- Ofertas integradas en Mensajes y /ofertas redirige a Mensajes.
+- Título del vestido clicable en chat y pedidos.
+- Cotización de envío visible en conversación.
+- Evidencia de envío y recepción asociada al pedido.
+- Mensajes contextuales de seguridad y recomendación de mantener operación dentro de SECOND VOW.
+- Checkout usa snapshot financiero backend seguro.
+- Dashboard admin compacto con pedidos, pagos, envíos y usuarias.
+- Callback de registro usa el origen actual del sitio.
+- Nueva migración 0015.
+
 # v1.1 — 2026-08-07
 
 - Migración 0011 incremental; 0001–0010 permanecen congeladas.
