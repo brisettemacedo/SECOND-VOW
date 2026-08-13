@@ -92,3 +92,11 @@
 - La compradora ve la cotización y solo puede pagar cuando exista.
 - Limpieza de modelos `na` en mensajes, ofertas y pedidos.
 - Migración 0014 para cotización segura de envío.
+
+## v1.3.1 - 2026-08-12
+- Ship24 preparado para tracker + webhook y referencias por pedido.
+- Google/Facebook OAuth en login y registro.
+- Vendedora y compradora visibles en mensajes/pedidos.
+- Folio amigable SV-AAAA-######.
+- Estados de pedido humanizados y tracking visible.
+- Corrección crítica: importes enviados a Stripe convertidos de MXN a centavos en Checkout, Transfer y Payout.

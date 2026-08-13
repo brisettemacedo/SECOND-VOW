@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   p.set("customer_email", user.email ?? "");
   p.set("line_items[0][price_data][currency]", "mxn");
   p.set("line_items[0][price_data][product_data][name]", "Compra protegida SECOND VOW");
-  p.set("line_items[0][price_data][unit_amount]", String(o.amount_charged_mxn ?? o.total_mxn));
+  p.set("line_items[0][price_data][unit_amount]", String(Math.round(Number(o.amount_charged_mxn ?? o.total_mxn) * 100)));
   p.set("line_items[0][quantity]", "1");
   p.set("metadata[order_id]", o.id);
   p.set("payment_intent_data[metadata][order_id]", o.id);

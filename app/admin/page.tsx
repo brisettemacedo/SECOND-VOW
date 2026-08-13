@@ -36,7 +36,7 @@ export default async function Admin() {
     supabase.from("profiles").select("id,full_name,role,is_blocked,blocked_reason,created_at").neq("role","admin").order("created_at",{ascending:false}).limit(100),
     supabase.from("conversation_reports").select("id,conversation_id,reporter_id,reason_code,details,status,created_at").in("status",["open","under_review"]).order("created_at",{ascending:false}),
     supabase.from("arco_requests").select("id,user_id,request_type,description,status,admin_response,created_at").in("status",["received","in_review","needs_information"]).order("created_at"),
-    supabase.from("orders").select("id,status,total_mxn,buyer_id,seller_id,created_at").not("status","in",'("completed","cancelled","refunded")').order("created_at",{ascending:false}).limit(20),
+    supabase.from("orders").select("id,public_code,status,total_mxn,buyer_id,seller_id,created_at").not("status","in",'("completed","cancelled","refunded")').order("created_at",{ascending:false}).limit(20),
     supabase.from("payments").select("id,order_id,status,amount_mxn,created_at").order("created_at",{ascending:false}).limit(20),
     supabase.from("shipments").select("id,order_id,status,carrier,tracking_number,created_at").order("created_at",{ascending:false}).limit(20),
   ]);

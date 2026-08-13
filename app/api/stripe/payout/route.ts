@@ -19,14 +19,14 @@ export async function POST(req: Request) {
     let transferId = p.transfer_id;
     if (!transferId) {
       const t = new URLSearchParams();
-      t.set("amount", String(p.amount_mxn)); t.set("currency", "mxn");
+      t.set("amount", String(Math.round(Number(p.amount_mxn) * 100))); t.set("currency", "mxn");
       t.set("destination", p.connected_account_id); t.set("source_transaction", o.stripe_charge_id);
       t.set("metadata[order_id]", orderId);
       const transfer = await stripeRequest("/transfers", t);
       transferId = transfer.id;
       await admin.rpc("backend_mark_transfer_created", { p_payout_row_id: p.id, p_transfer_id: transfer.id });
     }
-    const po = new URLSearchParams(); po.set("amount", String(p.amount_mxn)); po.set("currency", "mxn"); po.set("metadata[order_id]", orderId);
+    const po = new URLSearchParams(); po.set("amount", String(Math.round(Number(p.amount_mxn) * 100))); po.set("currency", "mxn"); po.set("metadata[order_id]", orderId);
     const payout = await stripeRequest("/payouts", po, p.connected_account_id);
     await admin.rpc("backend_update_payout", { p_payout_row_id: p.id, p_status: "processing", p_provider_payout_id: payout.id, p_failure_code: null });
     return NextResponse.json({ ok: true, transferId, payoutId: payout.id });
