@@ -1,10 +1,11 @@
-# SECOND VOW — decisión de pagos y operación (revisión 2)
+# SECOND VOW — decisión de pagos y operación (revisión 3, 17-08-2026)
 
 ## Política comercial propuesta
 
 - Publicación de vestido: gratis.
-- Comisión de éxito a la vendedora: 15% del precio del vestido.
-- Cargo administrativo fijo: $19 MXN por venta completada.
+- Comisión total a la vendedora: 18% del precio del vestido.
+- El 18% incluye el costo ordinario de procesamiento de Stripe; no se descuenta otra tarifa de tarjeta a la vendedora.
+- Sin cargo administrativo fijo.
 - Sin tarifa de protección a la compradora al lanzamiento.
 - Envío: pagado por la compradora, organizado por la vendedora con la paquetería de su elección.
 - La vendedora registra el monto del envío antes del checkout y, una vez enviado, carga paquetería y número de guía.
@@ -18,9 +19,9 @@ La usuaria no crea una suscripción ni necesita una cuenta Stripe previa. SECOND
 
 La experiencia puede ser: Cuenta > Pagos > Vincular cuenta bancaria. Tras las 72 horas sin reclamación, la venta pasa a saldo disponible. La vendedora pulsa Retirar saldo. El backend solicita el payout a Stripe y Stripe deposita a su banco.
 
-## Modelo Stripe recomendado para validar con Stripe México antes de producción
+## Modelo Stripe implementado
 
-Direct charges en Connected Accounts + application fee de SECOND VOW + payout manual. Este diseño acerca el flujo a una intermediación: el cargo pertenece a la cuenta conectada de la vendedora, SECOND VOW cobra su application fee y controla cuándo se realiza el payout bancario. La configuración exacta de merchant of record, responsabilidad de disputas, impuestos y tarifas debe confirmarse con Stripe México y con asesoría fiscal antes del lanzamiento.
+Separate charges and transfers con el cargo en la cuenta de plataforma, transferencia posterior a la Connected Account y payout manual al terminar la protección. SECOND VOW absorbe las tarifas ordinarias de Stripe dentro de su 18% y soporta inicialmente reembolsos y contracargos frente a Stripe. La asignación contractual y fiscal debe validarse con Stripe México y asesoría fiscal antes del lanzamiento.
 
 ## Envío
 

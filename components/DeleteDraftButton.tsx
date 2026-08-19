@@ -4,13 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function DeleteDraftButton({ dressId }: { dressId: string }) {
+const DELETABLE_STATUSES = ["draft", "pending_review", "changes_requested", "rejected", "approved"];
+
+export default function DeleteDraftButton({ dressId, hasOrderHistory = false }: { dressId: string; hasOrderHistory?: boolean }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
 
-  async function removeDraft() {
-    if (!window.confirm("¿Eliminar este borrador? Esta acción no se puede deshacer.")) return;
+  async function removeDress() {
+    if (hasOrderHistory) return;
+    if (!window.confirm("¿Eliminar esta publicación? Esta acción no se puede deshacer.")) return;
 
     setDeleting(true);
     setError("");
@@ -24,7 +27,9 @@ export default function DeleteDraftButton({ dressId }: { dressId: string }) {
         .single();
 
       if (dressError) throw dressError;
-      if (dress?.status !== "draft") throw new Error("Solo se pueden eliminar publicaciones en borrador.");
+      if (!DELETABLE_STATUSES.includes(dress?.status)) {
+        throw new Error("Esta publicación ya no puede eliminarse (tiene una oferta aceptada o ya fue vendida).");
+      }
 
       const { data: photos, error: photosError } = await supabase
         .from("dress_photos")
@@ -44,15 +49,23 @@ export default function DeleteDraftButton({ dressId }: { dressId: string }) {
 
       router.refresh();
     } catch (e: any) {
-      setError(e?.message || "No fue posible eliminar el borrador.");
+      setError(e?.message || "No fue posible eliminar la publicación.");
       setDeleting(false);
     }
   }
 
+  if (hasOrderHistory) {
+    return (
+      <span className="muted" title="Esta publicación tiene un pedido asociado y no puede eliminarse. Puedes archivarla en su lugar.">
+        No se puede eliminar
+      </span>
+    );
+  }
+
   return (
     <div className="delete-draft-wrap">
-      <button type="button" className="btn btn-danger-outline" onClick={removeDraft} disabled={deleting}>
-        {deleting ? "Eliminando..." : "Eliminar borrador"}
+      <button type="button" className="btn btn-danger-outline" onClick={removeDress} disabled={deleting}>
+        {deleting ? "Eliminando..." : "Eliminar publicación"}
       </button>
       {error && <p className="field-error">{error}</p>}
     </div>

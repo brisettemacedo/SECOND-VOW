@@ -1,3 +1,14 @@
+# v1.6.0 — 2026-08-17
+- Comisión total de 18% sobre vestido; incluye procesamiento Stripe, sin cargo fijo y sin comisión sobre envío.
+- Checkout atómico e idempotente; bloqueo de doble venta y reutilización de sesión.
+- Pagos tardíos/conflictivos pasan a revisión sin habilitar envío.
+- Webhooks ampliados: expiración, pagos asíncronos, fallas, reembolsos, contracargos, transferencias, payouts y cuentas Connect.
+- Devolución rastreable, confirmación de recepción y reembolso administrativo.
+- Stripe Connect sustituye nuevas cargas manuales de identificación.
+- Crons cerrados cuando falta `CRON_SECRET`, rate limiting y encabezados de seguridad.
+- Next.js 15.5.21 Maintenance LTS y React 19.2.4 con parches de seguridad.
+- Migración incremental 0018; 0001–0017 permanecen intactas.
+
 # v1.3.0
 - Ofertas integradas en Mensajes y /ofertas redirige a Mensajes.
 - Título del vestido clicable en chat y pedidos.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { resolveDressBrandNames } from "@/lib/server/dressBrands";
 import DeleteDraftButton from "@/components/DeleteDraftButton";
+import ArchiveDressButton from "@/components/ArchiveDressButton";
 
 const labels: Record<string, string> = {
   draft: "Borrador",
@@ -23,7 +24,7 @@ export default async function MyDresses() {
   const { supabase, user } = await requireUser();
   const { data, error } = await supabase
     .from("dresses")
-    .select("id,brand_id,brand_suggestion_id,model,status,updated_at,precio_venta_mxn,moderation_notes,moderated_at")
+    .select("id,brand_id,brand_suggestion_id,model,status,updated_at,precio_venta_mxn,moderation_notes,moderated_at,orders(count)")
     .eq("seller_id", user.id)
     .order("updated_at", { ascending: false });
 
@@ -44,7 +45,10 @@ export default async function MyDresses() {
     {loadError && <div className="alert-error"><strong>No pudimos cargar tus publicaciones.</strong><p>{loadError}</p></div>}
     <div className="cards-list">
       {!loadError && (data ?? []).map((d: any) => {
-        const editable = ["draft", "changes_requested", "rejected"].includes(d.status);
+        // Editable/eliminable mientras no haya una oferta aceptada (pedido activo)
+        // sobre este vestido, y no esté ya reservado/vendido.
+        const editable = ["draft", "pending_review", "changes_requested", "rejected", "approved"].includes(d.status);
+        const hasOrderHistory = (d.orders?.[0]?.count ?? 0) > 0;
         const brand = brandNames?.nameFor(d) ?? "Sin marca";
         const model = cleanModel(d.model);
         return <article className="panel" key={d.id}>
@@ -55,9 +59,12 @@ export default async function MyDresses() {
           {d.status === "changes_requested" && <div className="alert-error"><strong>SECOND VOW solicitó cambios:</strong><p>{d.moderation_notes || "Revisa la publicación antes de reenviarla."}</p></div>}
           {d.status === "rejected" && <div className="alert-error"><strong>Publicación rechazada:</strong><p>{d.moderation_notes || "No se indicó un motivo."}</p></div>}
           {d.status === "approved" && <div className="alert-success">Tu vestido está publicado y visible en el marketplace.</div>}
+          {d.status === "reserved" && <div className="alert-info">Hay un pago en proceso sobre este vestido. No puede editarse hasta que se complete o se cancele.</div>}
           <div className="actions">
-            {editable && <Link href={`/publicar/${d.id}`} className="btn btn-secondary">{d.status === "changes_requested" ? "Corregir y reenviar" : "Editar"}</Link>}
-            {d.status === "draft" && <DeleteDraftButton dressId={d.id} />}
+            {editable && <Link href={`/publicar/${d.id}`} className="btn btn-secondary">{d.status === "changes_requested" ? "Corregir y reenviar" : d.status === "approved" ? "Editar (vuelve a revisión)" : "Editar"}</Link>}
+            {editable && (hasOrderHistory
+              ? <ArchiveDressButton dressId={d.id} />
+              : <DeleteDraftButton dressId={d.id} />)}
             <Link href={`/vestidos/${d.id}`} className="btn btn-secondary">Ver</Link>
           </div>
         </article>;

@@ -3,9 +3,9 @@ import DressPublishForm from "@/components/DressPublishForm";
 import { requireUser } from "@/lib/auth";
 import { loadDressCatalogData } from "@/lib/dressCatalogData";
 
-export default async function EditDress({ params }: { params: { id: string } }) {
+export default async function EditDress({ params }: { params: Promise<{ id: string }> }) {
   const { supabase, user } = await requireUser();
-  const id = params?.id;
+  const { id } = await params;
   if (!id) notFound();
 
   const [{ data: dress, error: dressError }, { data: brands }, catalogs] = await Promise.all([

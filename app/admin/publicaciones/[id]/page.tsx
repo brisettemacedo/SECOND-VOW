@@ -15,9 +15,9 @@ function labelFor(list: { value: string; label: string }[], value: string | null
 
 function yesNo(v: any) { return v ? "Sí" : "No"; }
 
-export default async function AdminPublicationDetail({ params }: { params: { id: string } }) {
+export default async function AdminPublicationDetail({ params }: { params: Promise<{ id: string }> }) {
   const { supabase } = await requireAdmin();
-  const id = params?.id;
+  const { id } = await params;
   if (!id) notFound();
 
   // La ficha se carga en consultas separadas para que una relación opcional

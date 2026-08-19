@@ -30,7 +30,7 @@ export default async function Admin() {
       .eq("status", "pending_review")
       .order("updated_at", { ascending: true }),
     supabase.from("identity_verifications").select("id,user_id,legal_name,document_path,status,document_type,created_at").eq("status","pending").order("created_at"),
-    supabase.from("claims").select("id,order_id,reason,description,status,created_at").in("status",["open","under_review"]).order("created_at"),
+    supabase.from("claims").select("id,order_id,reason,description,status,created_at").in("status",["open","under_review","approved_return","return_shipped","refund_pending"]).order("created_at"),
     supabase.from("brands").select("id,name").eq("is_active",true).order("name"),
     supabase.from("brand_suggestions").select("id,suggested_name,seller_id,status,created_at").eq("status","pending").order("created_at"),
     supabase.from("profiles").select("id,full_name,role,is_blocked,blocked_reason,created_at").neq("role","admin").order("created_at",{ascending:false}).limit(100),

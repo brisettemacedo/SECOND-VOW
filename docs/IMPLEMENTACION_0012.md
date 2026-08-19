@@ -1,4 +1,6 @@
-# SECOND VOW — Implementación 0012
+# SECOND VOW — Implementación 0012 (histórico; sustituido por 0018)
+
+> No uses las tarifas ni instrucciones de pago de este documento para producción. La política vigente está en `DECISION_PAGOS_Y_MODELO.md`: 18% total, sin cargo fijo y con el costo ordinario de Stripe incluido.
 
 ## Qué cambia
 

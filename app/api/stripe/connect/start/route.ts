@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/server/adminSupabase";
 import { stripeRequest } from "@/lib/server/stripe";
+import { isSameOriginRequest } from "@/lib/server/requestSecurity";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isSameOriginRequest(request)) return NextResponse.json({ error: "Origen no permitido" }, { status: 403 });
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });

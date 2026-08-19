@@ -1,41 +1,93 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/server/adminSupabase";
-import { stripeRequest } from "@/lib/server/stripe";
+import { stripeGet, stripeRequest } from "@/lib/server/stripe";
+import { consumeRateLimit } from "@/lib/server/rateLimit";
+import { isSameOriginRequest } from "@/lib/server/requestSecurity";
 
 export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
+  if (!isSameOriginRequest(req)) return NextResponse.json({ error: "Origen no permitido" }, { status: 403 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const { orderId } = await req.json();
-  const { data: basicOrder } = await supabase.from("orders").select("id,buyer_id").eq("id", orderId).maybeSingle();
+  if (!await consumeRateLimit(user.id, "checkout", 8, 600)) return NextResponse.json({ error: "Demasiados intentos. Espera unos minutos." }, { status: 429 });
+
+  const body = await req.json().catch(() => ({}));
+  const orderId = typeof body.orderId === "string" ? body.orderId : "";
+  if (!orderId) return NextResponse.json({ error: "Pedido inválido" }, { status: 400 });
+
+  const { data: basicOrder } = await supabase
+    .from("orders")
+    .select("id,buyer_id,status,stripe_checkout_session_id,payment_deadline_at")
+    .eq("id", orderId)
+    .maybeSingle();
   if (!basicOrder || basicOrder.buyer_id !== user.id) return NextResponse.json({ error: "Pedido inválido" }, { status: 400 });
+
+  if (basicOrder.status === "payment_processing" && basicOrder.stripe_checkout_session_id) {
+    try {
+      const existing = await stripeGet(`/checkout/sessions/${basicOrder.stripe_checkout_session_id}`);
+      if (existing?.status === "open" && existing?.url) return NextResponse.json({ url: existing.url });
+    } catch {
+      // La RPC inferior decide si el intento todavía puede reanudarse.
+    }
+  }
+
   const admin = createAdminClient();
-  const { data: financials, error } = await admin.rpc("backend_prepare_order_financials", { p_order_id: orderId });
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  const o = Array.isArray(financials) ? financials[0] : financials;
-  if (!o) return NextResponse.json({ error: "Pedido inválido" }, { status: 400 });
-  const { data: sellerAccount } = await admin.from("seller_payment_accounts").select("onboarding_status,payouts_enabled,provider_account_id").eq("user_id", o.seller_id).maybeSingle();
+  const { data: financials, error: financialError } = await admin.rpc("backend_prepare_order_financials", { p_order_id: orderId });
+  if (financialError) return NextResponse.json({ error: financialError.message }, { status: 400 });
+  const financialOrder = Array.isArray(financials) ? financials[0] : financials;
+  if (!financialOrder) return NextResponse.json({ error: "Pedido inválido" }, { status: 400 });
+
+  const { data: sellerAccount } = await admin
+    .from("seller_payment_accounts")
+    .select("onboarding_status,payouts_enabled,provider_account_id")
+    .eq("user_id", financialOrder.seller_id)
+    .maybeSingle();
   if (!sellerAccount?.provider_account_id || sellerAccount.onboarding_status !== "complete" || !sellerAccount.payouts_enabled) {
     return NextResponse.json({ error: "La vendedora debe completar la vinculación bancaria antes de recibir pagos." }, { status: 409 });
   }
-  const site = process.env.NEXT_PUBLIC_SITE_URL!;
-  const group = `SV_${o.id.replaceAll("-", "")}`;
-  const p = new URLSearchParams();
-  p.set("mode", "payment");
-  p.set("success_url", `${site}/pedidos/${o.id}?payment=success`);
-  p.set("cancel_url", `${site}/pedidos/${o.id}?payment=cancelled`);
-  p.set("client_reference_id", o.id);
-  p.set("customer_email", user.email ?? "");
-  p.set("line_items[0][price_data][currency]", "mxn");
-  p.set("line_items[0][price_data][product_data][name]", "Compra protegida SECOND VOW");
-  p.set("line_items[0][price_data][unit_amount]", String(Math.round(Number(o.amount_charged_mxn ?? o.total_mxn) * 100)));
-  p.set("line_items[0][quantity]", "1");
-  p.set("metadata[order_id]", o.id);
-  p.set("payment_intent_data[metadata][order_id]", o.id);
-  p.set("payment_intent_data[transfer_group]", group);
-  const session = await stripeRequest("/checkout/sessions", p);
-  await admin.from("orders").update({ status: "payment_processing", stripe_checkout_session_id: session.id, stripe_transfer_group: group, updated_at: new Date().toISOString() }).eq("id", o.id);
-  return NextResponse.json({ url: session.url });
+
+  const { data: started, error: startError } = await admin.rpc("backend_begin_checkout", { p_order_id: orderId });
+  if (startError) return NextResponse.json({ error: startError.message }, { status: 409 });
+  const order = Array.isArray(started) ? started[0] : started;
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  if (!site) {
+    await admin.rpc("backend_release_checkout", { p_order_id: orderId, p_reason: "missing_site_url" });
+    return NextResponse.json({ error: "Falta configurar NEXT_PUBLIC_SITE_URL" }, { status: 500 });
+  }
+
+  try {
+    const group = `SV_${order.id.replaceAll("-", "")}`;
+    const p = new URLSearchParams();
+    p.set("mode", "payment");
+    p.set("success_url", `${site}/pedidos/${order.id}?payment=success`);
+    p.set("cancel_url", `${site}/pedidos/${order.id}?payment=cancelled`);
+    p.set("expires_at", String(Math.floor(Date.now() / 1000) + 60 * 60));
+    p.set("payment_method_types[0]", "card");
+    p.set("client_reference_id", order.id);
+    if (user.email) p.set("customer_email", user.email);
+    p.set("line_items[0][price_data][currency]", "mxn");
+    p.set("line_items[0][price_data][product_data][name]", "Compra protegida SECOND VOW");
+    p.set("line_items[0][price_data][unit_amount]", String(Math.round(Number(order.amount_charged_mxn ?? order.total_mxn) * 100)));
+    p.set("line_items[0][quantity]", "1");
+    p.set("metadata[order_id]", order.id);
+    p.set("payment_intent_data[metadata][order_id]", order.id);
+    p.set("payment_intent_data[transfer_group]", group);
+    const session = await stripeRequest("/checkout/sessions", p, undefined, `checkout_${order.id}`);
+
+    const { error: saveError } = await admin.rpc("backend_attach_checkout_session", {
+      p_order_id: order.id,
+      p_checkout_session_id: session.id,
+      p_transfer_group: group,
+    });
+    if (saveError) throw new Error(saveError.message);
+    return NextResponse.json({ url: session.url });
+  } catch (error: any) {
+    // Una falla de red no permite saber con certeza si Stripe alcanzó a crear
+    // la sesión. Conservamos la reserva hasta su expiración para evitar vender
+    // el vestido mientras pudiera existir un cobro abierto.
+    return NextResponse.json({ error: `${error?.message ?? "No fue posible iniciar el pago"}. La reserva se liberará automáticamente si no hubo cobro.` }, { status: 502 });
+  }
 }

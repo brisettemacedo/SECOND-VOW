@@ -22,11 +22,16 @@ function fmtPrice(v: number | null) {
   return v.toLocaleString("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 });
 }
 
-export default async function DressDetailPage({ params }: { params: { id: string } }) {
+export default async function DressDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
-  const id = params?.id;
+  const { id } = await params;
   if (!id) notFound();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Si el pago de este vestido quedó abandonado, libéralo antes de leer su estado.
+  try {
+    await supabase.rpc("expire_dress_reservation_if_stale", { p_dress_id: id });
+  } catch {}
 
   const { data: dress, error } = await supabase
     .from("dresses")
@@ -83,11 +88,23 @@ export default async function DressDetailPage({ params }: { params: { id: string
     .neq("id", dress.id)
     .limit(4);
 
+  const isOwnerOrAdminPreview = ["draft", "pending_review", "changes_requested", "rejected", "archived"].includes(dress.status);
+
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px" }}>
-      {dress.status !== "approved" && (
+      {isOwnerOrAdminPreview && (
         <div className="alert-error" style={{ marginBottom: 20 }}>
           Vista previa: esta publicación está en estado &quot;{STATUS_LABELS[dress.status]}&quot; y todavía no es visible públicamente.
+        </div>
+      )}
+      {dress.status === "reserved" && (
+        <div className="alert-info" style={{ marginBottom: 20 }}>
+          Pago pendiente: alguien ya está comprando este vestido. Si el pago no se completa, volverá a estar disponible.
+        </div>
+      )}
+      {dress.status === "sold" && (
+        <div className="alert-error" style={{ marginBottom: 20 }}>
+          Este vestido ya fue vendido y no está disponible para compra.
         </div>
       )}
 
@@ -194,7 +211,7 @@ export default async function DressDetailPage({ params }: { params: { id: string
 
           <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
             <ContactSellerButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} />
-            <OfferButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} price={dress.precio_venta_mxn} />
+            <OfferButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} price={dress.precio_venta_mxn} status={dress.status} />
             <FavoriteButton dressId={dress.id} />
           </div>
           

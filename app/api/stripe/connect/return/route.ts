@@ -21,6 +21,7 @@ export async function GET() {
       requirements_due: a?.requirements?.currently_due ?? [], verified_at: a.details_submitted && a.payouts_enabled ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
     }).eq("user_id", user.id);
+    await admin.from("profiles").update({ identity_verified: !!(a.details_submitted && a.payouts_enabled) }).eq("id", user.id);
   }
   return NextResponse.redirect(`${site}/cuenta/pagos?connect=returned`);
 }

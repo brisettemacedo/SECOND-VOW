@@ -1,10 +1,10 @@
-# SECOND VOW — v1.0 unificada
+# SECOND VOW — v1.6.0 producción candidata
 
 Esta carpeta es la versión única de referencia del proyecto. Sustituye los ZIP anteriores.
 
 ## Estado de la base de datos
 
-Las migraciones `0001` a `0010` incluidas en `supabase/migrations/` son el historial del esquema. Si ya fueron ejecutadas con éxito en el proyecto actual de Supabase, **NO se vuelven a ejecutar**. Cualquier cambio futuro debe añadirse como `0011`, `0012`, etc.
+Las migraciones `0001` a `0018` son el historial del esquema. Si `0001`–`0017` ya se ejecutaron, aplica únicamente `0018_produccion_pagos_18_seguridad.sql`. No vuelvas a ejecutar migraciones anteriores ni edites archivos ya aplicados.
 
 ## Variables de Vercel
 
@@ -34,12 +34,12 @@ Nunca publiques `service_role`, claves secretas de Supabase ni una secret key de
 - Reclamación únicamente durante 72 horas desde la recepción registrada.
 - Devolución autorizada: 5 días naturales para entregar a paquetería.
 - Reputación e identidad según el esquema actual.
-- Estructura de comisión: 15% + cargo administrativo fijo configurado en `0010`.
+- Comisión total a la vendedora: 18% del precio del vestido; incluye el costo ordinario de Stripe. Sin cargo administrativo fijo y sin comisión sobre el envío.
 - Estructura de saldos y retiros preparada para Stripe Connect.
 
 ## Stripe
 
-`0010` prepara la base de datos, pero no se incluyen claves secretas de Stripe en el repositorio. La activación real de cobros, onboarding bancario y webhooks debe hacerse desde rutas de servidor con variables secretas de Vercel antes de aceptar dinero real.
+`0018` implementa checkout atómico, idempotencia, conciliación de importes, pagos tardíos en revisión y eventos de reembolso/contracargo. No se incluyen secretos. Antes de aceptar dinero real configura el webhook de plataforma y eventos de cuentas conectadas conforme a `docs/PASO_A_PASO_LANZAMIENTO_HOY.md`.
 
 La pantalla `/cuenta/pagos` muestra el estado del banco y saldos disponibles conforme a la base. La vinculación bancaria se mantiene inactiva hasta conectar Stripe Connect del lado servidor.
 
@@ -62,9 +62,9 @@ La pantalla `/cuenta/pagos` muestra el estado del banco y saldos disponibles con
 7. No probar pagos reales hasta completar la integración secreta de Stripe.
 
 
-## Actualización v1.1
+## Actualización v1.6.0
 
-Si Supabase ya tiene 0001–0010 aplicadas, ejecuta **solamente** `supabase/migrations/0011_cumplimiento_marcas_admin_seguridad.sql`.
+Si Supabase ya tiene 0001–0017 aplicadas, ejecuta **solamente** `supabase/migrations/0018_produccion_pagos_18_seguridad.sql`.
 
 En Vercel agrega `NEXT_PUBLIC_SITE_URL` con la URL estable de producción y completa las variables legales indicadas en `.env.example`. En Supabase Authentication > URL Configuration, configura la misma URL estable como Site URL y agrega `https://TU-DOMINIO/**` como Redirect URL.
 

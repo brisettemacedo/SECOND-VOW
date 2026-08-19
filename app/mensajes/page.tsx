@@ -3,7 +3,8 @@ import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function MessagesPage({searchParams}:{searchParams?:{conversation?:string}}){
+export default async function MessagesPage({searchParams}:{searchParams?:Promise<{conversation?:string}>}){
+  const query=await(searchParams??Promise.resolve<{conversation?:string}>({}));
   const {supabase,user}=await requireUser();
   await supabase.rpc("expire_stale_offers");
   const {data,error}=await supabase.from("conversations")
@@ -28,5 +29,5 @@ export default async function MessagesPage({searchParams}:{searchParams?:{conver
     offers:(offers??[]).filter((o:any)=>o.conversation_id===c.id),
     orders:(orders??[]).filter((o:any)=>o.dress_id===c.dress_id&&o.buyer_id===c.buyer_id&&o.seller_id===c.seller_id),
   }));
-  return <main className="page"><h1>Mensajes</h1><p className="muted">Mantén la conversación, las ofertas y el pago dentro de SECOND VOW para conservar el historial de la operación.</p><MessagesClient initial={initial as any} userId={user.id} initialActive={searchParams?.conversation}/></main>
+  return <main className="page"><h1>Mensajes</h1><p className="muted">Mantén la conversación, las ofertas y el pago dentro de SECOND VOW para conservar el historial de la operación.</p><MessagesClient initial={initial as any} userId={user.id} initialActive={query.conversation}/></main>
 }

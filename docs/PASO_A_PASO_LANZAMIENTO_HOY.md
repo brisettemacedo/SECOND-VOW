@@ -1,60 +1,64 @@
-# SECOND VOW v1.3.1 - paso a paso para lanzamiento
+# SECOND VOW v1.6.0 — despliegue seguro
 
-## 1. Supabase
-1. SQL Editor > New query.
-2. Copia y ejecuta `supabase/migrations/0016_lanzamiento_publico_ship24.sql`.
-3. Authentication > URL Configuration:
-   - Site URL: `https://secondvow-seven.vercel.app`
-   - Redirect URL: `https://secondvow-seven.vercel.app/auth/callback`
-4. Para login social, configura Providers > Google y/o Facebook antes de activar los botones.
+## 1. Antes de subir
 
-## 2. Vercel
-En Settings > Environment Variables, Production debe tener al menos:
-- `NEXT_PUBLIC_SITE_URL=https://secondvow-seven.vercel.app`
-- `SHIP24_API_KEY=<tu API key de Ship24>`
-- `SHIP24_WEBHOOK_SECRET=<tu Webhook Secret de Ship24>`
-- variables existentes de Supabase
-- variables existentes de Stripe
+1. Ejecuta `npm install` para generar `package-lock.json` con las versiones exactas de `package.json`.
+2. Ejecuta `npm run typecheck`, `npm run lint` y `npm run build`.
+3. No continúes si cualquiera falla.
 
-No expongas secretos con prefijo `NEXT_PUBLIC_`.
+## 2. Supabase
 
-Para mostrar Google/Facebook después de configurarlos en Supabase:
-- `NEXT_PUBLIC_SOCIAL_LOGIN_ENABLED=true`
+Si 0001–0017 ya están aplicadas, ejecuta únicamente `supabase/migrations/0018_produccion_pagos_18_seguridad.sql`. La migración cambia la comisión a 18%, elimina el cargo fijo, hace atómico el Checkout, agrega revisión de pagos tardíos, reembolsos, devoluciones y rate limits.
 
-Después de cambiar variables: Redeploy.
+Configura Authentication con el dominio real:
 
-## 3. Ship24
-1. Dashboard > API keys: copia tu API key a Vercel como `SHIP24_API_KEY`.
-2. Dashboard > Webhook: usa `https://secondvow-seven.vercel.app/api/ship24/webhook`.
-3. Copia el Webhook Secret a Vercel como `SHIP24_WEBHOOK_SECRET`.
-4. Usa primero la función de prueba del webhook del Dashboard.
-5. Para probar un tracker sin paquete real, Ship24 documenta números de muestra como `SHIP24_SAMPLE_DELIVERED_000` y `SHIP24_SAMPLE_IN_TRANSIT_000`.
-6. En SECOND VOW, después de un pedido pagado, la vendedora registra paquetería + guía. SECOND VOW crea el tracker en Ship24 y guarda el trackerId.
+- Site URL: `https://TU-DOMINIO`
+- Redirect URL: `https://TU-DOMINIO/auth/callback`
+
+## 3. Vercel
+
+Copia todas las variables de `.env.example`. Usa valores TEST en Preview y LIVE en Production. `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SHIP24_API_KEY` y `SHIP24_WEBHOOK_SECRET` nunca llevan prefijo `NEXT_PUBLIC_`.
+
+El build de producción falla intencionalmente si faltan URL, identidad/domicilio legal, teléfono o correos obligatorios. Después de cambiar variables realiza un deployment nuevo del commit actual.
 
 ## 4. Stripe
-1. La vendedora debe entrar a Cuenta > Pagos y retiros y completar Stripe Connect.
-2. El botón de pago no se habilita funcionalmente si la vendedora no tiene onboarding completo y payouts habilitados.
-3. Confirma que Production usa claves LIVE y que `STRIPE_WEBHOOK_SECRET` corresponde al endpoint LIVE de producción.
-4. Webhook de producción debe apuntar a `https://secondvow-seven.vercel.app/api/stripe/webhook`.
-5. Para pruebas sin dinero real, usa un Preview Deployment con claves TEST de Stripe. No mezcles claves TEST y LIVE en Production.
 
-## 5. GitHub / Vercel
-1. Sustituye el proyecto por esta carpeta.
-2. Commit: `SECOND VOW v1.3.1 - lanzamiento publico`.
-3. Push origin.
-4. Verifica que Vercel cree automáticamente un deployment del commit nuevo.
-5. No hagas Redeploy de un commit viejo.
+Configura `/api/stripe/webhook` para eventos de plataforma y eventos de cuentas conectadas. Suscribe como mínimo:
 
-## 6. Prueba final mínima antes de compartir el enlace
-- crear cuenta y confirmar correo;
-- iniciar sesión;
-- publicar vestido y aprobarlo desde admin;
-- guardar vestido;
-- enviar mensaje;
-- hacer / aceptar oferta;
-- cotizar envío;
-- comprobar que el botón Pagar abre Stripe;
-- comprobar webhook de Stripe;
-- registrar tracking Ship24;
-- comprobar webhook de Ship24;
-- comprobar 72 h / reclamación con un pedido de prueba antes de operar un caso real.
+- `checkout.session.completed`
+- `checkout.session.expired`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+- `payment_intent.payment_failed`
+- `refund.created`, `refund.updated`, `refund.failed`
+- `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`
+- `transfer.reversed`
+- `payout.paid`, `payout.failed`, `payout.canceled`
+- `account.updated`
+
+El secret debe corresponder exactamente a ese endpoint y modo. El Checkout inicial acepta tarjeta para evitar pagos diferidos que sobrevivan a la reserva. Prueba primero con claves TEST.
+
+## 5. Vercel Cron
+
+`vercel.json` ejecuta una vez al día los cierres y expiraciones compatibles con Hobby. Vercel debe enviar `Authorization: Bearer CRON_SECRET`; si falta el secreto, los endpoints responden 401. Los webhooks de Stripe son la vía primaria para liberar sesiones vencidas.
+
+## 6. Ship24
+
+Configura `/api/ship24/webhook` con su secreto. Registra un número de prueba y confirma que el evento de entrega inicia exactamente la ventana de 72 horas.
+
+## 7. Prueba integral obligatoria
+
+1. Registro, correo, login y recuperación.
+2. Publicación, imágenes, moderación y catálogo público.
+3. Mensaje, oferta, aceptación y cotización.
+4. Dos compradoras intentando pagar el mismo vestido: solo una debe obtener Checkout.
+5. Doble clic en pagar: debe reutilizar una sola sesión.
+6. Pago exitoso y evento duplicado: un solo pago, ledger y saldo.
+7. Sesión vencida y visita a la ficha: liberación después del margen de seguridad.
+8. Pago tardío simulado: `payment_review`, sin habilitar envío.
+9. Envío, entrega, 72 horas y liberación de saldo.
+10. Reclamación, devolución en cinco días, recepción y reembolso.
+11. Contracargo: saldo pausado y excepción administrativa.
+12. Retiro, falla y reintento sin duplicar transferencia.
+
+No actives pagos LIVE hasta completar todos los casos y conciliar importes contra el Dashboard de Stripe.

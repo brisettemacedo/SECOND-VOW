@@ -37,12 +37,13 @@ async function CatalogResults({ searchParams }: { searchParams: DressSearchParam
   </>;
 }
 
-export default function CatalogPage({ searchParams }: { searchParams: DressSearchParams }) {
+export default async function CatalogPage({ searchParams }: { searchParams: Promise<DressSearchParams> }) {
+  const query = await searchParams;
   return <main className="catalog-page">
     <div className="catalog-heading-row">
       <div><p className="catalog-eyebrow">Encuentra el vestido indicado</p><h1>Vestidos disponibles</h1></div>
       <Suspense fallback={<div className="filter-trigger-placeholder" />}><CatalogFilters /></Suspense>
     </div>
-    <Suspense fallback={<p className="muted">Cargando vestidos...</p>}><CatalogResults searchParams={searchParams} /></Suspense>
+    <Suspense fallback={<p className="muted">Cargando vestidos...</p>}><CatalogResults searchParams={query} /></Suspense>
   </main>;
 }

@@ -47,6 +47,7 @@ export default function OffersClient({ offers, userId }: { offers: any[]; userId
       return <article className="panel" key={o.id}>
         <h2>{dressTitle(o.dresses)}</h2>
         <p>${Number(o.amount_mxn).toLocaleString("es-MX")} MXN | <span className="badge">{o.status}</span></p>
+        {o.seller_id === userId && <p className="muted">Si aceptas, recibirás ${Math.round(Number(o.amount_mxn) * 0.82).toLocaleString("es-MX")} MXN por el vestido, más el envío cotizado. SECOND VOW retiene 18%; Stripe ya está incluido.</p>}
         {o.note && <p>{o.note}</p>}
         <p className="muted">Expira: {new Date(o.expires_at).toLocaleString("es-MX")}</p>
         {canRespond && <div className="actions-stack">

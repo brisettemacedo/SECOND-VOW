@@ -16,6 +16,6 @@ CAMBIOS CLAVE
 - Devolución aprobada: 5 días naturales para entregar a paquetería.
 - Catálogos controlados en base de datos para talla, sistema de talla, silueta, escote, espalda, manga, tela, color, cola y condición.
 - Índices parciales para catálogo de 50,000+ vestidos.
-- Comisión inicial: 15% + $19 MXN fijo a la vendedora. Publicación gratis.
+- Comisión vigente desde 0018: 18% total del precio del vestido, incluyendo el costo ordinario de Stripe; sin cargo fijo. Publicación gratis.
 - Envío: lo organiza la vendedora; la compradora paga el monto cotizado dentro del checkout; 0% de comisión sobre envío.
 - Stripe Connect: la vendedora no necesita cuenta Stripe previa. Vincula banco mediante onboarding integrado/hosted de Stripe y solicita retiro desde SECOND VOW.
