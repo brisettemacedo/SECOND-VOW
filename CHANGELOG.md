@@ -120,3 +120,13 @@
 - Avisos persistentes, seguro y firma obligatorios desde $10,000 MXN.
 - Checkboxes transaccionales, políticas de envíos/devoluciones y preferencias de cookies.
 - Un solo proceso diario compatible con Vercel Hobby.
+# v1.7.1 — 2026-08-24
+- La vendedora puede cancelar antes del envío con motivo obligatorio.
+- Antes del pago se cancela el pedido; durante Checkout se expira la sesión; después del pago se solicita reembolso completo a Stripe.
+- Se impide cancelar unilateralmente después del envío o durante un contracargo/revisión para evitar devoluciones duplicadas.
+- El vestido vuelve a publicarse únicamente cuando Stripe confirma el reembolso.
+# v1.8.0 — 2026-08-24
+- Nueva portada con jerarquía editorial, CTA de catálogo y cuatro beneficios.
+- Sección para captar inventario y explicar la comisión de 18% y el 82% de la vendedora.
+- Calculadora interactiva de recuperación con descuento ajustable y aclaración sobre el envío.
+- Diseño responsivo para escritorio y móvil.

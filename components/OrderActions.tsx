@@ -25,6 +25,7 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
   const [chargeAcknowledged, setChargeAcknowledged] = useState(false);
   const [insured, setInsured] = useState(Boolean(order.shipping_insurance_confirmed));
   const [signature, setSignature] = useState(Boolean(order.shipping_signature_confirmed));
+  const [cancelReason, setCancelReason] = useState("");
   const highValue = Number(order.subtotal_mxn) >= 10000;
 
   async function rpc(name: string, args: any) {
@@ -68,6 +69,13 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
     const json = await res.json().catch(() => ({})); setBusy(false);
     if (!res.ok) setActionError(json.error || "No fue posible registrar la devolución"); else { if (json.warning) alert(json.warning); router.refresh(); }
   }
+  async function sellerCancel() {
+    if (!confirm(order.status === "paid" || order.status === "preparing_shipment" ? "¿Confirmas cancelar la venta? Se solicitará a Stripe el reembolso completo y no podrás enviar el vestido." : "¿Confirmas cancelar esta venta?")) return;
+    setBusy(true); setActionError("");
+    const res = await fetch("/api/stripe/seller-cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: order.id, reason: cancelReason.trim() }) });
+    const json = await res.json().catch(() => ({})); setBusy(false);
+    if (!res.ok) setActionError(json.error || "No fue posible cancelar la venta"); else router.refresh();
+  }
 
   const deadline = order.dispute_deadline_at || order.inspection_deadline_at || order.claim_deadline_at;
   const activeClaim = (order.claims ?? []).find((item: any) => !["rejected", "closed", "refunded"].includes(item.status));
@@ -92,5 +100,6 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
     {order.status === "returned" && <div className="alert-info">La devolución fue recibida. SECOND VOW debe completar el reembolso al medio de pago original.</div>}
     {order.status === "payment_review" && <div className="alert-error">El pago requiere conciliación manual. No envíes el vestido hasta que administración resuelva el caso.</div>}
     {order.status === "chargeback_open" && <div className="alert-error"><strong>NO ENVÍES.</strong> La compradora desconoció el cargo y Stripe abrió un contracargo. El envío y el retiro están bloqueados.</div>}
+    {order.seller_id === userId && ["awaiting_payment", "payment_processing", "paid", "preparing_shipment"].includes(order.status) && !order.shipped_at && <div className="panel"><h3>Cancelar venta</h3><p>{["paid", "preparing_shipment"].includes(order.status) ? "Solo puedes cancelarla antes de enviar. Se bloqueará el envío y se solicitará a Stripe el reembolso completo." : "Puedes cancelar mientras el vestido no haya sido enviado."}</p><div className="field"><label>Motivo</label><textarea rows={3} maxLength={500} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Explica brevemente por qué cancelas" /></div><button className="btn btn-secondary" disabled={busy || cancelReason.trim().length < 5} onClick={sellerCancel}>Cancelar venta</button></div>}
   </div>;
 }

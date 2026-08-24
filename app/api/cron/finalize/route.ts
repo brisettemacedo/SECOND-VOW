@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   if (expireError) return NextResponse.json({ error: expireError.message }, { status: 500 });
   const { data, error } = await admin.rpc("backend_finalize_expired_inspections");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const { data: pending } = await admin.from("orders").select("id,amount_charged_mxn,total_mxn,stripe_charge_id,stripe_dispute_status").eq("status", "refund_pending").eq("shipping_block_reason", "shipping_deadline_expired").is("shipped_at", null).limit(50);
+  const { data: pending } = await admin.from("orders").select("id,amount_charged_mxn,total_mxn,stripe_charge_id,stripe_dispute_status,shipping_block_reason").eq("status", "refund_pending").in("shipping_block_reason", ["shipping_deadline_expired", "seller_cancelled"]).is("shipped_at", null).limit(50);
   let refundsRequested = 0;
   const refundErrors: string[] = [];
   for (const order of pending ?? []) {
@@ -22,8 +22,8 @@ export async function GET(req: Request) {
       params.set("amount", String(Math.round(amount * 100)));
       params.set("reason", "requested_by_customer");
       params.set("metadata[order_id]", order.id);
-      params.set("metadata[reason]", "seller_shipping_deadline_expired");
-      const refund = await stripeRequest("/refunds", params, undefined, `shipping_deadline_refund_${order.id}`);
+      params.set("metadata[reason]", order.shipping_block_reason === "seller_cancelled" ? "seller_cancelled_before_shipping" : "seller_shipping_deadline_expired");
+      const refund = await stripeRequest("/refunds", params, undefined, `${order.shipping_block_reason}_refund_${order.id}`);
       const status = refund.status === "succeeded" ? "succeeded" : refund.status === "failed" ? "failed" : "processing";
       const { error: recordError } = await admin.rpc("backend_record_refund", { p_order_id: order.id, p_provider_refund_id: refund.id, p_amount_mxn: amount, p_status: status, p_reason_code: "order_cancelled" });
       if (recordError) throw new Error(recordError.message);
