@@ -1,4 +1,4 @@
-# SECOND VOW — v1.8.0 producción candidata
+# SECOND VOW — v1.8.1 producción candidata
 
 Esta carpeta es la versión única de referencia del proyecto. Sustituye los ZIP anteriores.
 

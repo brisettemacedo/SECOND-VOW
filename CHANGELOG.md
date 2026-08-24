@@ -130,3 +130,6 @@
 - Sección para captar inventario y explicar la comisión de 18% y el 82% de la vendedora.
 - Calculadora interactiva de recuperación con descuento ajustable y aclaración sobre el envío.
 - Diseño responsivo para escritorio y móvil.
+# v1.8.1 — 2026-08-24
+- Corregida una regla global que reducía a 14 px las líneas internas del titular del hero.
+- Titular ampliado y equilibrado para escritorio y móvil, con mejor contraste sobre fotografía.
