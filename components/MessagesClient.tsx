@@ -12,7 +12,7 @@ const STATUS:Record<string,string>={pending:"Pendiente",accepted:"Aceptada",decl
 
 export default function MessagesClient({initial,userId,initialActive}:{initial:Conv[];userId:string;initialActive?:string}){
  const supabase=useMemo(()=>createClient(),[]); const router=useRouter();
- const [convs,setConvs]=useState(initial);
+ const convs=initial;
  const first=initial.find(c=>c.id===initialActive)?.id??initial[0]?.id??"";
  const [active,setActive]=useState(first);
  const activeConv=convs.find(c=>c.id===active);

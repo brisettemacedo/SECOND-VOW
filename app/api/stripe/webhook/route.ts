@@ -28,6 +28,15 @@ async function markSessionPaid(admin: ReturnType<typeof createAdminClient>, sess
   if (error) throw new Error(error.message);
 }
 
+async function paymentIntentFromObject(object: any) {
+  if (typeof object?.payment_intent === "string") return object.payment_intent;
+  if (object?.payment_intent?.id) return object.payment_intent.id;
+  const chargeId = typeof object?.charge === "string" ? object.charge : object?.charge?.id;
+  if (!chargeId) return null;
+  const charge = await stripeGet(`/charges/${chargeId}`);
+  return typeof charge?.payment_intent === "string" ? charge.payment_intent : charge?.payment_intent?.id ?? null;
+}
+
 export async function POST(req: Request) {
   const raw = await req.text();
   if (!verifyStripeSignature(raw, req.headers.get("stripe-signature"))) {
@@ -73,9 +82,22 @@ export async function POST(req: Request) {
         if (error) throw new Error(error.message);
       }
     } else if (["charge.dispute.created", "charge.dispute.updated", "charge.dispute.closed"].includes(event.type)) {
-      const charge = await stripeGet(`/charges/${object.charge}`);
-      if (charge?.payment_intent) {
-        const { error } = await admin.rpc("backend_mark_payment_dispute", { p_payment_intent_id: charge.payment_intent, p_dispute_id: object.id, p_status: object.status ?? "open" });
+      const paymentIntentId = await paymentIntentFromObject(object);
+      if (paymentIntentId) {
+        const dueBy = object?.evidence_details?.due_by ? new Date(Number(object.evidence_details.due_by) * 1000).toISOString() : null;
+        const { error } = await admin.rpc("backend_mark_payment_risk", { p_payment_intent_id: paymentIntentId, p_kind: "dispute", p_reference_id: object.id, p_status: object.status ?? "open", p_reason: object.reason ?? null, p_due_by: dueBy });
+        if (error) throw new Error(error.message);
+      }
+    } else if (event.type === "radar.early_fraud_warning.created") {
+      const paymentIntentId = await paymentIntentFromObject(object);
+      if (paymentIntentId) {
+        const { error } = await admin.rpc("backend_mark_payment_risk", { p_payment_intent_id: paymentIntentId, p_kind: "early_fraud_warning", p_reference_id: object.id, p_status: object.actionable === false ? "informational" : "actionable", p_reason: object.fraud_type ?? "suspected_fraud", p_due_by: null });
+        if (error) throw new Error(error.message);
+      }
+    } else if (["review.opened", "review.closed"].includes(event.type)) {
+      const paymentIntentId = await paymentIntentFromObject(object);
+      if (paymentIntentId && event.type === "review.opened") {
+        const { error } = await admin.rpc("backend_mark_payment_risk", { p_payment_intent_id: paymentIntentId, p_kind: "radar_review", p_reference_id: object.id, p_status: object.opened_reason ?? "open", p_reason: object.opened_reason ?? null, p_due_by: null });
         if (error) throw new Error(error.message);
       }
     } else if (event.type === "transfer.reversed") {

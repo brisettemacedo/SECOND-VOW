@@ -8,7 +8,7 @@ function cleanModel(value: any) {
   return /^(na|n\/?a|no aplica|sin modelo)$/i.test(text) ? "" : text;
 }
 const STATUS: Record<string, string> = {
-  awaiting_payment: "Pendiente de pago", payment_processing: "Procesando pago", payment_review: "Pago en revisión",
+  awaiting_payment: "Pendiente de pago", payment_processing: "Procesando pago", payment_review: "Pago en revisión", chargeback_open: "Contracargo abierto",
   paid: "Pago confirmado", preparing_shipment: "Preparando envío", shipped: "Enviado", delivered: "Entregado",
   inspection: "Periodo de protección", claim_open: "Reclamación abierta", return_authorized: "Devolución autorizada",
   return_shipped: "Devolución en tránsito", returned: "Devolución recibida", refund_pending: "Reembolso pendiente",
@@ -40,6 +40,7 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
     {query.payment === "cancelled" && <div className="alert-info">Saliste de Stripe sin completar el pago. La reserva se conserva hasta que Stripe confirme que la sesión venció; puedes volver a intentarlo desde este pedido.</div>}
     {query.payment === "success" && !["paid", "preparing_shipment", "shipped"].includes(order.status) && <div className="alert-info">Stripe está confirmando el pago. Actualiza esta página en unos momentos; no inicies otro pago.</div>}
     <section className="panel"><p>Vestido: ${Number(order.subtotal_mxn).toLocaleString("es-MX")} MXN</p>{order.shipping_quote_set_at ? <p>Envío: ${Number(order.shipping_mxn).toLocaleString("es-MX")} MXN{order.shipping_carrier_declared ? ` con ${carrierName(order.shipping_carrier_declared)}` : ""}</p> : <p className="muted">Envío pendiente de cotización.</p>}<p>Estado: <span className="badge">{STATUS[order.status] || order.status}</span></p>{order.tracking_number && <p>Rastreo: {carrierName(order.carrier)} | {order.tracking_number}</p>}</section>
+    {(order.shipments ?? []).some((shipment: any) => shipment.tracking_error) && <div className="alert-info"><strong>Seguimiento pendiente de validación.</strong> La guía está registrada, pero el proveedor todavía no la reconoce. Esto no acredita que el envío esté confirmado ni entregado.</div>}
     {(trackingEvents ?? []).length > 0 && <section className="panel"><h2>Seguimiento del envío</h2>{(trackingEvents ?? []).map((event: any, index: number) => <div className="tracking-row" key={`${event.occurred_at}-${index}`}><strong>{STATUS[event.status_milestone] || String(event.status_milestone || event.raw_status || "Actualización").replaceAll("_", " ")}</strong><span>{new Date(event.occurred_at).toLocaleString("es-MX")}</span></div>)}</section>}
     <OrderActions order={order} userId={user.id} evidence={evidence ?? []} />
     {(order.claims ?? []).length > 0 && <section className="panel"><h2>Reclamaciones</h2>{order.claims.map((claim: any) => <div key={claim.id}><strong>{claim.status}</strong><p>{claim.description}</p></div>)}</section>}

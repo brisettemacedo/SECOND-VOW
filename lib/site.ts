@@ -16,6 +16,6 @@ if (production) {
 }
 export const PRIVACY_EMAIL = publicSetting("NEXT_PUBLIC_PRIVACY_EMAIL", process.env.NEXT_PUBLIC_PRIVACY_EMAIL, "privacidad@secondvow.com");
 export const CONTACT_EMAIL = publicSetting("NEXT_PUBLIC_CONTACT_EMAIL", process.env.NEXT_PUBLIC_CONTACT_EMAIL, "hola@secondvow.com");
-export const TERMS_VERSION = "2026-08-17";
-export const PRIVACY_VERSION = "2026-08-17";
-export const COOKIES_VERSION = "2026-08-17";
+export const TERMS_VERSION = "2026-08-22";
+export const PRIVACY_VERSION = "2026-08-22";
+export const COOKIES_VERSION = "2026-08-22";

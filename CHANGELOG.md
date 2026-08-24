@@ -111,3 +111,12 @@
 - Folio amigable SV-AAAA-######.
 - Estados de pedido humanizados y tracking visible.
 - Corrección crítica: importes enviados a Stripe convertidos de MXN a centavos en Checkout, Transfer y Payout.
+# v1.7.0 — 2026-08-22
+- Ventana de reclamación de 48 horas desde que SECOND VOW registra la entrega.
+- Devolución solo por información falsa o materialmente incorrecta, incluido daño relevante no informado; no procede porque el vestido no quede.
+- Cinco días naturales para envío y solicitud automática de reembolso Stripe al vencer.
+- Ship24 acredita entrega de salida y devolución sin inicio retroactivo del plazo.
+- Bloqueo de envío y retiro ante Radar, alerta temprana de fraude o contracargo.
+- Avisos persistentes, seguro y firma obligatorios desde $10,000 MXN.
+- Checkboxes transaccionales, políticas de envíos/devoluciones y preferencias de cookies.
+- Un solo proceso diario compatible con Vercel Hobby.

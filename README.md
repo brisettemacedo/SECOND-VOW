@@ -1,10 +1,10 @@
-# SECOND VOW — v1.6.0 producción candidata
+# SECOND VOW — v1.7.0 producción candidata
 
 Esta carpeta es la versión única de referencia del proyecto. Sustituye los ZIP anteriores.
 
 ## Estado de la base de datos
 
-Las migraciones `0001` a `0018` son el historial del esquema. Si `0001`–`0017` ya se ejecutaron, aplica únicamente `0018_produccion_pagos_18_seguridad.sql`. No vuelvas a ejecutar migraciones anteriores ni edites archivos ya aplicados.
+Las migraciones `0001` a `0019` son el historial del esquema. Si `0001`–`0018` ya se ejecutaron, aplica únicamente `0019_flujo_integral_48h_contracargos_devoluciones.sql`. No vuelvas a ejecutar migraciones anteriores ni edites archivos ya aplicados. La migración `0019` no borra objetos de `storage.objects`; cualquier eliminación física debe hacerse mediante Storage API.
 
 ## Variables de Vercel
 

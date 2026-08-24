@@ -1,11 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 export default function PayoutsClient({ orders }: { orders: any[] }) {
-  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const [busy, setBusy] = useState("");
 

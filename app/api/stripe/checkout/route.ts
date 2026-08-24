@@ -16,14 +16,17 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}));
   const orderId = typeof body.orderId === "string" ? body.orderId : "";
-  if (!orderId) return NextResponse.json({ error: "Pedido inválido" }, { status: 400 });
+  const accepted = body.accepted === true;
+  const termsVersion = typeof body.termsVersion === "string" ? body.termsVersion.trim() : "";
+  if (!orderId || !accepted || !termsVersion) return NextResponse.json({ error: "Debes aceptar las condiciones específicas de la compra" }, { status: 400 });
 
   const { data: basicOrder } = await supabase
     .from("orders")
-    .select("id,buyer_id,status,stripe_checkout_session_id,payment_deadline_at")
+    .select("id,buyer_id,status,stripe_checkout_session_id,payment_deadline_at,checkout_terms_version,checkout_terms_accepted_at,checkout_charge_acknowledged_at")
     .eq("id", orderId)
     .maybeSingle();
   if (!basicOrder || basicOrder.buyer_id !== user.id) return NextResponse.json({ error: "Pedido inválido" }, { status: 400 });
+  if (!basicOrder.checkout_terms_accepted_at || !basicOrder.checkout_charge_acknowledged_at || basicOrder.checkout_terms_version !== termsVersion) return NextResponse.json({ error: "No se encontró la aceptación legal de esta operación" }, { status: 409 });
 
   if (basicOrder.status === "payment_processing" && basicOrder.stripe_checkout_session_id) {
     try {

@@ -17,9 +17,11 @@ export async function POST(req: Request) {
   const carrier = typeof body.carrier === "string" ? body.carrier.trim().slice(0, 80) : "";
   const trackingNumber = typeof body.trackingNumber === "string" ? body.trackingNumber.trim().slice(0, 120) : "";
   const courierCode = typeof body.courierCode === "string" ? body.courierCode.trim().slice(0, 80) : undefined;
+  const insured = body.insured === true;
+  const signature = body.signature === true;
   if (!orderId || !carrier || !trackingNumber) return NextResponse.json({ error: "Faltan datos del envío" }, { status: 400 });
 
-  const { error: shipError } = await supabase.rpc("mark_order_shipped", { p_order_id: orderId, p_carrier: carrier, p_tracking_number: trackingNumber });
+  const { error: shipError } = await supabase.rpc("mark_order_shipped", { p_order_id: orderId, p_carrier: carrier, p_tracking_number: trackingNumber, p_insured: insured, p_signature: signature });
   if (shipError) return NextResponse.json({ error: shipError.message }, { status: 400 });
   const admin = createAdminClient();
   const [{ data: shipment, error }, { data: order }] = await Promise.all([

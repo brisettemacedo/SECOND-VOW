@@ -25,25 +25,25 @@ export default function AdminDashboard(p: { verifications: any[]; claims: any[];
 
   async function verify(id: string, status: string) {
     const { error } = await supabase.rpc("admin_resolve_identity_verification", { p_verification_id: id, p_status: status });
-    error ? alert(error.message) : refresh();
+    if (error) alert(error.message); else refresh();
   }
   async function brand(id: string, action: string) {
     const { error } = await supabase.rpc("admin_resolve_brand_suggestion", { p_suggestion_id: id, p_action: action, p_existing_brand_id: action === "link_existing" ? (link[id] || null) : null, p_notes: null });
-    error ? alert(error.message) : refresh();
+    if (error) alert(error.message); else refresh();
   }
   async function block(user: any) {
     const reason = user.is_blocked ? null : (prompt("Motivo del bloqueo") || "Incumplimiento de reglas");
     const { error } = await supabase.rpc("admin_set_user_blocked", { p_user_id: user.id, p_blocked: !user.is_blocked, p_reason: reason });
-    error ? alert(error.message) : refresh();
+    if (error) alert(error.message); else refresh();
   }
   async function arcoAction(id: string, status: string) {
     const response = prompt("Respuesta administrativa (opcional)") || null;
     const { error } = await supabase.from("arco_requests").update({ status, admin_response: response, resolved_at: status === "resolved" ? new Date().toISOString() : null }).eq("id", id);
-    error ? alert(error.message) : refresh();
+    if (error) alert(error.message); else refresh();
   }
   async function reportAction(id: string, status: string) {
     const { error } = await supabase.from("conversation_reports").update({ status }).eq("id", id);
-    error ? alert(error.message) : refresh();
+    if (error) alert(error.message); else refresh();
   }
   async function claimAction(claim: any, action: "authorize" | "reject" | "refund") {
     setBusy(claim.id);

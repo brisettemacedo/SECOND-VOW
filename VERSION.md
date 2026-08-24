@@ -1,3 +1,3 @@
-# SECOND VOW v1.6.0
+# SECOND VOW v1.7.0
 
-Candidata de producción: comisión total 18%, checkout atómico, conciliación Stripe, devoluciones/reembolsos y seguridad reforzada.
+Candidata de producción: flujo integral de 48 horas, cinco días de envío, contracargos, devoluciones rastreables y consentimiento legal transaccional.
