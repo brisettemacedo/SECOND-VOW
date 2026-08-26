@@ -1,3 +1,10 @@
+# v1.8.2 — 2026-08-26
+- Corrige el bloqueo de aceptación legal de la compradora antes de Stripe.
+- Corrige la cancelación de la vendedora en pedidos pendientes de pago.
+- Mantiene revocado el `UPDATE` directo sobre pedidos: las escrituras continúan únicamente mediante RPC seguras.
+- Separa visualmente los errores de pago, cancelación y devolución.
+- Nueva migración incremental 0021; 0001–0020 permanecen intactas.
+
 # v1.6.0 — 2026-08-17
 - Comisión total de 18% sobre vestido; incluye procesamiento Stripe, sin cargo fijo y sin comisión sobre envío.
 - Checkout atómico e idempotente; bloqueo de doble venta y reutilización de sesión.

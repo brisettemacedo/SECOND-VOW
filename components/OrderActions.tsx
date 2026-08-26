@@ -26,6 +26,7 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
   const [insured, setInsured] = useState(Boolean(order.shipping_insurance_confirmed));
   const [signature, setSignature] = useState(Boolean(order.shipping_signature_confirmed));
   const [cancelReason, setCancelReason] = useState("");
+  const [failedAction, setFailedAction] = useState<"payment" | "cancellation" | "return" | "">("");
   const highValue = Number(order.subtotal_mxn) >= 10000;
 
   async function rpc(name: string, args: any) {
@@ -41,7 +42,7 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
   }
   async function checkout() {
     if (!checkoutTerms || !chargeAcknowledged) { setActionError("Debes aceptar las condiciones de la operación y reconocer el cargo antes de pagar."); return; }
-    setBusy(true); setActionError("");
+    setBusy(true); setActionError(""); setFailedAction("");
     try {
       const { error: acceptanceError } = await supabase.rpc("accept_order_checkout_terms", { p_order_id: order.id, p_terms_version: TERMS_VERSION });
       if (acceptanceError) throw new Error(acceptanceError.message);
@@ -50,7 +51,7 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
       if (!res.ok) throw new Error(json.error || `No fue posible iniciar el pago (${res.status})`);
       if (!json.url) throw new Error("Stripe no devolvió la página de pago.");
       window.location.assign(json.url);
-    } catch (error: any) { setActionError(error?.message || "No fue posible iniciar el pago"); }
+    } catch (error: any) { setFailedAction("payment"); setActionError(error?.message || "No fue posible iniciar el pago"); }
     finally { setBusy(false); }
   }
   async function ship() {
@@ -64,23 +65,23 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
     if (reasonCode && description.trim()) await rpc("open_order_claim", { p_order_id: order.id, p_reason_code: reasonCode, p_description: description.trim() });
   }
   async function registerReturn() {
-    setBusy(true); setActionError("");
+    setBusy(true); setActionError(""); setFailedAction("");
     const res = await fetch("/api/tracking/register-return", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: order.id, carrier: returnCarrier.trim(), trackingNumber: returnTracking.trim() }) });
     const json = await res.json().catch(() => ({})); setBusy(false);
-    if (!res.ok) setActionError(json.error || "No fue posible registrar la devolución"); else { if (json.warning) alert(json.warning); router.refresh(); }
+    if (!res.ok) { setFailedAction("return"); setActionError(json.error || "No fue posible registrar la devolución"); } else { if (json.warning) alert(json.warning); router.refresh(); }
   }
   async function sellerCancel() {
     if (!confirm(order.status === "paid" || order.status === "preparing_shipment" ? "¿Confirmas cancelar la venta? Se solicitará a Stripe el reembolso completo y no podrás enviar el vestido." : "¿Confirmas cancelar esta venta?")) return;
-    setBusy(true); setActionError("");
+    setBusy(true); setActionError(""); setFailedAction("");
     const res = await fetch("/api/stripe/seller-cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: order.id, reason: cancelReason.trim() }) });
     const json = await res.json().catch(() => ({})); setBusy(false);
-    if (!res.ok) setActionError(json.error || "No fue posible cancelar la venta"); else router.refresh();
+    if (!res.ok) { setFailedAction("cancellation"); setActionError(json.error || "No fue posible cancelar la venta"); } else router.refresh();
   }
 
   const deadline = order.dispute_deadline_at || order.inspection_deadline_at || order.claim_deadline_at;
   const activeClaim = (order.claims ?? []).find((item: any) => !["rejected", "closed", "refunded"].includes(item.status));
   return <div className="actions-stack">
-    {actionError && <div className="alert-error"><strong>No se pudo iniciar el pago.</strong><p>{actionError}</p>{actionError.toLowerCase().includes("vendedora") && <p>La vendedora debe entrar a Cuenta → Pagos y retiros y completar Stripe Connect.</p>}</div>}
+    {actionError && <div className="alert-error"><strong>{failedAction === "cancellation" ? "No se pudo cancelar la venta." : failedAction === "return" ? "No se pudo registrar la devolución." : "No se pudo iniciar el pago."}</strong><p>{actionError}</p>{failedAction === "payment" && actionError.toLowerCase().includes("vendedora") && <p>La vendedora debe entrar a Cuenta → Pagos y retiros y completar Stripe Connect.</p>}</div>}
     <div className="safety-callout"><strong>Seguridad de la operación</strong><span>Mantén pagos, acuerdos y evidencia dentro de SECOND VOW. La evidencia del estado, empaque, envío y recepción puede ser determinante.</span></div>
 
     {order.seller_id === userId && order.status === "awaiting_payment" && <div className="panel"><h3>Cotizar envío</h3><p>Consulta la paquetería y captura el costo. La compradora pagará vestido y envío dentro de SECOND VOW.</p><div className="grid-2"><div className="field"><label>Costo de envío (MXN)</label><input type="number" min={0} value={shippingAmount} onChange={(e) => setShippingAmount(e.target.value)} /></div><div className="field"><label>Paquetería estimada</label><input value={shippingCarrier} onChange={(e) => setShippingCarrier(e.target.value)} /></div></div><button className="btn btn-primary" disabled={busy || shippingAmount === ""} onClick={quoteShipping}>{order.shipping_quote_set_at ? "Actualizar cotización" : "Enviar cotización"}</button></div>}
