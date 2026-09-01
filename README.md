@@ -10,7 +10,7 @@ Las migraciones `0001` a `0021` son el historial del esquema. Aplica en orden `0
 
 **Sobre `0023` — "primera en pagar gana", bloqueo vs. reembolso:** el checkout ya bloqueaba que dos pedidos estuvieran "en pago" al mismo tiempo para el mismo vestido (índice único). El hueco que corrige `0023` es distinto: cuando liberamos un pedido vencido en nuestra base, la página de pago de Stripe de esa compradora podía seguir abierta unos minutos más porque nunca le avisábamos a Stripe que la cerrara. Ahora, antes de liberar el vestido, el cron (`/api/cron/expire-payments` y `/api/cron/finalize`) le pide a Stripe que expire esa sesión — la compradora ve "esta sesión expiró" en vez de poder pagar. El reembolso automático (`backend_refund_losing_race_order`, disparado desde el webhook) queda solo como red de seguridad para el caso extremo de dos cobros casi simultáneos, que ningún bloqueo del lado del servidor puede prevenir al 100% con un checkout hospedado por Stripe.
 
-También actualiza `vercel.json` para cerrar pedidos vencidos cada 30 minutos (antes solo una vez al día). En el plan Hobby de Vercel, los crons se fuerzan a ejecutarse una vez al día sin importar el schedule configurado; para el cierre frecuente real se requiere plan Pro o superior.
+También actualiza `vercel.json` para cerrar pedidos vencidos dos veces al día (7am y 7pm) en vez de una sola vez. **Cuidado:** en el plan Hobby de Vercel, un cron con una expresión que corra más de una vez al día hace que **todo el deployment falle** (no solo se ignora la frecuencia). Cada entrada en `crons` debe ser estrictamente una vez por día en Hobby; para cierres más frecuentes que eso se requiere plan Pro o superior.
 
 ## Variables de Vercel
 
