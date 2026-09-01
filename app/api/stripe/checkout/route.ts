@@ -43,15 +43,12 @@ export async function POST(req: Request) {
   const financialOrder = Array.isArray(financials) ? financials[0] : financials;
   if (!financialOrder) return NextResponse.json({ error: "Pedido inválido" }, { status: 400 });
 
-  const { data: sellerAccount } = await admin
-    .from("seller_payment_accounts")
-    .select("onboarding_status,payouts_enabled,provider_account_id")
-    .eq("user_id", financialOrder.seller_id)
-    .maybeSingle();
-  if (!sellerAccount?.provider_account_id || sellerAccount.onboarding_status !== "complete" || !sellerAccount.payouts_enabled) {
-    return NextResponse.json({ error: "La vendedora debe completar la vinculación bancaria antes de recibir pagos." }, { status: 409 });
-  }
-
+  // La falta de datos bancarios de la vendedora NO bloquea la compra: el
+  // cobro se procesa directo a la cuenta de SECOND VOW (no hay transferencia
+  // a una cuenta conectada en este paso). El dinero de la vendedora queda
+  // registrado como saldo pendiente por cobrar (seller_payouts.status='held')
+  // y solo se le exige completar Stripe Connect al momento de RETIRAR ese
+  // saldo (ver request_seller_payout en 0018), que es donde sí es necesario.
   const { data: started, error: startError } = await admin.rpc("backend_begin_checkout", { p_order_id: orderId });
   if (startError) return NextResponse.json({ error: startError.message }, { status: 409 });
   const order = Array.isArray(started) ? started[0] : started;

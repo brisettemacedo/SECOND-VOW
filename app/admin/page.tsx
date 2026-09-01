@@ -41,6 +41,16 @@ export default async function Admin() {
     supabase.from("shipments").select("id,order_id,status,carrier,tracking_number,created_at").order("created_at",{ascending:false}).limit(20),
   ]);
 
+  const { data: stalledDraftsRaw } = await supabase.rpc("admin_list_stalled_drafts");
+  const stalledDrafts = stalledDraftsRaw ?? [];
+  let stalledDraftsWithBrand: any[] = stalledDrafts;
+  if (stalledDrafts.length) {
+    try {
+      const stalledResolver = await resolveDressBrandNames(supabase, stalledDrafts);
+      stalledDraftsWithBrand = stalledDrafts.map((d: any) => ({ ...d, brand_name: stalledResolver.nameFor(d) }));
+    } catch { /* si falla, se muestra sin nombre de marca */ }
+  }
+
   const pendingPublications = pendingResult.data ?? [];
   let pendingError = pendingResult.error?.message || "";
   let resolver: Awaited<ReturnType<typeof resolveDressBrandNames>> | null = null;
@@ -55,8 +65,8 @@ export default async function Admin() {
       <div className="title-row">
         <div>
           <span className="badge">{pendingError ? "Error" : `${pendingPublications.length} pendientes`}</span>
-          <h2>Publicaciones pendientes</h2>
-          <p>Abre cada solicitud para revisar todos los datos y fotografías antes de aprobarla.</p>
+          <h2>Publicaciones pendientes (cola histórica)</h2>
+          <p>Las publicaciones nuevas ya se publican solas al completarse. Esta cola solo puede tener vestidos antiguos que quedaron sin resolver antes de este cambio.</p>
         </div>
         <Link href="/admin/publicaciones" className="btn btn-secondary">Ver todas</Link>
       </div>
@@ -80,6 +90,6 @@ export default async function Admin() {
         {!pendingError && !pendingPublications.length && <p>No hay publicaciones pendientes.</p>}
       </div>
     </section>
-    <AdminDashboard verifications={verifications??[]} claims={claims??[]} brands={brands??[]} suggestions={suggestions??[]} users={users??[]} reports={reports??[]} arco={arco??[]} orders={orders??[]} payments={payments??[]} shipments={shipments??[]} />
+    <AdminDashboard verifications={verifications??[]} claims={claims??[]} brands={brands??[]} suggestions={suggestions??[]} users={users??[]} reports={reports??[]} arco={arco??[]} orders={orders??[]} payments={payments??[]} shipments={shipments??[]} stalledDrafts={stalledDraftsWithBrand} />
   </main>;
 }

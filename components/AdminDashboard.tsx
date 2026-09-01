@@ -16,10 +16,11 @@ function csvDownload(name: string, rows: any[]) {
   URL.revokeObjectURL(anchor.href);
 }
 
-export default function AdminDashboard(p: { verifications: any[]; claims: any[]; brands: any[]; suggestions: any[]; users: any[]; reports: any[]; arco: any[]; orders: any[]; payments: any[]; shipments: any[] }) {
+export default function AdminDashboard(p: { verifications: any[]; claims: any[]; brands: any[]; suggestions: any[]; users: any[]; reports: any[]; arco: any[]; orders: any[]; payments: any[]; shipments: any[]; stalledDrafts?: any[] }) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const [link, setLink] = useState<Record<string, string>>({});
+  const [correctedName, setCorrectedName] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState("");
   const refresh = () => router.refresh();
 
@@ -28,7 +29,13 @@ export default function AdminDashboard(p: { verifications: any[]; claims: any[];
     if (error) alert(error.message); else refresh();
   }
   async function brand(id: string, action: string) {
-    const { error } = await supabase.rpc("admin_resolve_brand_suggestion", { p_suggestion_id: id, p_action: action, p_existing_brand_id: action === "link_existing" ? (link[id] || null) : null, p_notes: null });
+    const { error } = await supabase.rpc("admin_resolve_brand_suggestion", {
+      p_suggestion_id: id,
+      p_action: action,
+      p_existing_brand_id: action === "link_existing" ? (link[id] || null) : null,
+      p_notes: null,
+      p_corrected_name: action === "approve_new" ? (correctedName[id]?.trim() || null) : null,
+    });
     if (error) alert(error.message); else refresh();
   }
   async function block(user: any) {
@@ -73,8 +80,35 @@ export default function AdminDashboard(p: { verifications: any[]; claims: any[];
       <section className="panel"><h2>Pedidos recientes</h2>{p.orders.slice(0, 6).map((order) => <Link className="admin-mini-row" key={order.id} href={`/pedidos/${order.id}`}><span>{order.public_code || `Pedido ${order.id.slice(0, 8)}`}</span><span className="badge">{order.status}</span><strong>${Number(order.total_mxn ?? 0).toLocaleString("es-MX")}</strong></Link>)}{!p.orders.length && <p className="muted">Sin pedidos.</p>}</section>
       <section className="panel"><h2>Envíos</h2>{p.shipments.slice(0, 6).map((shipment) => <div className="admin-mini-row" key={shipment.id}><span>{shipment.carrier || "Paquetería pendiente"}</span><span className="badge">{shipment.status}</span><small>{shipment.tracking_number || "Sin guía"}</small></div>)}{!p.shipments.length && <p className="muted">Sin envíos.</p>}</section>
     </div>
+    {!!(p.stalledDrafts && p.stalledDrafts.length) && (
+      <section className="panel">
+        <h2>Publicaciones sin terminar de publicar</h2>
+        <p className="muted">Ya tienen marca (resuelta o pendiente) pero no se publicaron solas porque les falta algo más. Contacta a la vendedora para completar lo que falta.</p>
+        <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Vestido</th><th>Marca</th><th>Falta</th><th>Actualizado</th></tr></thead><tbody>
+          {p.stalledDrafts.map((d: any) => {
+            const missing = [
+              d.falta_talla && "talla", d.falta_diseno && "diseño", d.falta_condicion && "condición",
+              d.falta_precio && "precio", d.falta_fotos && "fotos", d.falta_declaraciones && "declaraciones",
+            ].filter(Boolean);
+            return <tr key={d.id}>
+              <td><Link href={`/admin/publicaciones/${d.id}`}>{d.model || d.id.slice(0, 8)}</Link></td>
+              <td>{d.brand_name || "Sin marca"}</td>
+              <td>{missing.length ? missing.join(", ") : "—"}</td>
+              <td>{d.updated_at ? new Date(d.updated_at).toLocaleDateString("es-MX") : "—"}</td>
+            </tr>;
+          })}
+        </tbody></table></div>
+      </section>
+    )}
     <div className="admin-module-grid">
-      <section className="panel"><h2>Marcas por revisar</h2>{p.suggestions.map((suggestion) => <div className="admin-compact-item" key={suggestion.id}><strong>{suggestion.suggested_name}</strong><select value={link[suggestion.id] || ""} onChange={(e) => setLink((current) => ({ ...current, [suggestion.id]: e.target.value }))}><option value="">Vincular a existente</option>{p.brands.map((brandOption) => <option key={brandOption.id} value={brandOption.id}>{brandOption.name}</option>)}</select><div className="actions"><button className="btn btn-primary" onClick={() => brand(suggestion.id, "approve_new")}>Aprobar nueva</button><button className="btn btn-secondary" disabled={!link[suggestion.id]} onClick={() => brand(suggestion.id, "link_existing")}>Vincular</button><button className="btn btn-secondary" onClick={() => brand(suggestion.id, "reject")}>Rechazar</button></div></div>)}{!p.suggestions.length && <p className="muted">Nada pendiente.</p>}</section>
+      <section className="panel"><h2>Marcas por revisar</h2>{p.suggestions.map((suggestion) => <div className="admin-compact-item" key={suggestion.id}>
+        <strong>Sugerida: {suggestion.suggested_name}</strong>
+        <label className="muted" style={{ display: "block", marginTop: 4 }}>Nombre corregido (opcional, solo para "Aprobar nueva")
+          <input type="text" placeholder={suggestion.suggested_name} value={correctedName[suggestion.id] ?? ""} onChange={(e) => setCorrectedName((current) => ({ ...current, [suggestion.id]: e.target.value }))} />
+        </label>
+        <select value={link[suggestion.id] || ""} onChange={(e) => setLink((current) => ({ ...current, [suggestion.id]: e.target.value }))}><option value="">Vincular a existente</option>{p.brands.map((brandOption) => <option key={brandOption.id} value={brandOption.id}>{brandOption.name}</option>)}</select>
+        <div className="actions"><button className="btn btn-primary" onClick={() => brand(suggestion.id, "approve_new")}>Aprobar {correctedName[suggestion.id]?.trim() ? `como "${correctedName[suggestion.id].trim()}"` : "nueva"}</button><button className="btn btn-secondary" disabled={!link[suggestion.id]} onClick={() => brand(suggestion.id, "link_existing")}>Vincular</button><button className="btn btn-secondary" onClick={() => brand(suggestion.id, "reject")}>Rechazar</button></div>
+      </div>)}{!p.suggestions.length && <p className="muted">Nada pendiente.</p>}</section>
       <section className="panel"><h2>Identidad histórica</h2>{p.verifications.map((verification) => <div className="admin-compact-item" key={verification.id}><strong>{verification.legal_name || "Nombre no disponible"}</strong><span className="badge">{verification.status}</span><div className="actions"><button className="btn btn-primary" onClick={() => verify(verification.id, "verified")}>Verificar</button><button className="btn btn-secondary" onClick={() => verify(verification.id, "rejected")}>Rechazar</button></div></div>)}{!p.verifications.length && <p className="muted">No hay documentos manuales pendientes.</p>}</section>
     </div>
     <section className="panel"><h2>Reclamaciones y devoluciones</h2>{p.claims.map((claim) => <div className="admin-compact-item" key={claim.id}><strong>{claim.reason}</strong><p>{claim.description}</p><span className="badge">{claim.status}</span><div className="actions">{["open", "under_review"].includes(claim.status) && <><button className="btn btn-primary" disabled={busy === claim.id} onClick={() => claimAction(claim, "authorize")}>Autorizar devolución</button><button className="btn btn-secondary" disabled={busy === claim.id} onClick={() => claimAction(claim, "reject")}>Rechazar</button></>}{claim.status === "approved_return" && <span>Esperando que la compradora registre la devolución.</span>}{claim.status === "return_shipped" && <span>Devolución en tránsito.</span>}{claim.status === "refund_pending" && <button className="btn btn-primary" disabled={busy === claim.id} onClick={() => claimAction(claim, "refund")}>Reembolsar ahora</button>}</div></div>)}{!p.claims.length && <p className="muted">Sin reclamaciones pendientes.</p>}</section>

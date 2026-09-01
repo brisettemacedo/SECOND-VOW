@@ -1,12 +1,33 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/server/adminSupabase";
-import { stripeRequest } from "@/lib/server/stripe";
+import { stripeGet, stripeRequest } from "@/lib/server/stripe";
 export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const admin = createAdminClient();
-  const { data: expiredPayments, error: expireError } = await admin.rpc("backend_expire_abandoned_payments");
+
+  // Igual que en /api/cron/expire-payments: cerramos primero en Stripe
+  // cualquier sesión de pago vencida, para bloquear un segundo cobro en
+  // vez de solo reembolsarlo después de que ya ocurrió.
+  const skipOrderIds: string[] = [];
+  try {
+    const { data: expiring } = await admin.rpc("backend_list_expiring_checkouts");
+    for (const row of expiring ?? []) {
+      const sessionId = row.stripe_checkout_session_id as string | null;
+      if (!sessionId) continue;
+      try {
+        const session = await stripeGet(`/checkout/sessions/${sessionId}`);
+        if (session?.status === "complete" || session?.payment_status === "paid") {
+          skipOrderIds.push(row.order_id as string);
+        } else if (session?.status === "open") {
+          await stripeRequest(`/checkout/sessions/${sessionId}/expire`, new URLSearchParams(), undefined, `cron_expire_${row.order_id}`);
+        }
+      } catch { /* seguimos: la base de datos igual cancela el pedido vencido */ }
+    }
+  } catch { /* seguimos con el barrido de base de datos de todas formas */ }
+
+  const { data: expiredPayments, error: expireError } = await admin.rpc("backend_expire_abandoned_payments", { p_skip_order_ids: skipOrderIds });
   if (expireError) return NextResponse.json({ error: expireError.message }, { status: 500 });
   const { data, error } = await admin.rpc("backend_finalize_expired_inspections");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
