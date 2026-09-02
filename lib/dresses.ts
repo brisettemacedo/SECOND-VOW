@@ -10,7 +10,7 @@ const CATALOG_COLUMNS = `
   tela_principal, color_principal, cola, condicion,
   precio_original_mxn, precio_venta_mxn,
   envio_nacional, status, created_at,
-  brands ( name ),
+  brands ( name ), brand_suggestions ( suggested_name ),
   dress_photos ( storage_path, is_primary, position )
 `;
 
@@ -47,7 +47,8 @@ export async function searchDresses(
   let query = supabase
     .from("dresses")
     .select(CATALOG_COLUMNS, { count: "exact" })
-    .eq("status", "approved");
+    .eq("status", "approved")
+    .is("removed_by_seller_at", null);
 
   const silueta = multi(params.silueta);
   if (silueta) query = query.in("silueta", silueta);

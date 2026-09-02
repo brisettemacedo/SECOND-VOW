@@ -15,6 +15,7 @@ export type CatalogDress = {
   precio_venta_mxn: number;
   envio_nacional: boolean;
   brands: { name: string } | { name: string }[] | null;
+  brand_suggestions?: { suggested_name: string } | { suggested_name: string }[] | null;
   dress_photos: DressPhoto[];
 };
 
@@ -22,7 +23,9 @@ function labelFor(list: { value: string; label: string }[], value: string) {
   return list.find((o) => o.value === value)?.label ?? value;
 }
 
-function brandName(brands: CatalogDress["brands"]) {
+function brandName(brands: CatalogDress["brands"], suggestions?: CatalogDress["brand_suggestions"]) {
+  const suggested = Array.isArray(suggestions) ? suggestions[0]?.suggested_name : suggestions?.suggested_name;
+  if (!brands && suggested) return `${suggested} (marca en confirmación)`;
   if (!brands) return "Marca no especificada";
   if (Array.isArray(brands)) return brands[0]?.name ?? "Marca no especificada";
   return brands.name;
@@ -66,7 +69,7 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={dressImageUrl(photoPath)}
-            alt={`${brandName(dress.brands)}${dress.model ? " " + dress.model : ""}`}
+            alt={`${brandName(dress.brands, dress.brand_suggestions)}${dress.model ? " " + dress.model : ""}`}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
@@ -81,7 +84,7 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
 
       <div style={{ padding: "12px 14px" }}>
         <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 0.5, color: "var(--color-action-primary)" }}>
-          {brandName(dress.brands)}
+          {brandName(dress.brands, dress.brand_suggestions)}
         </div>
         <h3 style={{ fontSize: 16, margin: "4px 0 8px" }}>
           {labelFor(SILUETAS, dress.silueta)}

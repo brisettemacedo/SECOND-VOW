@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { DressCatalogData } from "@/lib/dressCatalogData";
 import { TERMS_VERSION } from "@/lib/site";
+import { DRESS_REQUIRED_FIELDS } from "@/lib/dressRequirements";
 
 type Brand = { id: string; name: string };
 type Dress = Record<string, any> & {
@@ -34,7 +35,7 @@ const fieldsByStep: string[][] = [
 const numeric = new Set(["year_approx", "busto_cm", "cintura_cm", "cadera_cm", "largo_hombro_piso_cm", "altura_persona_cm", "altura_tacon_cm", "cola_largo_cm", "precio_original_mxn", "precio_venta_mxn"]);
 // Tela principal, color principal y cola son recomendados pero ya NO obligatorios:
 // una publicación completa inspira más confianza, pero no bloqueamos la venta por esto.
-const requiredKeys = new Set(["talla_etiqueta", "silueta", "escote", "espalda", "manga", "condicion", "precio_venta_mxn"]);
+const requiredKeys = new Set<string>(DRESS_REQUIRED_FIELDS.map(([key])=>key).filter((key)=>key!=="brand"));
 const recommendedKeys: { key: string; label: string }[] = [
   { key: "tela_principal", label: "Tela principal" },
   { key: "color_principal", label: "Color principal" },
@@ -63,6 +64,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     trueInfo: Boolean(initialDeclaration?.information_true_declared),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const autosaveReady = useRef(false);
 
   const exactBrand = brands.find((b) => b.name.localeCompare(brandQuery.trim(), undefined, { sensitivity: "base" }) === 0);
   const matches = brandQuery.trim() ? brands.filter((b) => b.name.toLowerCase().includes(brandQuery.trim().toLowerCase())).slice(0, 8) : brands.slice(0, 8);
@@ -215,6 +217,17 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       setBusy(false);
     }
   }
+
+  useEffect(() => {
+    if (!autosaveReady.current) { autosaveReady.current = true; return; }
+    // También autoguarda publicaciones ya visibles. La base de datos impide
+    // modificarla si existe un checkout realmente en proceso.
+    if (["sold", "reserved"].includes(dress.status || "")) return;
+    const timer = window.setTimeout(() => { void save().catch(() => undefined); }, 800);
+    return () => window.clearTimeout(timer);
+    // Reutiliza save(), la misma lógica del botón manual.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dress, selectedCharacteristics]);
 
   async function upload(files: FileList | null) {
     if (!files?.length) return;
@@ -377,7 +390,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
           <input value={brandQuery} onChange={(e) => { setBrandQuery(e.target.value); setDress((d) => ({ ...d, brand_id: null, brand_suggestion_id: null })); clearError("brand"); }} placeholder="Empieza a escribir una marca…" aria-invalid={Boolean(errors.brand)} />
           <div className="brand-suggestions">{matches.map((b) => <button type="button" key={b.id} onClick={() => chooseBrand(b)}>{b.name}</button>)}</div>
           {brandQuery.trim() && !exactBrand && !dress.brand_suggestion_id && <div className="brand-new"><p>No encontramos una coincidencia exacta.</p><strong>Nombre de la marca</strong><div>{brandQuery}</div><button type="button" className="btn btn-secondary" disabled={busy} onClick={suggestBrand}>Enviar marca para revisión</button></div>}
-          {dress.brand_suggestion_id && <p className="muted">Marca sugerida: <strong>{dress.brand_suggestions?.suggested_name || brandQuery}</strong> | pendiente de revisión.</p>}
+          {dress.brand_suggestion_id && <p className="muted">Marca: <strong>{dress.brand_suggestions?.suggested_name || brandQuery}</strong> (marca en confirmación). Esto no detiene la publicación.</p>}
           {errors.brand && <p className="field-error">{errors.brand}</p>}
         </div>
         {input("model", "Modelo")}{input("collection", "Colección")}{input("year_approx", "Año aproximado", "number")}

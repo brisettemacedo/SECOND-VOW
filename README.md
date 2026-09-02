@@ -1,14 +1,16 @@
-# SECOND VOW — v1.8.1 producción candidata
+# SECOND VOW — v1.8.4 producción candidata
 
 Esta carpeta es la versión única de referencia del proyecto. Sustituye los ZIP anteriores.
 
 ## Estado de la base de datos
 
-Las migraciones `0001` a `0021` son el historial del esquema. Aplica en orden `0022_correcciones_publicacion_pagos_cancelacion.sql` y luego `0023_expirar_sesion_stripe_antes_de_liberar.sql`, una sola vez cada una, después de todas las anteriores. No vuelvas a ejecutar migraciones anteriores. Ninguna de estas migraciones borra objetos de `storage.objects`.
+Las migraciones `0001` a `0021` son el historial del esquema. Aplica en orden `0022_correcciones_publicacion_pagos_cancelacion.sql`, `0023_expirar_sesion_stripe_antes_de_liberar.sql` y `0024_experiencia_unificada_admin.sql`, una sola vez cada una, después de todas las anteriores. No vuelvas a ejecutar migraciones anteriores. Ninguna de estas migraciones borra objetos de `storage.objects`.
 
 **Importante sobre `0022`:** además de cambiar funciones hacia adelante, esta migración corrige de inmediato a usuarias existentes: cierra pedidos vencidos atorados (cancelándolos, liberando el vestido y sincronizando la oferta a `expired`/`cancelled`), corrige ofertas que quedaron marcadas "accepted" por error, restablece vestidos huérfanos en `reserved`, y publica automáticamente los borradores antiguos que ya estaban completos y solo esperaban que se resolviera su marca. Es segura de ejecutar una sola vez; si la vuelves a correr no debería encontrar nada más que corregir.
 
 **Sobre `0023` — "primera en pagar gana", bloqueo vs. reembolso:** el checkout ya bloqueaba que dos pedidos estuvieran "en pago" al mismo tiempo para el mismo vestido (índice único). El hueco que corrige `0023` es distinto: cuando liberamos un pedido vencido en nuestra base, la página de pago de Stripe de esa compradora podía seguir abierta unos minutos más porque nunca le avisábamos a Stripe que la cerrara. Ahora, antes de liberar el vestido, el cron (`/api/cron/expire-payments` y `/api/cron/finalize`) le pide a Stripe que expire esa sesión — la compradora ve "esta sesión expiró" en vez de poder pagar. El reembolso automático (`backend_refund_losing_race_order`, disparado desde el webhook) queda solo como red de seguridad para el caso extremo de dos cobros casi simultáneos, que ningún bloqueo del lado del servidor puede prevenir al 100% con un checkout hospedado por Stripe.
+
+**Sobre `0024`:** aceptar una oferta ya no reserva el vestido ni rechaza las demás. Puede haber varias cotizaciones y sesiones de pago; la confirmación de Stripe bloquea la fila del vestido y el primer pago válido gana. En ese momento el vestido cambia a `sold`, se cancelan pedidos no pagados, se rechazan las demás ofertas y el webhook expira las otras sesiones. También agrega la bandeja única de Administración, avisos de mejora a vendedoras, eliminación visible conservando historial transaccional cuando corresponde y el conteo de vestidos vinculados/publicados al resolver una marca.
 
 También actualiza `vercel.json` para cerrar pedidos vencidos dos veces al día (7am y 7pm) en vez de una sola vez. **Cuidado:** en el plan Hobby de Vercel, un cron con una expresión que corra más de una vez al día hace que **todo el deployment falle** (no solo se ignora la frecuencia). Cada entrada en `crons` debe ser estrictamente una vez por día en Hobby; para cierres más frecuentes que eso se requiere plan Pro o superior.
 

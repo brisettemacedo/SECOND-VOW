@@ -22,6 +22,7 @@ export default async function PaymentsAccountPage() {
       </>}
     </section>
     <h2>Saldos</h2>
-    <PayoutsClient orders={orders ?? []} />
+    {!paymentAccount?.bank_account_linked && <div className="alert-info">Completa tus datos para poder recibir tus retiros. Las compras pueden continuar y tu saldo quedará pendiente por cobrar.</div>}
+    <PayoutsClient orders={orders ?? []} bankLinked={Boolean(paymentAccount?.bank_account_linked)} />
   </main>;
 }

@@ -54,13 +54,14 @@ export default function DeleteDraftButton({ dressId, hasOrderHistory = false }: 
     }
   }
 
-  if (hasOrderHistory) {
-    return (
-      <span className="muted" title="Esta publicación tiene un pedido asociado y no puede eliminarse. Puedes archivarla en su lugar.">
-        No se puede eliminar
-      </span>
-    );
+  async function removePreservingHistory() {
+    if (!window.confirm("¿Eliminar esta publicación? Dejará de verse en tu cuenta y en el catálogo. El historial de pedidos se conservará por seguridad.")) return;
+    setDeleting(true); setError("");
+    const { error } = await createClient().rpc("remove_own_dress_listing", { p_dress_id: dressId });
+    setDeleting(false); if (error) setError(error.message); else router.refresh();
   }
+
+  if (hasOrderHistory) return <div className="delete-draft-wrap"><button type="button" className="btn btn-danger-outline" onClick={removePreservingHistory} disabled={deleting}>{deleting?"Eliminando…":"Eliminar publicación"}</button>{error&&<p className="field-error">{error}</p>}</div>;
 
   return (
     <div className="delete-draft-wrap">

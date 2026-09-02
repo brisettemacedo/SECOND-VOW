@@ -5,6 +5,7 @@ import { dressImageUrl } from "@/lib/storage";
 import { SILUETAS, ESCOTES, ESPALDAS, MANGAS, TELAS, COLORES, COLAS, CONDICIONES } from "@/lib/catalogs";
 import AdminDressModeration from "@/components/AdminDressModeration";
 import { resolveDressBrandNames } from "@/lib/server/dressBrands";
+import AdminDressFeedback from "@/components/AdminDressFeedback";
 
 export const dynamic = "force-dynamic";
 
@@ -125,6 +126,7 @@ export default async function AdminPublicationDetail({ params }: { params: Promi
       {history.length > 0 && <section className="panel"><h2>Historial de moderación</h2>{history.map((h: any) => <div className="moderation-history-item" key={h.id}><strong>{h.action}</strong><span>{new Date(h.created_at).toLocaleString("es-MX")}</span>{h.comments && <p>{h.comments}</p>}</div>)}</section>}
 
       {dress.status === "pending_review" ? <AdminDressModeration dressId={dress.id} /> : <div className="alert-success">Esta publicación ya fue resuelta. Estado actual: {dress.status}.</div>}
+      <AdminDressFeedback dressId={dress.id} />
     </main>
   );
 }

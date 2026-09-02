@@ -24,6 +24,7 @@ export default async function Admin() {
     { data: orders },
     { data: payments },
     { data: shipments },
+    { data: paymentExceptions },
   ] = await Promise.all([
     supabase.from("dresses")
       .select("id,brand_id,brand_suggestion_id,model,status,updated_at,talla_etiqueta,precio_venta_mxn,dress_photos(id)")
@@ -39,9 +40,11 @@ export default async function Admin() {
     supabase.from("orders").select("id,public_code,status,total_mxn,buyer_id,seller_id,created_at").not("status","in",'("completed","cancelled","refunded")').order("created_at",{ascending:false}).limit(20),
     supabase.from("payments").select("id,order_id,status,amount_mxn,created_at").order("created_at",{ascending:false}).limit(20),
     supabase.from("shipments").select("id,order_id,status,carrier,tracking_number,created_at").order("created_at",{ascending:false}).limit(20),
+    supabase.from("payment_exceptions").select("id,order_id,exception_type,status,details,created_at").eq("status","open").order("created_at",{ascending:false}).limit(50),
   ]);
 
   const { data: stalledDraftsRaw } = await supabase.rpc("admin_list_stalled_drafts");
+  const { data: pendingItems } = await supabase.rpc("admin_list_pending_items");
   const stalledDrafts = stalledDraftsRaw ?? [];
   let stalledDraftsWithBrand: any[] = stalledDrafts;
   if (stalledDrafts.length) {
@@ -90,6 +93,6 @@ export default async function Admin() {
         {!pendingError && !pendingPublications.length && <p>No hay publicaciones pendientes.</p>}
       </div>
     </section>
-    <AdminDashboard verifications={verifications??[]} claims={claims??[]} brands={brands??[]} suggestions={suggestions??[]} users={users??[]} reports={reports??[]} arco={arco??[]} orders={orders??[]} payments={payments??[]} shipments={shipments??[]} stalledDrafts={stalledDraftsWithBrand} />
+    <AdminDashboard pendingItems={pendingItems??[]} paymentExceptions={paymentExceptions??[]} verifications={verifications??[]} claims={claims??[]} brands={brands??[]} suggestions={suggestions??[]} users={users??[]} reports={reports??[]} arco={arco??[]} orders={orders??[]} payments={payments??[]} shipments={shipments??[]} stalledDrafts={stalledDraftsWithBrand} />
   </main>;
 }

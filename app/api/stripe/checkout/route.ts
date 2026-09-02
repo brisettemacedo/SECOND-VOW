@@ -85,9 +85,6 @@ export async function POST(req: Request) {
     if (saveError) throw new Error(saveError.message);
     return NextResponse.json({ url: session.url });
   } catch (error: any) {
-    // Una falla de red no permite saber con certeza si Stripe alcanzó a crear
-    // la sesión. Conservamos la reserva hasta su expiración para evitar vender
-    // el vestido mientras pudiera existir un cobro abierto.
-    return NextResponse.json({ error: `${error?.message ?? "No fue posible iniciar el pago"}. La reserva se liberará automáticamente si no hubo cobro.` }, { status: 502 });
+    return NextResponse.json({ error: `${error?.message ?? "No fue posible iniciar el pago"}. No se realizó un cargo confirmado; puedes intentarlo nuevamente.` }, { status: 502 });
   }
 }

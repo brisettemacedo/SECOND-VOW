@@ -2,7 +2,8 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { resolveDressBrandNames } from "@/lib/server/dressBrands";
 import DeleteDraftButton from "@/components/DeleteDraftButton";
-import ArchiveDressButton from "@/components/ArchiveDressButton";
+import { dressImageUrl } from "@/lib/storage";
+import { missingDressRequirements } from "@/lib/dressRequirements";
 
 const labels: Record<string, string> = {
   draft: "Borrador",
@@ -24,8 +25,9 @@ export default async function MyDresses() {
   const { supabase, user } = await requireUser();
   const { data, error } = await supabase
     .from("dresses")
-    .select("id,brand_id,brand_suggestion_id,model,status,updated_at,precio_venta_mxn,moderation_notes,moderated_at,orders(count)")
+    .select("*,dress_photos(id,storage_path,is_primary,position),orders(count)")
     .eq("seller_id", user.id)
+    .is("removed_by_seller_at", null)
     .order("updated_at", { ascending: false });
 
   let brandNames: Awaited<ReturnType<typeof resolveDressBrandNames>> | null = null;
@@ -38,6 +40,15 @@ export default async function MyDresses() {
     }
   }
 
+  const dressIds=(data??[]).map((d:any)=>d.id);
+  const [{data:activeOffers},{data:activePayments},{data:feedback}]=await Promise.all([
+    dressIds.length?supabase.from("offers").select("dress_id").in("dress_id",dressIds).eq("status","pending"):Promise.resolve({data:[]} as any),
+    dressIds.length?supabase.from("orders").select("dress_id").in("dress_id",dressIds).in("status",["payment_processing","payment_review"]):Promise.resolve({data:[]} as any),
+    supabase.from("notifications").select("id,body,metadata,created_at").eq("user_id",user.id).eq("kind","dress_improvement_suggested").is("read_at",null).order("created_at",{ascending:false}),
+  ]);
+  const offerCounts=(activeOffers??[]).reduce((acc:any,o:any)=>{acc[o.dress_id]=(acc[o.dress_id]||0)+1;return acc;},{});
+  const paymentDressIds=new Set((activePayments??[]).map((o:any)=>o.dress_id));
+  const feedbackByDress=(feedback??[]).reduce((acc:any,n:any)=>{const id=n.metadata?.dress_id;if(id)(acc[id]??=[]).push(n);return acc;},{});
   const loadError = error?.message || brandError;
 
   return <main className="page">
@@ -47,25 +58,33 @@ export default async function MyDresses() {
       {!loadError && (data ?? []).map((d: any) => {
         // Editable/eliminable mientras no haya una oferta aceptada (pedido activo)
         // sobre este vestido, y no esté ya reservado/vendido.
-        const editable = ["draft", "pending_review", "changes_requested", "rejected", "approved"].includes(d.status);
+        const hasActivePayment=paymentDressIds.has(d.id);
+        const editable = ["draft", "pending_review", "changes_requested", "rejected", "approved"].includes(d.status) && !hasActivePayment;
         const hasOrderHistory = (d.orders?.[0]?.count ?? 0) > 0;
         const brand = brandNames?.nameFor(d) ?? "Sin marca";
         const model = cleanModel(d.model);
-        return <article className="panel" key={d.id}>
+        const photo=[...(d.dress_photos??[])].sort((a:any,b:any)=>(b.is_primary?1:0)-(a.is_primary?1:0)||a.position-b.position)[0];
+        const missing=d.status==="draft"?missingDressRequirements(d):[];
+        return <article className="panel my-dress-card" key={d.id}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {photo&&<img className="my-dress-photo" src={dressImageUrl(photo.storage_path)} alt={`${brand} ${model}`} />}
+          <div className="my-dress-card-body">
           <h2>{brand}{model ? ` ${model}` : ""}</h2>
           <p><span className="badge">{labels[d.status] ?? d.status}</span></p>
           <p>{d.precio_venta_mxn ? `$${Number(d.precio_venta_mxn).toLocaleString("es-MX")} MXN` : "Precio pendiente"}</p>
-          {d.status === "pending_review" && <div className="alert-success">Tu vestido está en revisión administrativa. No necesitas hacer nada por ahora.</div>}
           {d.status === "changes_requested" && <div className="alert-error"><strong>SECOND VOW solicitó cambios:</strong><p>{d.moderation_notes || "Revisa la publicación antes de reenviarla."}</p></div>}
           {d.status === "rejected" && <div className="alert-error"><strong>Publicación rechazada:</strong><p>{d.moderation_notes || "No se indicó un motivo."}</p></div>}
           {d.status === "approved" && <div className="alert-success">Tu vestido está publicado y visible en el marketplace.</div>}
+          {!!offerCounts[d.id]&&<p><strong>{offerCounts[d.id]}</strong> oferta{offerCounts[d.id]===1?" activa":"s activas"}</p>}
+          {!!missing.length&&<div className="alert-info"><strong>Para publicar falta:</strong> {missing.join(", ")}.</div>}
+          {hasActivePayment&&<div className="alert-info">Hay un pago en proceso. La edición y eliminación se habilitarán si ese intento se cancela o vence.</div>}
+          {(feedbackByDress[d.id]??[]).map((notice:any)=><div className="alert-info" key={notice.id}><strong>Sugerencia de SECOND VOW</strong><p>{notice.body}</p></div>)}
           {d.status === "reserved" && <div className="alert-info">Hay un pago en proceso sobre este vestido. No puede editarse hasta que se complete o se cancele.</div>}
           <div className="actions">
-            {editable && <Link href={`/publicar/${d.id}`} className="btn btn-secondary">{d.status === "changes_requested" ? "Corregir y reenviar" : d.status === "approved" ? "Editar (vuelve a revisión)" : "Editar"}</Link>}
-            {editable && (hasOrderHistory
-              ? <ArchiveDressButton dressId={d.id} />
-              : <DeleteDraftButton dressId={d.id} />)}
+            {editable && <Link href={`/publicar/${d.id}`} className="btn btn-secondary">{d.status === "changes_requested" ? "Corregir publicación" : "Editar publicación"}</Link>}
+            {editable && <DeleteDraftButton dressId={d.id} hasOrderHistory={hasOrderHistory} />}
             <Link href={`/vestidos/${d.id}`} className="btn btn-secondary">Ver</Link>
+          </div>
           </div>
         </article>;
       })}

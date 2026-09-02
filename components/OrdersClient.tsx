@@ -1,0 +1,7 @@
+"use client";
+import Link from "next/link";
+import { useState } from "react";
+import { ORDER_STATUS, orderBucket } from "@/lib/orderDisplay";
+function title(d:any){const raw=String(d?.model??"").trim();const model=/^(na|n\/?a|no aplica|sin modelo)$/i.test(raw)?"":raw;return [d?.brands?.name,model].filter(Boolean).join(" ")||"Vestido"}
+const tabs = [["attention","Necesitan tu atención"],["process","En proceso"],["finished","Finalizados"]] as const;
+export default function OrdersClient({ orders, userId }: { orders:any[]; userId:string }) { const initial=tabs.find(([key])=>orders.some(o=>orderBucket(o,userId)===key))?.[0]||"attention"; const [tab,setTab]=useState<string>(initial); const shown=orders.filter(o=>orderBucket(o,userId)===tab); return <><div className="order-tabs" role="tablist">{tabs.map(([key,label])=><button type="button" className={`btn btn-secondary ${tab===key?"active":""}`} onClick={()=>setTab(key)} key={key}>{label} ({orders.filter(o=>orderBucket(o,userId)===key).length})</button>)}</div><div className="cards-list">{shown.map(o=><Link className="panel card-link" key={o.id} href={`/pedidos/${o.id}`}><h2>{title(o.dresses)}</h2><p>{o.shipping_quote_set_at?`$${Number(o.total_mxn).toLocaleString("es-MX")} MXN`:`$${Number(o.subtotal_mxn).toLocaleString("es-MX")} MXN + envío por cotizar`}</p><span className="badge">{ORDER_STATUS[o.status]||o.status}</span></Link>)}{!shown.length&&<p>No hay pedidos en esta sección.</p>}</div></>; }

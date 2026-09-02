@@ -27,6 +27,20 @@ async function markSessionPaid(admin: ReturnType<typeof createAdminClient>, sess
   });
   if (error) throw new Error(error.message);
 
+  if (result === "paid") {
+    const { data: winner } = await admin.from("orders").select("dress_id").eq("id", orderId).single();
+    if (winner?.dress_id) {
+      const { data: losers } = await admin.from("orders").select("id,stripe_checkout_session_id").eq("dress_id", winner.dress_id).neq("id", orderId).eq("payment_failure_code", "another_buyer_paid_first");
+      for (const loser of losers ?? []) {
+        if (loser.stripe_checkout_session_id) {
+          try { await stripeRequest(`/checkout/sessions/${loser.stripe_checkout_session_id}/expire`, new URLSearchParams(), undefined, `expire_loser_${loser.id}`); } catch { /* el webhook tardío se reembolsa abajo */ }
+        }
+        // El RPC ganador ya canceló estos pedidos atómicamente. Aquí solo se
+        // expiran las sesiones externas de Stripe que todavía estuvieran abiertas.
+      }
+    }
+  }
+
   // Red de seguridad para la carrera real (dos pagos casi simultáneos):
   // si este pago llegó tarde porque el vestido YA se vendió con otro pedido,
   // el importe se reembolsa aquí mismo, sin esperar a que un admin lo note.

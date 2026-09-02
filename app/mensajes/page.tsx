@@ -17,7 +17,7 @@ export default async function MessagesPage({searchParams}:{searchParams?:Promise
   const participantIds=Array.from(new Set(conversations.flatMap((c:any)=>[c.buyer_id,c.seller_id]).filter(Boolean)));
   const [{data:offers},{data:orders},{data:profiles}]=await Promise.all([
     ids.length ? supabase.from("offers").select("id,conversation_id,dress_id,buyer_id,seller_id,created_by,parent_offer_id,amount_mxn,status,expires_at,created_at,responded_at,accepted_at,note").in("conversation_id",ids).order("created_at") : Promise.resolve({data:[]} as any),
-    ids.length ? supabase.from("orders").select("id,public_code,dress_id,buyer_id,seller_id,status,subtotal_mxn,shipping_mxn,total_mxn,shipping_quote_set_at,shipping_carrier_declared,created_at,paid_at,shipped_at,delivered_at").or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`).order("created_at") : Promise.resolve({data:[]} as any),
+    ids.length ? supabase.from("orders").select("id,public_code,dress_id,buyer_id,seller_id,status,subtotal_mxn,shipping_mxn,total_mxn,shipping_quote_set_at,shipping_carrier_declared,payment_deadline_at,created_at,paid_at,shipped_at,delivered_at").or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`).order("created_at") : Promise.resolve({data:[]} as any),
     participantIds.length ? supabase.from("profiles").select("id,full_name").in("id",participantIds) : Promise.resolve({data:[]} as any),
   ]);
   const profileMap=Object.fromEntries((profiles??[]).map((x:any)=>[x.id,x.full_name||"Usuaria"]));

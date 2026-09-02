@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { dressImageUrl } from "@/lib/storage";
+import DressGallery from "@/components/DressGallery";
 import DressCard, { type CatalogDress } from "@/components/DressCard";
 import FavoriteButton from "@/components/FavoriteButton";
 import ContactSellerButton from "@/components/ContactSellerButton";
@@ -47,11 +47,12 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
       precio_original_mxn, precio_venta_mxn,
       envio_nacional,
       descripcion, status, created_at, seller_id,
-      brands ( name ),
+      brands ( name ), brand_suggestions ( suggested_name ),
       dress_photos ( id, storage_path, is_primary, position, classification ),
       dress_characteristics ( characteristics ( id, label ) )
     `)
     .eq("id", id)
+    .is("removed_by_seller_at", null)
     .maybeSingle();
 
   if (error || !dress) {
@@ -67,6 +68,10 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
   const brandName = Array.isArray(dress.brands)
     ? (dress.brands as any[])[0]?.name
     : (dress.brands as any)?.name;
+  const suggestedBrand = Array.isArray((dress as any).brand_suggestions)
+    ? (dress as any).brand_suggestions[0]?.suggested_name
+    : (dress as any).brand_suggestions?.suggested_name;
+  const displayBrand = brandName || (suggestedBrand ? `${suggestedBrand} (marca en confirmación)` : "Marca no especificada");
   const { data: seller } = await supabase
     .from("public_profiles")
     .select("id, identity_verified, response_time_minutes, rating_average")
@@ -81,9 +86,10 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
     .select(`
       id, model, talla_etiqueta, silueta, condicion, precio_original_mxn,
       precio_venta_mxn, envio_nacional,
-      brands ( name ), dress_photos ( storage_path, is_primary, position )
+      brands ( name ), brand_suggestions ( suggested_name ), dress_photos ( storage_path, is_primary, position )
     `)
     .eq("status", "approved")
+    .is("removed_by_seller_at", null)
     .eq("silueta", dress.silueta)
     .neq("id", dress.id)
     .limit(4);
@@ -109,32 +115,12 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40 }}>
-        {/* Galería */}
-        <div>
-          <div style={{ aspectRatio: "3/4", background: "var(--color-background-secondary)", borderRadius: 4, overflow: "hidden", marginBottom: 10 }}>
-            {photos[0] ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={dressImageUrl(photos[0].storage_path)} alt={brandName ?? "Vestido"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              <div style={{ display: "flex", height: "100%", alignItems: "center", justifyContent: "center", color: "var(--color-text-muted)" }}>
-                Sin fotografías
-              </div>
-            )}
-          </div>
-          {photos.length > 1 && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
-              {photos.slice(1).map((p) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={p.id} src={dressImageUrl(p.storage_path)} alt={p.classification ?? ""} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 3 }} />
-              ))}
-            </div>
-          )}
-        </div>
+        <DressGallery photos={photos} alt={displayBrand} />
 
         {/* Datos */}
         <div>
           <div style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 0.5, color: "var(--color-action-primary)" }}>
-            {brandName ?? "Marca no especificada"}
+            {displayBrand}
           </div>
           <h1 style={{ fontSize: 26, margin: "6px 0 4px" }}>{dress.model && !/^(na|n\/a|no aplica|sin modelo)$/i.test(String(dress.model).trim()) ? dress.model : labelFor(SILUETAS, dress.silueta)}</h1>
 

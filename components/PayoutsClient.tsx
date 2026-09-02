@@ -3,25 +3,25 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function PayoutsClient({ orders }: { orders: any[] }) {
+export default function PayoutsClient({ orders, bankLinked }: { orders: any[]; bankLinked: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState("");
 
-  async function request(orderId: string) {
-    setBusy(orderId);
-    const res = await fetch("/api/stripe/payout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId }) });
-    const json = await res.json();
-    setBusy("");
-    if (!res.ok) alert(json.error || "No fue posible solicitar el retiro"); else router.refresh();
+  const payouts=orders.flatMap(order=>(order.seller_payouts??[]).map((p:any)=>({...p,order})));
+  const pending=payouts.filter((p:any)=>["held","releasable"].includes(p.status));
+  const total=pending.reduce((sum:number,p:any)=>sum+Number(p.amount_mxn??0),0);
+  const releasable=pending.filter((p:any)=>p.status==="releasable");
+  async function requestAll() {
+    setBusy("all");
+    for (const payout of releasable) {
+      const res = await fetch("/api/stripe/payout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId:payout.order.id }) });
+      if (!res.ok) { const json=await res.json().catch(()=>({})); alert(json.error||"No fue posible solicitar todos los retiros"); break; }
+    }
+    setBusy(""); router.refresh();
   }
-
-  return <div className="cards-list">
-    {orders.map(order => <article className="panel" key={order.id}>
-      <h3>{order.dresses?.model || "Vestido"}</h3>
-      <p>Saldo de la operación: ${Number(order.seller_net_after_processor_mxn ?? order.seller_net_mxn ?? 0).toLocaleString("es-MX")} MXN</p>
-      <p><span className="badge">{order.seller_payouts?.[0]?.status ?? "held"}</span></p>
-      {order.seller_payouts?.[0]?.status === "releasable" && <button className="btn btn-primary" disabled={busy === order.id} onClick={() => request(order.id)}>Solicitar retiro</button>}
-    </article>)}
-    {!orders.length && <p>No hay saldos por retirar.</p>}
-  </div>;
+  return <section className="panel"><span className="muted">Saldo pendiente por cobrar</span><h2>${total.toLocaleString("es-MX")} MXN</h2>
+    {bankLinked&&releasable.length>0&&<button className="btn btn-primary" disabled={busy==="all"} onClick={requestAll}>{busy?"Procesando…":`Retirar $${releasable.reduce((s:number,p:any)=>s+Number(p.amount_mxn||0),0).toLocaleString("es-MX")}`}</button>}
+    {!total&&<p>No hay saldos pendientes.</p>}
+    {!!payouts.length&&<details><summary>Ver desglose</summary>{payouts.map((p:any)=><p key={`${p.order.id}-${p.status}`}>{p.order.dresses?.model||"Vestido"}: ${Number(p.amount_mxn||0).toLocaleString("es-MX")} · {p.status}</p>)}</details>}
+  </section>;
 }

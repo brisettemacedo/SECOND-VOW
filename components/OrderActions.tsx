@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import OrderEvidenceUploader from "@/components/OrderEvidenceUploader";
 import Link from "next/link";
 import { TERMS_VERSION } from "@/lib/site";
+import { humanActionError } from "@/lib/actionErrors";
+import { paymentTimeRemaining } from "@/lib/orderDisplay";
 
 const CLAIM_REASONS = [["false_or_materially_incorrect", "Información falsa o materialmente incorrecta"], ["damaged_undisclosed", "Daño relevante no informado"]] as const;
 
@@ -51,7 +53,7 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
       if (!res.ok) throw new Error(json.error || `No fue posible iniciar el pago (${res.status})`);
       if (!json.url) throw new Error("Stripe no devolvió la página de pago.");
       window.location.assign(json.url);
-    } catch (error: any) { setFailedAction("payment"); setActionError(error?.message || "No fue posible iniciar el pago"); }
+    } catch (error: any) { setFailedAction("payment"); setActionError(humanActionError(error, "No pudimos abrir el pago. No se realizó ningún cargo; puedes intentarlo nuevamente.")); }
     finally { setBusy(false); }
   }
   async function ship() {
@@ -75,13 +77,14 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
     setBusy(true); setActionError(""); setFailedAction("");
     const res = await fetch("/api/stripe/seller-cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: order.id, reason: cancelReason.trim() }) });
     const json = await res.json().catch(() => ({})); setBusy(false);
-    if (!res.ok) { setFailedAction("cancellation"); setActionError(json.error || "No fue posible cancelar la venta"); } else router.refresh();
+    if (!res.ok) { setFailedAction("cancellation"); setActionError(humanActionError(json.error, "No pudimos completar la cancelación. No se hizo ningún cargo nuevo y el vestido sigue publicado.")); } else router.refresh();
   }
 
   const deadline = order.dispute_deadline_at || order.inspection_deadline_at || order.claim_deadline_at;
   const activeClaim = (order.claims ?? []).find((item: any) => !["rejected", "closed", "refunded"].includes(item.status));
   return <div className="actions-stack">
-    {actionError && <div className="alert-error"><strong>{failedAction === "cancellation" ? "No se pudo cancelar la venta." : failedAction === "return" ? "No se pudo registrar la devolución." : "No se pudo iniciar el pago."}</strong><p>{actionError}</p>{failedAction === "payment" && actionError.toLowerCase().includes("vendedora") && <p>La vendedora debe entrar a Cuenta → Pagos y retiros y completar Stripe Connect.</p>}</div>}
+    {actionError && <div className="alert-error"><strong>{failedAction === "cancellation" ? "No se pudo cancelar la venta." : failedAction === "return" ? "No se pudo registrar la devolución." : "No se pudo iniciar el pago."}</strong><p>{actionError}</p></div>}
+    {["awaiting_payment", "payment_processing"].includes(order.status) && order.payment_deadline_at && <div className="protection-deadline"><span>Plazo de pago</span><strong>{paymentTimeRemaining(order.payment_deadline_at)}</strong><span>El vestido sigue visible hasta que se confirme un pago.</span></div>}
     <div className="safety-callout"><strong>Seguridad de la operación</strong><span>Mantén pagos, acuerdos y evidencia dentro de SECOND VOW. La evidencia del estado, empaque, envío y recepción puede ser determinante.</span></div>
 
     {order.seller_id === userId && order.status === "awaiting_payment" && <div className="panel"><h3>Cotizar envío</h3><p>Consulta la paquetería y captura el costo. La compradora pagará vestido y envío dentro de SECOND VOW.</p><div className="grid-2"><div className="field"><label>Costo de envío (MXN)</label><input type="number" min={0} value={shippingAmount} onChange={(e) => setShippingAmount(e.target.value)} /></div><div className="field"><label>Paquetería estimada</label><input value={shippingCarrier} onChange={(e) => setShippingCarrier(e.target.value)} /></div></div><button className="btn btn-primary" disabled={busy || shippingAmount === ""} onClick={quoteShipping}>{order.shipping_quote_set_at ? "Actualizar cotización" : "Enviar cotización"}</button></div>}
