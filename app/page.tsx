@@ -1,14 +1,20 @@
 import Link from "next/link";
 import Image from "next/image";
+import { cookies } from "next/headers";
+import { readdirSync } from "node:fs";
+import path from "node:path";
 import SellerRecoveryCalculator from "@/components/SellerRecoveryCalculator";
+import HeroRotationMarker from "@/components/HeroRotationMarker";
 
 export const dynamic = "force-dynamic";
 
-const HERO_IMAGES = [
-  { src: "/images/hero-1.jpg", alt: "Novia probándose un vestido de novia" },
-  { src: "/images/hero-2.jpg", alt: "Detalle de encaje de un vestido de novia" },
-  { src: "/images/hero-3.jpg", alt: "Novia con un vestido de cola larga" },
-];
+function heroImages() {
+  const imageDirectory = path.join(process.cwd(), "public", "images");
+  return readdirSync(imageDirectory)
+    .filter((name) => /^hero-[1-6]\.(jpg|jpeg|png|webp|avif)$/i.test(name))
+    .sort((a, b) => Number(a.match(/hero-(\d+)/i)?.[1]) - Number(b.match(/hero-(\d+)/i)?.[1]))
+    .map((name, index) => ({ src: `/images/${name}`, alt: `Vestido de novia destacado ${index + 1}` }));
+}
 
 const BENEFITS = [
   { icon: "tag", title: "Mejor precio", text: "Encuentra vestidos de diseñador por una fracción de su precio original." },
@@ -24,11 +30,16 @@ function BenefitIcon({ name }: { name: typeof BENEFITS[number]["icon"] }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4 12 22l-9-9 8.6-8.6A2 2 0 0 1 13 4h6a1 1 0 0 1 1 1v6a2 2 0 0 1-.4 1.4Z"/><circle cx="16.5" cy="7.5" r="1.4"/></svg>;
 }
 
-export default function HomePage() {
-  const heroImage = HERO_IMAGES[Math.floor(Math.random() * HERO_IMAGES.length)];
+export default async function HomePage() {
+  const images = heroImages();
+  const cookieStore = await cookies();
+  const lastIndex = Number(cookieStore.get("second_vow_hero")?.value ?? -1);
+  const heroIndex = images.length ? (Number.isInteger(lastIndex) ? (lastIndex + 1) % images.length : 0) : 0;
+  const heroImage = images[heroIndex];
   return <main className="home-page">
     <section className="home-hero">
-      <Image src={heroImage.src} alt={heroImage.alt} fill priority sizes="100vw" className="home-hero-image" />
+      {heroImage && <Image src={heroImage.src} alt={heroImage.alt} fill priority sizes="100vw" className="home-hero-image" />}
+      <HeroRotationMarker index={heroIndex} />
       <div className="home-hero-overlay" />
       <div className="home-hero-content">
         <p className="home-wordmark">SECOND VOW</p>
