@@ -25,7 +25,7 @@ export default async function MyDresses() {
   const { supabase, user } = await requireUser();
   const { data, error } = await supabase
     .from("dresses")
-    .select("*,dress_photos(id,storage_path,is_primary,position),orders(count)")
+    .select("*,dress_photos(id,storage_path,is_primary,position),orders!orders_dress_id_fkey(count)")
     .eq("seller_id", user.id)
     .is("removed_by_seller_at", null)
     .order("updated_at", { ascending: false });

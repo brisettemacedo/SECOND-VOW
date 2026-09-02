@@ -1,5 +1,11 @@
 # SECOND VOW v1.8.4
 
+## Hotfix posterior al despliegue
+
+- Se desambiguaron las relaciones PostgREST `dresses → brand_suggestions` en catálogo, ficha, similares y favoritos.
+- Se desambiguó `dresses → orders` en “Mis vestidos” después de incorporar `winning_order_id`.
+- Este hotfix no requiere una migración adicional: basta desplegar el código actualizado después de haber ejecutado 0024 y 0025.
+
 ## Aplicación en una instalación existente
 
 1. Haz respaldo de la base de datos.

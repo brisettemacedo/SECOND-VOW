@@ -47,7 +47,7 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
       precio_original_mxn, precio_venta_mxn,
       envio_nacional,
       descripcion, status, created_at, seller_id,
-      brands ( name ), brand_suggestions ( suggested_name ),
+      brands ( name ), brand_suggestions!dresses_brand_suggestion_id_fkey ( suggested_name ),
       dress_photos ( id, storage_path, is_primary, position, classification ),
       dress_characteristics ( characteristics ( id, label ) )
     `)
@@ -86,7 +86,7 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
     .select(`
       id, model, talla_etiqueta, silueta, condicion, precio_original_mxn,
       precio_venta_mxn, envio_nacional,
-      brands ( name ), brand_suggestions ( suggested_name ), dress_photos ( storage_path, is_primary, position )
+      brands ( name ), brand_suggestions!dresses_brand_suggestion_id_fkey ( suggested_name ), dress_photos ( storage_path, is_primary, position )
     `)
     .eq("status", "approved")
     .is("removed_by_seller_at", null)

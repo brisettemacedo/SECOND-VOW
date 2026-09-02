@@ -21,7 +21,7 @@ export default async function FavoritesPage() {
       dresses (
         id, model, talla_etiqueta, silueta, condicion, precio_original_mxn,
         precio_venta_mxn, envio_nacional, status,
-        brands ( name ), dress_photos ( storage_path, is_primary, position )
+        brands ( name ), brand_suggestions!dresses_brand_suggestion_id_fkey ( suggested_name ), dress_photos ( storage_path, is_primary, position )
       )
     `)
     .eq("user_id", user.id)
