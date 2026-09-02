@@ -65,8 +65,8 @@ export default async function HomePage() {
       </div>
       <div className="home-seller-steps">
         <article><span>1</span><h3>Publica gratis</h3><p>Sube tus fotos, medidas y todos los detalles de tu vestido.</p></article>
-        <article><span>2</span><h3>Recibe ofertas</h3><p>Recibe ofertas, habla con posibles compradoras, cotiza el envío y realiza la venta directamente en SECOND VOW.</p></article>
-        <article><span>3</span><h3>Recibe tu dinero</h3><p>Cuando la operación se completa, SECOND VOW cobra una comisión del <strong>18% del precio de venta</strong> y tú recibes el <strong>82% restante</strong>, sujeto a los términos aplicables.</p></article>
+        <article><span>2</span><h3>Envía una oferta final</h3><p>Habla con la compradora y envíale una oferta con precio del vestido y envío fijo según su código postal.</p></article>
+        <article><span>3</span><h3>Recibe tu dinero</h3><p>SECOND VOW retiene <strong>18% del total con envío</strong>. Tú recibes el <strong>82% del total</strong> y de ese monto pagas la guía.</p></article>
       </div>
       <SellerRecoveryCalculator />
     </section>

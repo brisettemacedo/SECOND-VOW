@@ -17,5 +17,5 @@ CAMBIOS CLAVE
 - Catálogos controlados en base de datos para talla, sistema de talla, silueta, escote, espalda, manga, tela, color, cola y condición.
 - Índices parciales para catálogo de 50,000+ vestidos.
 - Comisión vigente desde 0018: 18% total del precio del vestido, incluyendo el costo ordinario de Stripe; sin cargo fijo. Publicación gratis.
-- Envío: lo organiza la vendedora; la compradora paga el monto cotizado dentro del checkout; 0% de comisión sobre envío.
+- Envío: la vendedora lo fija en su oferta según el código postal; la comisión del 18% se calcula sobre vestido + envío.
 - Stripe Connect: la vendedora no necesita cuenta Stripe previa. Vincula banco mediante onboarding integrado/hosted de Stripe y solicita retiro desde SECOND VOW.

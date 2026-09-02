@@ -65,6 +65,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     photos: Boolean(initialDeclaration?.photos_correspond_declared),
     right: Boolean(initialDeclaration?.right_to_sell_declared),
     trueInfo: Boolean(initialDeclaration?.information_true_declared),
+    promotionalImages: Boolean(initialDeclaration?.promotional_image_license_declared),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const autosaveReady = useRef(false);
@@ -333,6 +334,8 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
         photos_correspond_declared: decl.photos,
         right_to_sell_declared: decl.right,
         information_true_declared: decl.trueInfo,
+        promotional_image_license_declared: decl.promotionalImages,
+        promotional_image_license_declared_at: decl.promotionalImages ? new Date().toISOString() : null,
         terms_version: TERMS_VERSION,
         declared_at: new Date().toISOString(),
       }, { onConflict: "dress_id" });
@@ -468,6 +471,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
         <label className={`check ${errors.decl_photos ? "check-invalid" : ""}`}><input type="checkbox" checked={decl.photos} onChange={(e) => { setDecl((d) => ({ ...d, photos: e.target.checked })); clearError("decl_photos"); }} /><span>Declaro que las fotografías corresponden al vestido anunciado.</span></label>
         <label className={`check ${errors.decl_right ? "check-invalid" : ""}`}><input type="checkbox" checked={decl.right} onChange={(e) => { setDecl((d) => ({ ...d, right: e.target.checked })); clearError("decl_right"); }} /><span>Declaro que soy propietaria o tengo derecho para venderlo.</span></label>
         <label className={`check ${errors.decl_true ? "check-invalid" : ""}`}><input type="checkbox" checked={decl.trueInfo} onChange={(e) => { setDecl((d) => ({ ...d, trueInfo: e.target.checked })); clearError("decl_true"); }} /><span>Declaro que la información publicada es verdadera y completa respecto de los aspectos relevantes.</span></label>
+        <label className="check"><input type="checkbox" checked={decl.promotionalImages} onChange={(e) => setDecl((d) => ({ ...d, promotionalImages: e.target.checked }))} /><span><strong>Opcional:</strong> autorizo a SECOND VOW a usar las fotografías de esta publicación en redes sociales y publicidad para promocionar el marketplace y este vestido. Declaro contar con los derechos y permisos de las personas que aparezcan. Puedo retirar esta autorización para usos futuros contactando a SECOND VOW.</span></label>
         <p className="muted">Estas declaraciones se registran con fecha y versión de los Términos y Condiciones.</p>
       </div>}
 

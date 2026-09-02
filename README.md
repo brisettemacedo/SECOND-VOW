@@ -37,12 +37,12 @@ Nunca publiques `service_role`, claves secretas de Supabase ni una secret key de
 - Fotografías en Storage.
 - Favoritos.
 - Mensajería y lectura de conversaciones.
-- Ofertas de 48 horas, contraofertas, aceptación y rechazo mediante RPCs seguras.
+- Ofertas finales de la vendedora por 48 horas, con envío fijo; aceptación, rechazo y cancelación mediante RPCs seguras. No hay contraofertas.
 - Pedidos y envío manual con paquetería de libre elección y número de guía.
 - Reclamación únicamente durante 72 horas desde la recepción registrada.
 - Devolución autorizada: 5 días naturales para entregar a paquetería.
 - Reputación e identidad según el esquema actual.
-- Comisión total a la vendedora: 18% del precio del vestido; incluye el costo ordinario de Stripe. Sin cargo administrativo fijo y sin comisión sobre el envío.
+- Comisión: 18% del total de la oferta (vestido + envío), incluido el costo ordinario de Stripe. La vendedora recibe 82% del total y paga la guía con ese saldo.
 - Estructura de saldos y retiros preparada para Stripe Connect.
 
 ## Stripe
@@ -66,7 +66,7 @@ La pantalla `/cuenta/pagos` muestra el estado del banco y saldos disponibles con
 3. Crear borrador de vestido, seleccionar talla/características y escribir descripción libre.
 4. Subir fotos y enviar a revisión.
 5. Aprobar desde admin.
-6. Abrir dos cuentas y probar mensaje → oferta → contraoferta/aceptación → pedido.
+6. Abrir dos cuentas y probar mensaje → código postal → oferta final → aceptación → pedido → Stripe Test.
 7. No probar pagos reales hasta completar la integración secreta de Stripe.
 
 

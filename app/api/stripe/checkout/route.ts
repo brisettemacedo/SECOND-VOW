@@ -28,6 +28,7 @@ export async function POST(req: Request) {
   if (!basicOrder || basicOrder.buyer_id !== user.id) return NextResponse.json({ error: "Pedido inválido" }, { status: 400 });
   if (!basicOrder.checkout_terms_accepted_at || !basicOrder.checkout_charge_acknowledged_at || basicOrder.checkout_terms_version !== termsVersion) return NextResponse.json({ error: "No se encontró la aceptación legal de esta operación" }, { status: 409 });
 
+  const admin = createAdminClient();
   if (basicOrder.status === "payment_processing" && basicOrder.stripe_checkout_session_id) {
     try {
       const existing = await stripeGet(`/checkout/sessions/${basicOrder.stripe_checkout_session_id}`);
@@ -35,9 +36,11 @@ export async function POST(req: Request) {
     } catch {
       // La RPC inferior decide si el intento todavía puede reanudarse.
     }
+    await admin.rpc("backend_release_checkout", { p_order_id: orderId, p_reason: "checkout_closed_retry_allowed" });
+  } else if (basicOrder.status === "payment_processing") {
+    await admin.rpc("backend_release_checkout", { p_order_id: orderId, p_reason: "checkout_session_missing_retry_allowed" });
   }
 
-  const admin = createAdminClient();
   const { data: financials, error: financialError } = await admin.rpc("backend_prepare_order_financials", { p_order_id: orderId });
   if (financialError) return NextResponse.json({ error: financialError.message }, { status: 400 });
   const financialOrder = Array.isArray(financials) ? financials[0] : financials;
@@ -64,7 +67,11 @@ export async function POST(req: Request) {
     p.set("mode", "payment");
     p.set("success_url", `${site}/pedidos/${order.id}?payment=success`);
     p.set("cancel_url", `${site}/pedidos/${order.id}?payment=cancelled`);
-    p.set("expires_at", String(Math.floor(Date.now() / 1000) + 60 * 60));
+    // Stripe exige que una sesión hospedada dure al menos 30 minutos. Si el
+    // plazo local está por vencer, el webhook seguirá decidiendo atómicamente
+    // si el pago llegó a tiempo o debe revisarse/reembolsarse.
+    const checkoutExpiry = Math.max(Date.now() + 30 * 60 * 1000, Math.min(Date.now() + 60 * 60 * 1000, new Date(order.payment_deadline_at).getTime()));
+    p.set("expires_at", String(Math.floor(checkoutExpiry / 1000)));
     p.set("payment_method_types[0]", "card");
     p.set("client_reference_id", order.id);
     if (user.email) p.set("customer_email", user.email);
@@ -85,6 +92,7 @@ export async function POST(req: Request) {
     if (saveError) throw new Error(saveError.message);
     return NextResponse.json({ url: session.url });
   } catch (error: any) {
+    await admin.rpc("backend_release_checkout", { p_order_id: orderId, p_reason: "checkout_creation_failed_retry_allowed" });
     return NextResponse.json({ error: `${error?.message ?? "No fue posible iniciar el pago"}. No se realizó un cargo confirmado; puedes intentarlo nuevamente.` }, { status: 502 });
   }
 }

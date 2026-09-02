@@ -7,8 +7,9 @@ export default async function MessagesPage({searchParams}:{searchParams?:Promise
   const query=await(searchParams??Promise.resolve<{conversation?:string}>({}));
   const {supabase,user}=await requireUser();
   await supabase.rpc("expire_stale_offers");
+  await supabase.rpc("refresh_my_offer_reminders");
   const {data,error}=await supabase.from("conversations")
-    .select("id,dress_id,buyer_id,seller_id,last_message_at,dresses(id,model,precio_venta_mxn,brands(name)),messages(id,sender_id,body,created_at,read_at)")
+    .select("id,dress_id,buyer_id,seller_id,buyer_postal_code,last_message_at,dresses(id,model,precio_venta_mxn,brands(name)),messages(id,sender_id,body,created_at,read_at)")
     .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
     .order("last_message_at",{ascending:false});
   if(error) return <main className="page"><h1>Mensajes</h1><div className="alert-error">{error.message}</div></main>;

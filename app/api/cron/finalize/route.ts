@@ -51,5 +51,6 @@ export async function GET(req: Request) {
       refundsRequested++;
     } catch (refundError: any) { refundErrors.push(`${order.id}: ${refundError?.message ?? "error"}`); }
   }
-  return NextResponse.json({ expiredPayments: expiredPayments ?? 0, finalized: data ?? 0, refundsRequested, refundErrors });
+  const { data: offerReminders } = await admin.rpc("backend_generate_offer_reminders");
+  return NextResponse.json({ expiredPayments: expiredPayments ?? 0, finalized: data ?? 0, offerReminders: offerReminders ?? 0, refundsRequested, refundErrors });
 }

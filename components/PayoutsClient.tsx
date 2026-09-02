@@ -20,6 +20,7 @@ export default function PayoutsClient({ orders, bankLinked }: { orders: any[]; b
     setBusy(""); router.refresh();
   }
   return <section className="panel"><span className="muted">Saldo pendiente por cobrar</span><h2>${total.toLocaleString("es-MX")} MXN</h2>
+    <p className="muted">Este saldo es el 82% del total cobrado (vestido + envío). De aquí pagarás la guía acordada con la compradora.</p>
     {bankLinked&&releasable.length>0&&<button className="btn btn-primary" disabled={busy==="all"} onClick={requestAll}>{busy?"Procesando…":`Retirar $${releasable.reduce((s:number,p:any)=>s+Number(p.amount_mxn||0),0).toLocaleString("es-MX")}`}</button>}
     {!total&&<p>No hay saldos pendientes.</p>}
     {!!payouts.length&&<details><summary>Ver desglose</summary>{payouts.map((p:any)=><p key={`${p.order.id}-${p.status}`}>{p.order.dresses?.model||"Vestido"}: ${Number(p.amount_mxn||0).toLocaleString("es-MX")} · {p.status}</p>)}</details>}

@@ -1,3 +1,3 @@
-# SECOND VOW v1.8.3
+# SECOND VOW v1.8.7
 
 Corrige y simplifica sobre v1.8.2: publicación inmediata (sin cola de moderación manual), corrección de nombre de marca antes de aprobarla, tela/color/cola opcionales, mínimo de 1 fotografía, aclaración del paso de envío, checkout que ya NO exige Stripe Connect de la vendedora, ofertas con 48h reales para pagar, cancelación/cotización de envío también disponibles para administración, y cierre automático de pedidos vencidos que sincroniza sus ofertas y libera sus vestidos. Incluye backfill para usuarias existentes (ver `supabase/migrations/0022_correcciones_publicacion_pagos_cancelacion.sql`).

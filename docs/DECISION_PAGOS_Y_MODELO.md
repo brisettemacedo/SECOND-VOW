@@ -3,13 +3,13 @@
 ## Política comercial propuesta
 
 - Publicación de vestido: gratis.
-- Comisión total a la vendedora: 18% del precio del vestido.
+- Comisión total: 18% del vestido más el envío fijado en la oferta.
 - El 18% incluye el costo ordinario de procesamiento de Stripe; no se descuenta otra tarifa de tarjeta a la vendedora.
 - Sin cargo administrativo fijo.
 - Sin tarifa de protección a la compradora al lanzamiento.
 - Envío: pagado por la compradora, organizado por la vendedora con la paquetería de su elección.
 - La vendedora registra el monto del envío antes del checkout y, una vez enviado, carga paquetería y número de guía.
-- La comisión porcentual no se calcula sobre el envío.
+- La comisión del 18% se calcula sobre vestido + envío. La vendedora recibe 82% del total y paga la guía con ese saldo.
 - Reclamación por incumplimiento: 72 horas desde entrega.
 - Si se autoriza devolución: 5 días naturales para entregarla a paquetería.
 

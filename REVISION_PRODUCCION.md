@@ -5,7 +5,7 @@ Fecha: 17 de agosto de 2026.
 ## Decisión económica vigente
 
 - Publicación gratuita.
-- Comisión total: 18% del precio del vestido.
+- Comisión total: 18% del vestido más envío.
 - El costo ordinario de Stripe está incluido en ese 18% y lo absorbe SECOND VOW.
 - Sin cargo administrativo fijo.
 - El envío se cobra a la compradora, se transfiere a la vendedora y no genera comisión porcentual.
