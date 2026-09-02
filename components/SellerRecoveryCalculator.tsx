@@ -34,7 +34,7 @@ export default function SellerRecoveryCalculator() {
         <div><span>Precio de venta</span><strong>{money.format(result.salePrice)}</strong></div>
         <div><span>SECOND VOW (18%)</span><strong>− {money.format(result.commission)}</strong></div>
         <div className="recovery-total"><span>Recibes</span><strong>{money.format(result.sellerReceives)}</strong></div>
-        <small>El cálculo corresponde al vestido. El envío no está sujeto a la comisión porcentual.</small>
+        <small>Esta estimación es solo sobre el precio del vestido, antes de envío.</small>
       </div>
     </div>
     <p className="recovery-note">Como punto de partida, puedes considerar publicarlo aproximadamente 30% debajo de su precio original. El precio ideal dependerá de la marca, antigüedad, condición y modificaciones.</p>
