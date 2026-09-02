@@ -74,7 +74,7 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
   const displayBrand = brandName || (suggestedBrand ? `${suggestedBrand} (marca en confirmación)` : "Marca no especificada");
   const { data: seller } = await supabase
     .from("public_profiles")
-    .select("id, identity_verified, response_time_minutes, rating_average")
+    .select("id, display_name, identity_verified, response_time_minutes, rating_average")
     .eq("id", dress.seller_id)
     .maybeSingle();
   const characteristics = (dress.dress_characteristics ?? [])
@@ -196,16 +196,14 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
           )}
 
           <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-            <ContactSellerButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} />
-            <OfferButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} price={dress.precio_venta_mxn} status={dress.status} />
-            <FavoriteButton dressId={dress.id} />
+            {user?.id === dress.seller_id ? <Link className="btn btn-primary" href={`/publicar/${dress.id}`}>Editar mi publicación</Link> : <><ContactSellerButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} /><OfferButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} price={dress.precio_venta_mxn} status={dress.status} /><FavoriteButton dressId={dress.id} /></>}
           </div>
           
 
           <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--color-border)", fontSize: 13 }}>
             {seller?.id ? (
               <Link href={`/vendedoras/${seller.id}`} style={{ fontWeight: 600 }}>
-                Perfil de vendedora
+                {seller.display_name || "Perfil de vendedora"}
               </Link>
             ) : (
               <strong>Vendedora</strong>

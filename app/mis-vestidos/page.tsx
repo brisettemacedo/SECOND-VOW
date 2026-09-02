@@ -21,7 +21,8 @@ function cleanModel(value: any) {
   return /^(na|n\/a|no aplica|sin modelo)$/i.test(text) ? "" : text;
 }
 
-export default async function MyDresses() {
+export default async function MyDresses({ searchParams }: { searchParams: Promise<{ published?: string }> }) {
+  const query = await searchParams;
   const { supabase, user } = await requireUser();
   const { data, error } = await supabase
     .from("dresses")
@@ -52,6 +53,7 @@ export default async function MyDresses() {
   const loadError = error?.message || brandError;
 
   return <main className="page">
+    {query.published === "1" && <div className="alert-success">Tu vestido ya está publicado en el marketplace.</div>}
     <div className="title-row"><h1>Mis vestidos</h1><Link className="btn btn-primary" href="/publicar">Publicar vestido</Link></div>
     {loadError && <div className="alert-error"><strong>No pudimos cargar tus publicaciones.</strong><p>{loadError}</p></div>}
     <div className="cards-list">
