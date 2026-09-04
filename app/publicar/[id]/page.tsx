@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import DressPublishForm from "@/components/DressPublishForm";
 import { requireUser } from "@/lib/auth";
 import { loadDressCatalogData } from "@/lib/dressCatalogData";
+import { signDressPhotos } from "@/lib/server/dressImageUrls";
 
 export default async function EditDress({ params }: { params: Promise<{ id: string }> }) {
   const { supabase, user } = await requireUser();
@@ -34,7 +35,11 @@ export default async function EditDress({ params }: { params: Promise<{ id: stri
     if (!error) suggestion = data;
   }
 
-  const initialDress = { ...dress, brand_suggestions: suggestion };
+  const initialDress = {
+    ...dress,
+    brand_suggestions: suggestion,
+    dress_photos: await signDressPhotos(dress.dress_photos ?? [], 60 * 60),
+  };
 
   return (
     <main className="page">

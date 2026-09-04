@@ -6,6 +6,7 @@ import { SILUETAS, ESCOTES, ESPALDAS, MANGAS, TELAS, COLORES, COLAS, CONDICIONES
 import AdminDressModeration from "@/components/AdminDressModeration";
 import { resolveDressBrandNames } from "@/lib/server/dressBrands";
 import AdminDressFeedback from "@/components/AdminDressFeedback";
+import { signDressPhotos } from "@/lib/server/dressImageUrls";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,7 @@ export default async function AdminPublicationDetail({ params }: { params: Promi
     supabase.from("dress_moderation_history").select("id,action,status_from,status_to,comments,admin_id,created_at").eq("dress_id", dress.id).order("created_at", { ascending: false }),
   ]);
 
-  const photos = [...(photoRows ?? [])].sort((a: any, b: any) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0) || a.position - b.position);
+  const photos = (await signDressPhotos([...(photoRows ?? [])], 60 * 60)).sort((a: any, b: any) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0) || a.position - b.position);
   const brandResolver = await resolveDressBrandNames(supabase, [dress]);
   const brand = brandResolver.nameFor(dress) || "Marca pendiente";
   const cleanModel = (value: any) => {
@@ -95,7 +96,7 @@ export default async function AdminPublicationDetail({ params }: { params: Promi
           {photos.map((photo: any) => (
             <figure key={photo.id}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={dressImageUrl(photo.storage_path)} alt={photo.classification || "Fotografía del vestido"} />
+              <img src={dressImageUrl(photo.storage_path, photo.signed_url)} alt={photo.classification || "Fotografía del vestido"} />
               <figcaption>{photo.is_primary ? "Principal" : photo.classification || `Posición ${Number(photo.position ?? 0) + 1}`}</figcaption>
             </figure>
           ))}

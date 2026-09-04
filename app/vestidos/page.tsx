@@ -5,6 +5,7 @@ import { searchDresses, type DressSearchParams } from "@/lib/dresses";
 import { loadDressCatalogData } from "@/lib/dressCatalogData";
 import DressCard, { type CatalogDress } from "@/components/DressCard";
 import FilterSidebar from "@/components/FilterSidebar";
+import { signDressCollections } from "@/lib/server/dressImageUrls";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +25,10 @@ async function CatalogResults({ searchParams }: { searchParams: DressSearchParam
   if (error) return <div className="alert-error">No se pudo cargar el catálogo en este momento.</div>;
   if (dresses.length === 0) return <div className="catalog-empty"><h3>Ningún vestido coincide con esos filtros</h3><p>Prueba ampliando el rango de precio o quitando alguna opción.</p></div>;
 
+  const signedDresses = await signDressCollections(dresses as any[]);
   return <>
     <p className="catalog-count"><strong>{count}</strong> vestido{count === 1 ? "" : "s"} encontrado{count === 1 ? "" : "s"}</p>
-    <div className="catalog-grid">{(dresses as unknown as CatalogDress[]).map(dress => <DressCard key={dress.id} dress={dress} />)}</div>
+    <div className="catalog-grid">{(signedDresses as unknown as CatalogDress[]).map(dress => <DressCard key={dress.id} dress={dress} />)}</div>
     {totalPages > 1 && <nav className="catalog-pagination" aria-label="Paginación del catálogo">
       {Array.from({ length: totalPages }, (_, index) => index + 1).map(pageNumber => {
         const params = new URLSearchParams(searchParams as Record<string, string>);

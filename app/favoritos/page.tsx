@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import DressCard, { type CatalogDress } from "@/components/DressCard";
 import { STATUS_LABELS } from "@/lib/catalogs";
+import { signDressCollections } from "@/lib/server/dressImageUrls";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,8 @@ export default async function FavoritesPage() {
     );
   }
 
-  const items = (favorites ?? []).map((f: any) => (Array.isArray(f.dresses) ? f.dresses[0] : f.dresses)).filter(Boolean);
+  const rawItems = (favorites ?? []).map((f: any) => (Array.isArray(f.dresses) ? f.dresses[0] : f.dresses)).filter(Boolean);
+  const items = await signDressCollections(rawItems as any[]);
 
   const disponibles = items.filter((d: any) => d.status === "approved");
   const noDisponibles = items.filter((d: any) => d.status !== "approved");

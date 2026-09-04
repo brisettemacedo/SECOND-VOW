@@ -3,7 +3,7 @@ import { dressImageUrl } from "@/lib/storage";
 import { SILUETAS, CONDICIONES } from "@/lib/catalogs";
 import FavoriteButton from "@/components/FavoriteButton";
 
-type DressPhoto = { storage_path: string; is_primary: boolean; position: number };
+type DressPhoto = { storage_path: string; signed_url?: string | null; is_primary: boolean; position: number };
 
 export type CatalogDress = {
   id: string;
@@ -37,7 +37,7 @@ function primaryPhoto(photos: DressPhoto[]) {
     if (b.is_primary) return 1;
     return a.position - b.position;
   });
-  return sorted[0]?.storage_path ?? null;
+  return sorted[0] ?? null;
 }
 
 function fmtPrice(v: number) {
@@ -45,7 +45,7 @@ function fmtPrice(v: number) {
 }
 
 export default function DressCard({ dress }: { dress: CatalogDress }) {
-  const photoPath = primaryPhoto(dress.dress_photos ?? []);
+  const photo = primaryPhoto(dress.dress_photos ?? []);
   const discount =
     dress.precio_original_mxn && dress.precio_original_mxn > dress.precio_venta_mxn
       ? Math.round((1 - dress.precio_venta_mxn / dress.precio_original_mxn) * 100)
@@ -65,10 +65,10 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
       }}
     >
       <div style={{ aspectRatio: "3 / 4", background: "var(--color-background-secondary)", position: "relative" }}>
-        {photoPath ? (
+        {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={dressImageUrl(photoPath)}
+            src={dressImageUrl(photo.storage_path, photo.signed_url)}
             alt={`${brandName(dress.brands, dress.brand_suggestions)}${dress.model ? " " + dress.model : ""}`}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />

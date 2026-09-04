@@ -4,6 +4,7 @@ import { resolveDressBrandNames } from "@/lib/server/dressBrands";
 import DeleteDraftButton from "@/components/DeleteDraftButton";
 import { dressImageUrl } from "@/lib/storage";
 import { missingDressRequirements } from "@/lib/dressRequirements";
+import { signDressCollections } from "@/lib/server/dressImageUrls";
 
 const labels: Record<string, string> = {
   draft: "Borrador",
@@ -41,7 +42,8 @@ export default async function MyDresses({ searchParams }: { searchParams: Promis
     }
   }
 
-  const dressIds=(data??[]).map((d:any)=>d.id);
+  const signedDresses = error ? [] : await signDressCollections((data ?? []) as any[], 60 * 60);
+  const dressIds=signedDresses.map((d:any)=>d.id);
   const [{data:activeOffers},{data:activePayments},{data:feedback}]=await Promise.all([
     dressIds.length?supabase.from("offers").select("dress_id").in("dress_id",dressIds).eq("status","pending"):Promise.resolve({data:[]} as any),
     dressIds.length?supabase.from("orders").select("dress_id").in("dress_id",dressIds).in("status",["payment_processing","payment_review"]):Promise.resolve({data:[]} as any),
@@ -57,7 +59,7 @@ export default async function MyDresses({ searchParams }: { searchParams: Promis
     <div className="title-row"><h1>Mis vestidos</h1><Link className="btn btn-primary" href="/publicar">Publicar vestido</Link></div>
     {loadError && <div className="alert-error"><strong>No pudimos cargar tus publicaciones.</strong><p>{loadError}</p></div>}
     <div className="cards-list">
-      {!loadError && (data ?? []).map((d: any) => {
+      {!loadError && signedDresses.map((d: any) => {
         // Editable/eliminable mientras no haya una oferta aceptada (pedido activo)
         // sobre este vestido, y no esté ya reservado/vendido.
         const hasActivePayment=paymentDressIds.has(d.id);
@@ -69,7 +71,7 @@ export default async function MyDresses({ searchParams }: { searchParams: Promis
         const missing=d.status==="draft"?missingDressRequirements(d):[];
         return <article className="panel my-dress-card" key={d.id}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {photo&&<img className="my-dress-photo" src={dressImageUrl(photo.storage_path)} alt={`${brand} ${model}`} />}
+          {photo&&<img className="my-dress-photo" src={dressImageUrl(photo.storage_path, photo.signed_url)} alt={`${brand} ${model}`} />}
           <div className="my-dress-card-body">
           <h2>{brand}{model ? ` ${model}` : ""}</h2>
           <p><span className="badge">{labels[d.status] ?? d.status}</span></p>

@@ -9,6 +9,7 @@ import OfferButton from "@/components/OfferButton";
 import {
   SILUETAS, ESCOTES, ESPALDAS, MANGAS, TELAS, COLORES, COLAS, CONDICIONES, STATUS_LABELS,
 } from "@/lib/catalogs";
+import { signDressCollections, signDressPhotos } from "@/lib/server/dressImageUrls";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,7 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  const photos = [...(dress.dress_photos ?? [])].sort((a, b) => {
+  const photos = (await signDressPhotos([...(dress.dress_photos ?? [])])).sort((a, b) => {
     if (a.is_primary) return -1;
     if (b.is_primary) return 1;
     return a.position - b.position;
@@ -93,6 +94,7 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
     .eq("silueta", dress.silueta)
     .neq("id", dress.id)
     .limit(4);
+  const similaresFirmados = await signDressCollections((similares ?? []) as any[]);
 
   const isOwnerOrAdminPreview = ["draft", "pending_review", "changes_requested", "rejected", "archived"].includes(dress.status);
 
@@ -213,11 +215,11 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
 
-      {similares && similares.length > 0 && (
+      {similaresFirmados.length > 0 && (
         <section style={{ marginTop: 60 }}>
           <h2 style={{ fontSize: 20, marginBottom: 16 }}>Vestidos similares</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
-            {(similares as unknown as CatalogDress[]).map((d) => (
+            {(similaresFirmados as unknown as CatalogDress[]).map((d) => (
               <DressCard key={d.id} dress={d} />
             ))}
           </div>
