@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { dressImageUrl } from "@/lib/storage";
@@ -95,8 +96,7 @@ export default async function AdminPublicationDetail({ params }: { params: Promi
         <div className="admin-photo-grid">
           {photos.map((photo: any) => (
             <figure key={photo.id}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={dressImageUrl(photo.storage_path, photo.signed_url)} alt={photo.classification || "Fotografía del vestido"} />
+              <Image width={480} height={640} src={dressImageUrl(photo.storage_path, photo.signed_url)} alt={photo.classification || "Fotografía del vestido"} />
               <figcaption>{photo.is_primary ? "Principal" : photo.classification || `Posición ${Number(photo.position ?? 0) + 1}`}</figcaption>
             </figure>
           ))}

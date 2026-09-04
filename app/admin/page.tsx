@@ -63,7 +63,7 @@ export default async function Admin() {
   }
 
   return <main className="page">
-    <div className="title-row"><h1>Administración</h1></div>
+    <div className="title-row"><h1>Administración</h1><Link className="btn btn-secondary" href="/admin/pedidos">Todos los pedidos</Link></div>
     <section className="panel admin-pending-overview">
       <div className="title-row">
         <div>

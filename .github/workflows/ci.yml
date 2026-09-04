@@ -1,0 +1,26 @@
+name: Validación
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SITE_URL: https://example.com
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci
+      NEXT_PUBLIC_LEGAL_NAME: SECOND VOW CI
+      NEXT_PUBLIC_LEGAL_ADDRESS: Domicilio de prueba para CI
+      NEXT_PUBLIC_LEGAL_PHONE: 0000000000
+      NEXT_PUBLIC_PRIVACY_EMAIL: privacidad@example.com
+      NEXT_PUBLIC_CONTACT_EMAIL: hola@example.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build

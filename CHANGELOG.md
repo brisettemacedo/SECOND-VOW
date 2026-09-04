@@ -41,6 +41,26 @@
 
 # Changelog
 
+## v1.9.1 — 2026-09-04
+
+- Aclara el tratamiento contractual de las ventas ocasionales de bienes personales.
+- Condiciona la solicitud de RFC, información y retenciones a una obligación legal efectivamente aplicable.
+- Explica cómo SECOND VOW registra un evento de entrega mediante rastreo o confirmación manual.
+- Agrega la reclamación `not_received` y bloquea el saldo mientras se revisa la prueba de entrega.
+- Nueva migración incremental 0031; las migraciones anteriores permanecen intactas.
+
+## v1.9.0 — 2026-09-04
+
+- Destino y nombre de recepción compartidos privadamente antes de la oferta; snapshot inmutable al aceptarla.
+- Comisión obtenida de la configuración activa, aplicada al vestido más envío.
+- Seguro, rastreo, firma, identificación y evidencia mínima obligatorios para registrar envío.
+- Correos transaccionales mediante Resend, reintentos y bitácora de fallos.
+- Expediente administrativo, margen real, página paginada de pedidos y liberación manual protegida.
+- Calificaciones reales con comentario; no se crean cinco estrellas ficticias.
+- Términos, privacidad, envíos, FAQ y flujo actualizados.
+- Hero convertido a WebP y catálogo/galería con optimización de imágenes.
+- Migración incremental 0030; 0001–0029 permanecen intactas.
+
 ## v1.0 — 2026-08-07
 
 - Consolidación del frontend más reciente con migraciones 0001–0010.

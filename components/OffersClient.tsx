@@ -5,6 +5,15 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 function dressTitle(d:any){const raw=String(d?.model??"").trim();const model=/^(na|n\/?a|no aplica|sin modelo)$/i.test(raw)?"":raw;return [d?.brands?.name,model].filter(Boolean).join(" ")||"Vestido"}
+const STATUS: Record<string, string> = {
+  pending: "Pendiente",
+  accepted: "Aceptada",
+  rejected: "Rechazada",
+  declined: "Rechazada",
+  countered: "Reemplazada",
+  expired: "Vencida",
+  cancelled: "Cancelada",
+};
 
 export default function OffersClient({ offers, userId }: { offers: any[]; userId: string }) {
   const supabase = useMemo(() => createClient(), []);
@@ -43,8 +52,7 @@ export default function OffersClient({ offers, userId }: { offers: any[]; userId
       const total = Number(o.amount_mxn || 0) + Number(o.shipping_mxn || 0);
       return <article className="panel" key={o.id}>
         <h2>{dressTitle(o.dresses)}</h2>
-        <p>Vestido ${Number(o.amount_mxn).toLocaleString("es-MX")} + envío ${Number(o.shipping_mxn || 0).toLocaleString("es-MX")} = <strong>${total.toLocaleString("es-MX")} MXN</strong> | <span className="badge">{o.status}</span></p>
-        {o.seller_id === userId && <p className="muted">Recibirás aproximadamente ${Math.round(total * 0.82).toLocaleString("es-MX")} MXN y de ahí pagarás la guía. SECOND VOW retiene 18% del total.</p>}
+        <p>Vestido ${Number(o.amount_mxn).toLocaleString("es-MX")} + envío ${Number(o.shipping_mxn || 0).toLocaleString("es-MX")} = <strong>${total.toLocaleString("es-MX")} MXN</strong> | <span className="badge">{STATUS[o.status] ?? o.status}</span></p>
         {o.note && <p>{o.note}</p>}
         <p className="muted">Expira: {new Date(o.expires_at).toLocaleString("es-MX")}</p>
         {canRespond && <div className="actions-stack">

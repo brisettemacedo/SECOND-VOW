@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { dressImageUrl } from "@/lib/storage";
 import { SILUETAS, CONDICIONES } from "@/lib/catalogs";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -66,11 +67,12 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
     >
       <div style={{ aspectRatio: "3 / 4", background: "var(--color-background-secondary)", position: "relative" }}>
         {photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={dressImageUrl(photo.storage_path, photo.signed_url)}
             alt={`${brandName(dress.brands, dress.brand_suggestions)}${dress.model ? " " + dress.model : ""}`}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1100px) 33vw, 25vw"
+            style={{ objectFit: "cover" }}
           />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-text-muted)", fontSize: 12.5 }}>

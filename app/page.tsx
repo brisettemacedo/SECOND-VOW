@@ -1,20 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { cookies } from "next/headers";
-import { readdirSync } from "node:fs";
-import path from "node:path";
 import SellerRecoveryCalculator from "@/components/SellerRecoveryCalculator";
 import HeroRotationMarker from "@/components/HeroRotationMarker";
 
 export const dynamic = "force-dynamic";
 
-function heroImages() {
-  const imageDirectory = path.join(process.cwd(), "public", "images");
-  return readdirSync(imageDirectory)
-    .filter((name) => /^hero-[1-6]\.(jpg|jpeg|png|webp|avif)$/i.test(name))
-    .sort((a, b) => Number(a.match(/hero-(\d+)/i)?.[1]) - Number(b.match(/hero-(\d+)/i)?.[1]))
-    .map((name, index) => ({ src: `/images/${name}`, alt: `Vestido de novia destacado ${index + 1}` }));
-}
+const HERO_IMAGES = [1,2,3,4].map(index=>({src:`/images/hero-${index}.webp`,alt:`Vestido de novia destacado ${index}`}));
 
 const BENEFITS = [
   { icon: "tag", title: "Mejor precio", text: "Encuentra vestidos de diseñador por una fracción de su precio original." },
@@ -31,7 +23,7 @@ function BenefitIcon({ name }: { name: typeof BENEFITS[number]["icon"] }) {
 }
 
 export default async function HomePage() {
-  const images = heroImages();
+  const images = HERO_IMAGES;
   const cookieStore = await cookies();
   const lastIndex = Number(cookieStore.get("second_vow_hero")?.value ?? -1);
   const heroIndex = images.length ? (Number.isInteger(lastIndex) ? (lastIndex + 1) % images.length : 0) : 0;

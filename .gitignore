@@ -1,3 +1,12 @@
 
+node_modules/
+.next/
+.vercel/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
 .DS_Store
 **/.DS_Store
+__MACOSX/
+npm-debug.log*

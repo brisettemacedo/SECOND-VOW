@@ -1,11 +1,12 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { DressCatalogData } from "@/lib/dressCatalogData";
 import { TERMS_VERSION } from "@/lib/site";
+import { validateUploadMedia } from "@/lib/mediaValidation";
 import { DRESS_REQUIRED_FIELDS } from "@/lib/dressRequirements";
 import { dressImageUrl } from "@/lib/storage";
 
@@ -250,6 +251,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     try {
       const id = await ensureDraft();
       for (const [i, file] of Array.from(files).entries()) {
+        await validateUploadMedia(file);
         const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `${userId}/${id}/${crypto.randomUUID()}.${ext}`;
         const { error: up } = await supabase.storage.from("dress-images").upload(path, file, { upsert: false });
@@ -457,10 +459,10 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
 
       {step === 4 && <>{check("tuvo_ajustes", "Tuvo ajustes o alteraciones")}<div className="field"><label>Detalle de ajustes</label><textarea rows={5} value={dress.ajustes_detalle ?? ""} onChange={(e) => set("ajustes_detalle", e.target.value)} /></div>{check("conserva_margen_costura", "Conserva margen de costura")}</>}
 
-      {step === 5 && <><div className="grid-2">{input("precio_original_mxn", "Precio original (MXN)", "number")}{input("precio_venta_mxn", "Precio de venta (MXN)", "number")}</div><p className="muted">Tú decides si este precio ya incluye el envío o si se cobrará aparte: el costo real de envío se cotiza con cada compradora después de aceptar su oferta, según su código postal.</p></>}
+      {step === 5 && <><div className="grid-2">{input("precio_original_mxn", "Precio original (MXN)", "number")}{input("precio_venta_mxn", "Precio de venta (MXN)", "number")}</div><p className="muted">El precio del vestido no incluye el envío. Cuando una compradora te contacte y comparta su domicilio postal, podrás cotizar el envío asegurado y enviarle una oferta final.</p></>}
       {step === 6 && <><p>Todos los vestidos publicados en SECOND VOW se envían; no se ofrecen pruebas ni entregas presenciales.</p><p className="muted">No necesitas capturar un costo de envío aquí. Cuando aceptes una oferta, podrás cotizar el envío real según el código postal de esa compradora, y ese costo se sumará a lo que ella pague dentro de SECOND VOW.</p></>}
       {step === 7 && <div className="field"><label>Descripción adicional</label><textarea rows={10} value={dress.descripcion ?? ""} onChange={(e) => set("descripcion", e.target.value)} placeholder="Cuenta libremente la historia, detalles, accesorios incluidos o cualquier dato adicional relevante." /></div>}
-      {step === 8 && <><div className={`field ${errors.photos ? "field-invalid" : ""}`}><label>Fotografías (mínimo 1)<span className="required-mark"> *</span></label><input type="file" accept="image/*" multiple onChange={(e) => upload(e.target.files)} />{errors.photos && <p className="field-error">{errors.photos}</p>}<p className="muted">Recomendamos agregar frente, espalda, etiqueta, detalles y cualquier daño: una publicación visualmente completa inspira más confianza y suele venderse más rápido.</p></div>{photos.length > 0 && <div className="photo-editor"><div className="photo-editor-preview"><img src={dressImageUrl((photos.find((p) => p.id === previewPhotoId) ?? photos[0]).storage_path, (photos.find((p) => p.id === previewPhotoId) ?? photos[0]).signed_url)} alt="Vista previa de la fotografía seleccionada" /></div><div className="photo-list">{photos.map((p, i) => <article key={p.id} className={p.id === previewPhotoId ? "photo-editor-selected" : ""}><button type="button" className="photo-thumb-button" onClick={() => setPreviewPhotoId(p.id)} aria-label={`Ver fotografía ${i + 1} en grande`}><img src={dressImageUrl(p.storage_path, p.signed_url)} alt={`Fotografía ${i + 1}`} /></button><strong>Foto {i + 1}{p.is_primary ? " · principal" : ""}</strong><div className="photo-editor-actions">{!p.is_primary && <button type="button" className="link-button" disabled={busy} onClick={() => makePrimary(p.id)}>Hacer principal</button>}<button type="button" className="link-button danger-link" disabled={busy} onClick={() => removePhoto(p)}>Eliminar</button></div></article>)}</div></div>}</>}
+      {step === 8 && <><div className={`field ${errors.photos ? "field-invalid" : ""}`}><label>Fotografías (mínimo 1)<span className="required-mark"> *</span></label><input type="file" accept="image/*" multiple onChange={(e) => upload(e.target.files)} />{errors.photos && <p className="field-error">{errors.photos}</p>}<p className="muted">Recomendamos agregar frente, espalda, etiqueta, detalles y cualquier daño: una publicación visualmente completa inspira más confianza y suele venderse más rápido.</p></div>{photos.length > 0 && <div className="photo-editor"><div className="photo-editor-preview"><Image width={900} height={1200} src={dressImageUrl((photos.find((p) => p.id === previewPhotoId) ?? photos[0]).storage_path, (photos.find((p) => p.id === previewPhotoId) ?? photos[0]).signed_url)} alt="Vista previa de la fotografía seleccionada" /></div><div className="photo-list">{photos.map((p, i) => <article key={p.id} className={p.id === previewPhotoId ? "photo-editor-selected" : ""}><button type="button" className="photo-thumb-button" onClick={() => setPreviewPhotoId(p.id)} aria-label={`Ver fotografía ${i + 1} en grande`}><Image width={180} height={240} src={dressImageUrl(p.storage_path, p.signed_url)} alt={`Fotografía ${i + 1}`} /></button><strong>Foto {i + 1}{p.is_primary ? " · principal" : ""}</strong><div className="photo-editor-actions">{!p.is_primary && <button type="button" className="link-button" disabled={busy} onClick={() => makePrimary(p.id)}>Hacer principal</button>}<button type="button" className="link-button danger-link" disabled={busy} onClick={() => removePhoto(p)}>Eliminar</button></div></article>)}</div></div>}</>}
 
       {step === 9 && <div className="publish-declarations">
         <div className={pendingByStep.length ? "review-summary review-summary-pending" : "review-summary review-summary-complete"}>

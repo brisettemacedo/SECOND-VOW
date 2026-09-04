@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/server/adminSupabase";
 import { stripeGet, stripeRequest } from "@/lib/server/stripe";
+import { sendPendingNotificationEmails } from "@/lib/server/notificationEmail";
 export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -52,5 +53,6 @@ export async function GET(req: Request) {
     } catch (refundError: any) { refundErrors.push(`${order.id}: ${refundError?.message ?? "error"}`); }
   }
   const { data: offerReminders } = await admin.rpc("backend_generate_offer_reminders");
-  return NextResponse.json({ expiredPayments: expiredPayments ?? 0, finalized: data ?? 0, offerReminders: offerReminders ?? 0, refundsRequested, refundErrors });
+  const email = await sendPendingNotificationEmails();
+  return NextResponse.json({ expiredPayments: expiredPayments ?? 0, finalized: data ?? 0, offerReminders: offerReminders ?? 0, refundsRequested, refundErrors, email });
 }

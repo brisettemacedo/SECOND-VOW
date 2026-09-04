@@ -1,5 +1,6 @@
 import MessagesClient from "@/components/MessagesClient";
 import { requireUser } from "@/lib/auth";
+import { safeDisplayName } from "@/lib/displayName";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export default async function MessagesPage({searchParams}:{searchParams?:Promise
   await supabase.rpc("expire_stale_offers");
   await supabase.rpc("refresh_my_offer_reminders");
   const {data,error}=await supabase.from("conversations")
-    .select("id,dress_id,buyer_id,seller_id,buyer_postal_code,last_message_at,dresses(id,model,precio_venta_mxn,brands(name)),messages(id,sender_id,body,created_at,read_at)")
+    .select("id,dress_id,buyer_id,seller_id,buyer_postal_code,shipping_destination_type,recipient_full_name,recipient_phone,shipping_street1,shipping_street2,shipping_neighborhood,shipping_city,shipping_state,shipping_branch_name,shipping_destination_set_at,last_message_at,dresses(id,model,precio_venta_mxn,brands(name)),messages(id,sender_id,body,created_at,read_at)")
     .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
     .order("last_message_at",{ascending:false});
   if(error) return <main className="page"><h1>Mensajes</h1><div className="alert-error">{error.message}</div></main>;
@@ -18,10 +19,10 @@ export default async function MessagesPage({searchParams}:{searchParams?:Promise
   const participantIds=Array.from(new Set(conversations.flatMap((c:any)=>[c.buyer_id,c.seller_id]).filter(Boolean)));
   const [{data:offers},{data:orders},{data:profiles}]=await Promise.all([
     ids.length ? supabase.from("offers").select("id,conversation_id,dress_id,buyer_id,seller_id,created_by,parent_offer_id,amount_mxn,shipping_mxn,status,expires_at,created_at,responded_at,accepted_at,note").in("conversation_id",ids).order("created_at") : Promise.resolve({data:[]} as any),
-    ids.length ? supabase.from("orders").select("id,public_code,dress_id,buyer_id,seller_id,status,subtotal_mxn,shipping_mxn,total_mxn,shipping_quote_set_at,shipping_carrier_declared,payment_deadline_at,created_at,paid_at,shipped_at,delivered_at").or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`).order("created_at") : Promise.resolve({data:[]} as any),
+    ids.length ? supabase.from("orders").select("id,public_code,dress_id,buyer_id,seller_id,status,subtotal_mxn,shipping_mxn,total_mxn,shipping_quote_set_at,shipping_carrier_declared,carrier,tracking_number,payment_deadline_at,created_at,paid_at,shipped_at,delivered_at").or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`).order("created_at") : Promise.resolve({data:[]} as any),
     participantIds.length ? supabase.from("profiles").select("id,full_name").in("id",participantIds) : Promise.resolve({data:[]} as any),
   ]);
-  const profileMap=Object.fromEntries((profiles??[]).map((x:any)=>[x.id,x.full_name||"Usuaria"]));
+  const profileMap=Object.fromEntries((profiles??[]).map((x:any)=>[x.id,safeDisplayName(x.full_name)]));
   const initial=(conversations as any[]).map((c:any)=>({
     ...c,
     buyer_name:profileMap[c.buyer_id]||"Compradora",

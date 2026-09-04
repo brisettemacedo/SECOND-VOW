@@ -1,6 +1,96 @@
 "use client";
-import {useState} from "react";import SocialAuthButtons from "@/components/SocialAuthButtons";import {useSearchParams} from "next/navigation";import Link from "next/link";import {createClient} from "@/lib/supabase/client";import {safeInternalPath} from "@/lib/navigation";import {PRIVACY_VERSION,SITE_URL,TERMS_VERSION} from "@/lib/site";
-export default function SignupForm(){const supabase=createClient();const sp=useSearchParams();const next=safeInternalPath(sp.get("next"));const dress=sp.get("dress");const [fullName,setFullName]=useState("");const [email,setEmail]=useState("");const [password,setPassword]=useState("");const [privacy,setPrivacy]=useState(false);const [terms,setTerms]=useState(false);const [processing,setProcessing]=useState(false);const [error,setError]=useState<string|null>(null);const [sent,setSent]=useState(false);const [loading,setLoading]=useState(false);
-async function submit(e:React.FormEvent){e.preventDefault();setError(null);if(password.length<8){setError("La contraseña debe tener al menos 8 caracteres.");return}if(!privacy||!terms||!processing){setError("Debes aceptar los documentos legales y la autorización indicada para crear tu cuenta.");return}setLoading(true);const origin=typeof window!=="undefined"?window.location.origin:SITE_URL;const callback=new URL(`${origin}/auth/callback`);callback.searchParams.set("next",next);if(dress)callback.searchParams.set("dress",dress);const acceptedAt=new Date().toISOString();const {error}=await supabase.auth.signUp({email,password,options:{data:{full_name:fullName.trim(),privacy_accepted:true,terms_accepted:true,data_processing_accepted:true,privacy_version:PRIVACY_VERSION,terms_version:TERMS_VERSION,legal_accepted_at:acceptedAt},emailRedirectTo:callback.toString()}});setLoading(false);if(error){setError("No se pudo crear la cuenta. Revisa los datos e intenta de nuevo.");return}setSent(true)}
-if(sent)return <main className="auth-shell"><div className="alert-success">Revisa tu correo para confirmar la cuenta.</div></main>;
-return <main className="auth-shell"><h1>Crea tu cuenta</h1>{error&&<div className="alert-error">{error}</div>}<form onSubmit={submit}><div className="field"><label htmlFor="fullName">Nombre visible</label><input id="fullName" required maxLength={80} value={fullName} onChange={e=>setFullName(e.target.value)}/></div><div className="field"><label htmlFor="email">Correo electrónico</label><input id="email" type="email" required autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></div><div className="field"><label htmlFor="password">Contraseña</label><input id="password" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)}/></div><div className="legal-checks"><label className="check"><input type="checkbox" checked={privacy} onChange={e=>setPrivacy(e.target.checked)}/><span>He leído y acepto el <Link href="/legal/aviso-privacidad" target="_blank">Aviso de Privacidad</Link>.</span></label><label className="check"><input type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)}/><span>He leído y acepto los <Link href="/legal/terminos" target="_blank">Términos y Condiciones</Link>.</span></label><label className="check"><input type="checkbox" checked={processing} onChange={e=>setProcessing(e.target.checked)}/><span>Autorizo el tratamiento de mis datos para las finalidades descritas en el Aviso de Privacidad.</span></label></div><button className="btn btn-primary" disabled={loading} style={{width:"100%"}}>{loading?"Creando cuenta...":"Crear cuenta"}</button></form><SocialAuthButtons/><p className="auth-foot">¿Ya tienes cuenta? <Link href={`/login?next=${encodeURIComponent(next)}${dress?`&dress=${encodeURIComponent(dress)}`:""}`}>Iniciar sesión</Link></p></main>}
+
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import SocialAuthButtons from "@/components/SocialAuthButtons";
+import { createClient } from "@/lib/supabase/client";
+import { safeInternalPath } from "@/lib/navigation";
+import { PRIVACY_VERSION, SITE_URL, TERMS_VERSION } from "@/lib/site";
+
+export default function SignupForm() {
+  const supabase = createClient();
+  const sp = useSearchParams();
+  const next = safeInternalPath(sp.get("next"));
+  const dress = sp.get("dress");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [privacy, setPrivacy] = useState(false);
+  const [terms, setTerms] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setError(null);
+    const visibleName = fullName.trim();
+    if (visibleName.length < 2 || visibleName.includes("@") || /^https?:\/\//i.test(visibleName)) {
+      setError("Escribe tu nombre, no tu correo electrónico ni una liga, en el campo de nombre visible.");
+      return;
+    }
+    if (password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+    if (!privacy || !terms || !processing) {
+      setError("Debes aceptar los documentos legales y la autorización indicada para crear tu cuenta.");
+      return;
+    }
+
+    setLoading(true);
+    const origin = typeof window !== "undefined" ? window.location.origin : SITE_URL;
+    const callback = new URL(`${origin}/auth/callback`);
+    callback.searchParams.set("next", next);
+    if (dress) callback.searchParams.set("dress", dress);
+    const acceptedAt = new Date().toISOString();
+    const { error: signupError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: visibleName,
+          privacy_accepted: true,
+          terms_accepted: true,
+          data_processing_accepted: true,
+          privacy_version: PRIVACY_VERSION,
+          terms_version: TERMS_VERSION,
+          legal_accepted_at: acceptedAt,
+        },
+        emailRedirectTo: callback.toString(),
+      },
+    });
+    setLoading(false);
+    if (signupError) {
+      setError("No se pudo crear la cuenta. Revisa los datos e intenta de nuevo.");
+      return;
+    }
+    setSent(true);
+  }
+
+  if (sent) return <main className="auth-shell"><div className="alert-success">Revisa tu correo para confirmar la cuenta.</div></main>;
+
+  return <main className="auth-shell">
+    <h1>Crea tu cuenta</h1>
+    {error && <div className="alert-error">{error}</div>}
+    <form onSubmit={submit}>
+      <div className="field">
+        <label htmlFor="fullName">Nombre visible</label>
+        <input id="fullName" required minLength={2} maxLength={80} autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} />
+        <p className="muted">Este nombre sí será visible. Tu correo electrónico permanecerá privado.</p>
+      </div>
+      <div className="field"><label htmlFor="email">Correo electrónico</label><input id="email" type="email" required autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} /></div>
+      <div className="field"><label htmlFor="password">Contraseña</label><input id="password" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} /></div>
+      <div className="legal-checks">
+        <label className="check"><input type="checkbox" checked={privacy} onChange={(event) => setPrivacy(event.target.checked)} /><span>He leído y acepto el <Link href="/legal/aviso-privacidad" target="_blank">Aviso de Privacidad</Link>.</span></label>
+        <label className="check"><input type="checkbox" checked={terms} onChange={(event) => setTerms(event.target.checked)} /><span>He leído y acepto los <Link href="/legal/terminos" target="_blank">Términos y Condiciones</Link>.</span></label>
+        <label className="check"><input type="checkbox" checked={processing} onChange={(event) => setProcessing(event.target.checked)} /><span>Autorizo el tratamiento de mis datos para las finalidades descritas en el Aviso de Privacidad.</span></label>
+      </div>
+      <button className="btn btn-primary" disabled={loading} style={{ width: "100%" }}>{loading ? "Creando cuenta..." : "Crear cuenta"}</button>
+    </form>
+    <SocialAuthButtons />
+    <p className="auth-foot">¿Ya tienes cuenta? <Link href={`/login?next=${encodeURIComponent(next)}${dress ? `&dress=${encodeURIComponent(dress)}` : ""}`}>Iniciar sesión</Link></p>
+  </main>;
+}

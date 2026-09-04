@@ -14,9 +14,15 @@ export default function AccountForm({ email, initialFullName }: { email: string;
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault(); setSavingProfile(true); setProfileMsg(null);
+    const visibleName = fullName.trim();
+    if (visibleName.length < 2 || visibleName.includes("@") || /^https?:\/\//i.test(visibleName)) {
+      setSavingProfile(false);
+      setProfileMsg({ type: "error", text: "Escribe un nombre visible válido, sin correos electrónicos ni enlaces." });
+      return;
+    }
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { error } = await supabase.from("profiles").update({ full_name: fullName }).eq("id", user.id);
+    if (!user) { setSavingProfile(false); return; }
+    const { error } = await supabase.from("profiles").update({ full_name: visibleName }).eq("id", user.id);
     setSavingProfile(false);
     setProfileMsg(error ? { type: "error", text: "No se pudo guardar. Intenta de nuevo." } : { type: "success", text: "Perfil actualizado." });
   }
@@ -37,7 +43,7 @@ export default function AccountForm({ email, initialFullName }: { email: string;
       <h2 style={{ fontSize: 16, marginBottom: 16 }}>Datos de cuenta</h2>
       {profileMsg && <div className={profileMsg.type === "success" ? "alert-success" : "alert-error"}>{profileMsg.text}</div>}
       <div className="field"><label>Correo (privado)</label><input type="email" value={email} disabled style={{ opacity: 0.6 }} /></div>
-      <div className="field"><label htmlFor="fullName">Nombre para tu cuenta</label><input id="fullName" value={fullName} onChange={e => setFullName(e.target.value)} /></div>
+      <div className="field"><label htmlFor="fullName">Nombre visible</label><input id="fullName" minLength={2} maxLength={80} required value={fullName} onChange={e => setFullName(e.target.value)} /><small>Este nombre será público. Tu correo electrónico permanecerá privado.</small></div>
       <button className="btn btn-primary" type="submit" disabled={savingProfile}>{savingProfile ? "Guardando..." : "Guardar cambios"}</button>
     </form>
     <form onSubmit={changePassword} style={{ marginBottom: 40 }}>

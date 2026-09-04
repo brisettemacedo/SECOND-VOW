@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/server/adminSupabase";
 import { stripeGet, stripeRequest, verifyStripeSignature } from "@/lib/server/stripe";
+import { sendPendingNotificationEmails } from "@/lib/server/notificationEmail";
 
 export const dynamic = "force-dynamic";
 
@@ -175,5 +176,6 @@ export async function POST(req: Request) {
     await admin.from("payment_webhook_events").update({ processing_error: error?.message ?? "Error" }).eq("provider", "stripe").eq("event_id", event.id);
     return NextResponse.json({ error: "Error procesando webhook" }, { status: 500 });
   }
+  await sendPendingNotificationEmails(20).catch(() => undefined);
   return NextResponse.json({ received: true });
 }

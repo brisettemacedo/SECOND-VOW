@@ -6,7 +6,7 @@ function publicSetting(name: string, value: string | undefined, fallback: string
 }
 
 export const SITE_URL = publicSetting("NEXT_PUBLIC_SITE_URL", process.env.NEXT_PUBLIC_SITE_URL, "http://localhost:3000").replace(/\/$/, "");
-export const LEGAL_NAME = process.env.NEXT_PUBLIC_LEGAL_NAME || "SECOND VOW";
+export const LEGAL_NAME = process.env.NEXT_PUBLIC_LEGAL_NAME || 'MAVY BRISETTE DEL PILAR MACEDO REYES, quien opera bajo el nombre comercial “SECOND VOW”';
 export const LEGAL_ADDRESS = process.env.NEXT_PUBLIC_LEGAL_ADDRESS || "[COMPLETAR DOMICILIO DEL RESPONSABLE ANTES DEL LANZAMIENTO COMERCIAL]";
 export const LEGAL_PHONE = process.env.NEXT_PUBLIC_LEGAL_PHONE || "[COMPLETAR TELÉFONO DE CONTACTO]";
 if (production) {
@@ -16,6 +16,7 @@ if (production) {
 }
 export const PRIVACY_EMAIL = publicSetting("NEXT_PUBLIC_PRIVACY_EMAIL", process.env.NEXT_PUBLIC_PRIVACY_EMAIL, "privacidad@secondvow.com");
 export const CONTACT_EMAIL = publicSetting("NEXT_PUBLIC_CONTACT_EMAIL", process.env.NEXT_PUBLIC_CONTACT_EMAIL, "hola@secondvow.com");
-export const TERMS_VERSION = "2026-09-02";
-export const PRIVACY_VERSION = "2026-09-02";
+export const TERMS_VERSION = "2026-09-04.1";
+export const PRIVACY_VERSION = "2026-09-04";
 export const COOKIES_VERSION = "2026-08-22";
+export const LEGAL_BUNDLE_SHA256 = "0e53b880fbeaa1094cd71fc03de00ea78675d909f0ddd55da11c6e61e2b6fca1";

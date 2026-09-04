@@ -22,6 +22,8 @@ export default function AdminDashboard(p: { pendingItems?: any[]; paymentExcepti
   const [link, setLink] = useState<Record<string, string>>({});
   const [correctedName, setCorrectedName] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState("");
+  const [search, setSearch] = useState("");
+  const [orderStatus, setOrderStatus] = useState("all");
   const refresh = () => router.refresh();
 
   async function verify(id: string, status: string) {
@@ -72,13 +74,17 @@ export default function AdminDashboard(p: { pendingItems?: any[]; paymentExcepti
     finally { setBusy(""); }
   }
 
+  const normalizedSearch=search.trim().toLocaleLowerCase("es-MX");
+  const visibleOrders=p.orders.filter(order=>(orderStatus==="all"||order.status===orderStatus)&&(!normalizedSearch||JSON.stringify(order).toLocaleLowerCase("es-MX").includes(normalizedSearch)));
+  const visibleUsers=p.users.filter(user=>!normalizedSearch||JSON.stringify(user).toLocaleLowerCase("es-MX").includes(normalizedSearch));
   const cards = [["Pedidos activos", p.orders.length], ["Pagos por revisar", p.payments.filter((x) => !["paid", "refunded"].includes(x.status)).length], ["Envíos activos", p.shipments.filter((x) => !["delivered", "cancelled"].includes(x.status)).length], ["Reclamaciones", p.claims.length], ["Marcas por revisar", p.suggestions.length], ["Solicitudes ARCO", p.arco.length]];
   return <div className="admin-operations">
+    <section className="panel"><h2>Buscar y filtrar</h2><div className="grid-2"><label className="field"><span>Nombre, código o identificador</span><input value={search} onChange={event=>setSearch(event.target.value)} placeholder="Buscar en pedidos y usuarias"/></label><label className="field"><span>Estado del pedido</span><select value={orderStatus} onChange={event=>setOrderStatus(event.target.value)}><option value="all">Todos</option>{Array.from(new Set(p.orders.map(order=>order.status))).map(status=><option value={status} key={status}>{status}</option>)}</select></label></div></section>
     <section className="panel"><h2>Bandeja única de pendientes</h2><p className="muted">Todo lo que requiere atención, en un solo lugar.</p>{(p.pendingItems??[]).map((item:any,index:number)=><Link className="admin-mini-row" href={item.url} key={`${item.tipo}-${item.created_at}-${index}`}><span>{item.etiqueta}</span><span className="badge">{item.tipo}</span><small>{new Date(item.created_at).toLocaleDateString("es-MX")}</small></Link>)}{!p.pendingItems?.length&&<p>No hay pendientes.</p>}</section>
     <section className="admin-stat-grid">{cards.map(([label, count]) => <div className="admin-stat" key={String(label)}><strong>{count}</strong><span>{label}</span></div>)}</section>
-    <section className="panel"><div className="admin-title"><div><h2>Usuarias</h2><p className="muted">Últimas cuentas registradas.</p></div><button className="btn btn-secondary" onClick={() => csvDownload("usuarios.csv", p.users)}>Exportar</button></div><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Usuaria</th><th>Estado</th><th>Registro</th><th>Acción</th></tr></thead><tbody>{p.users.slice(0, 10).map((user) => <tr key={user.id}><td>{user.full_name || "Sin nombre"}</td><td><span className="badge">{user.is_blocked ? "Bloqueada" : "Activa"}</span></td><td>{user.created_at ? new Date(user.created_at).toLocaleDateString("es-MX") : "No disponible"}</td><td><button className="table-action" onClick={() => block(user)}>{user.is_blocked ? "Desbloquear" : "Bloquear"}</button></td></tr>)}</tbody></table></div></section>
+    <section className="panel"><div className="admin-title"><div><h2>Usuarias</h2><p className="muted">Últimas cuentas registradas.</p></div><button className="btn btn-secondary" onClick={() => csvDownload("usuarios.csv", visibleUsers)}>Exportar</button></div><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Usuaria</th><th>Estado</th><th>Registro</th><th>Acción</th></tr></thead><tbody>{visibleUsers.slice(0, 25).map((user) => <tr key={user.id}><td>{user.full_name || "Sin nombre"}</td><td><span className="badge">{user.is_blocked ? "Bloqueada" : "Activa"}</span></td><td>{user.created_at ? new Date(user.created_at).toLocaleDateString("es-MX") : "No disponible"}</td><td><button className="table-action" onClick={() => block(user)}>{user.is_blocked ? "Desbloquear" : "Bloquear"}</button></td></tr>)}</tbody></table></div></section>
     <div className="admin-module-grid">
-      <section className="panel" id="pedidos"><h2>Pedidos recientes</h2>{p.orders.slice(0, 6).map((order) => <Link className="admin-mini-row" key={order.id} href={`/pedidos/${order.id}`}><span>{order.public_code || `Pedido ${order.id.slice(0, 8)}`}</span><span className="badge">{order.status}</span><strong>${Number(order.total_mxn ?? 0).toLocaleString("es-MX")}</strong></Link>)}{!p.orders.length && <p className="muted">Sin pedidos.</p>}</section>
+      <section className="panel" id="pedidos"><div className="admin-title"><h2>Pedidos recientes</h2><button className="btn btn-secondary" onClick={()=>csvDownload("pedidos.csv",visibleOrders)}>Exportar</button></div>{visibleOrders.slice(0, 25).map((order) => <Link className="admin-mini-row" key={order.id} href={`/pedidos/${order.id}`}><span>{order.public_code || `Pedido ${order.id.slice(0, 8)}`}</span><span className="badge">{order.status}</span><strong>${Number(order.total_mxn ?? 0).toLocaleString("es-MX")}</strong></Link>)}{!visibleOrders.length && <p className="muted">Sin pedidos para este filtro.</p>}</section>
       <section className="panel"><h2>Envíos</h2>{p.shipments.slice(0, 6).map((shipment) => <div className="admin-mini-row" key={shipment.id}><span>{shipment.carrier || "Paquetería pendiente"}</span><span className="badge">{shipment.status}</span><small>{shipment.tracking_number || "Sin guía"}</small></div>)}{!p.shipments.length && <p className="muted">Sin envíos.</p>}</section>
     </div>
     {!!(p.stalledDrafts && p.stalledDrafts.length) && (
@@ -94,8 +100,8 @@ export default function AdminDashboard(p: { pendingItems?: any[]; paymentExcepti
             return <tr key={d.id}>
               <td><Link href={`/admin/publicaciones/${d.id}`}>{d.model || d.id.slice(0, 8)}</Link></td>
               <td>{d.brand_name || "Sin marca"}</td>
-              <td>{missing.length ? missing.join(", ") : "—"}</td>
-              <td>{d.updated_at ? new Date(d.updated_at).toLocaleDateString("es-MX") : "—"}</td>
+              <td>{missing.length ? missing.join(", ") : "No aplica"}</td>
+              <td>{d.updated_at ? new Date(d.updated_at).toLocaleDateString("es-MX") : "No disponible"}</td>
             </tr>;
           })}
         </tbody></table></div>

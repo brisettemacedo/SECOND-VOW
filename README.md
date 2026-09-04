@@ -16,6 +16,8 @@ También actualiza `vercel.json` para cerrar pedidos vencidos dos veces al día 
 
 ## Variables de Vercel
 
+Para correos transaccionales configura `RESEND_API_KEY` y `RESEND_FROM_EMAIL` (por ejemplo, `SECOND VOW <avisos@second-vow.com>`). El dominio remitente debe estar verificado. Si faltan estas variables, los avisos permanecen en la bitácora y el sistema no simula un envío.
+
 Configura en Vercel, para Production y Preview:
 
 - `NEXT_PUBLIC_SUPABASE_URL`

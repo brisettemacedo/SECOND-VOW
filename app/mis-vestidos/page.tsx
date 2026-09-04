@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { requireUser } from "@/lib/auth";
 import { resolveDressBrandNames } from "@/lib/server/dressBrands";
 import DeleteDraftButton from "@/components/DeleteDraftButton";
@@ -70,8 +71,7 @@ export default async function MyDresses({ searchParams }: { searchParams: Promis
         const photo=[...(d.dress_photos??[])].sort((a:any,b:any)=>(b.is_primary?1:0)-(a.is_primary?1:0)||a.position-b.position)[0];
         const missing=d.status==="draft"?missingDressRequirements(d):[];
         return <article className="panel my-dress-card" key={d.id}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          {photo&&<img className="my-dress-photo" src={dressImageUrl(photo.storage_path, photo.signed_url)} alt={`${brand} ${model}`} />}
+          {photo&&<Image className="my-dress-photo" width={360} height={480} src={dressImageUrl(photo.storage_path, photo.signed_url)} alt={`${brand} ${model}`} />}
           <div className="my-dress-card-body">
           <h2>{brand}{model ? ` ${model}` : ""}</h2>
           <p><span className="badge">{labels[d.status] ?? d.status}</span></p>
