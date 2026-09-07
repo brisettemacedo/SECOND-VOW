@@ -32,6 +32,11 @@
   --text-base: 14px;
 }
 
+.admin-pending-scroll{max-height:360px;overflow-y:auto;overscroll-behavior:contain;padding-right:6px}
+.admin-pagination{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px}
+.catalog-infinite-status{min-height:72px;display:flex;align-items:center;justify-content:center;color:var(--color-text-muted);font-size:13px;text-align:center}
+.catalog-grid>article{content-visibility:auto;contain-intrinsic-size:430px}
+
 * { box-sizing: border-box; }
 
 html, body {

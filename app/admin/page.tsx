@@ -10,15 +10,21 @@ function cleanModel(value: any) {
   return /^(na|n\/a|no aplica|sin modelo)$/i.test(text) ? "" : text;
 }
 
-export default async function Admin() {
+const ADMIN_USER_PAGE_SIZE = 20;
+
+export default async function Admin({ searchParams }: { searchParams: Promise<{ users_page?: string }> }) {
   const { supabase } = await requireAdmin();
+  const query = await searchParams;
+  const usersPage = Math.max(1, Number.parseInt(query.users_page ?? "1", 10) || 1);
+  const usersFrom = (usersPage - 1) * ADMIN_USER_PAGE_SIZE;
   const [
     pendingResult,
     { data: verifications },
     { data: claims },
     { data: brands },
     { data: suggestions },
-    { data: users },
+    { data: brandAliases },
+    usersResult,
     { data: reports },
     { data: arco },
     { data: orders },
@@ -34,7 +40,8 @@ export default async function Admin() {
     supabase.from("claims").select("id,order_id,reason,description,status,created_at").in("status",["open","under_review","approved_return","return_shipped","refund_pending"]).order("created_at"),
     supabase.from("brands").select("id,name").eq("is_active",true).order("name"),
     supabase.from("brand_suggestions").select("id,suggested_name,seller_id,status,created_at").eq("status","pending").order("created_at"),
-    supabase.from("profiles").select("id,full_name,role,is_blocked,blocked_reason,created_at").neq("role","admin").order("created_at",{ascending:false}).limit(100),
+    supabase.from("brand_aliases").select("alias_name,brand_id,brands(name)").order("alias_name"),
+    supabase.from("profiles").select("id,full_name,role,is_blocked,blocked_reason,created_at", { count: "exact" }).neq("role","admin").order("created_at",{ascending:false}).range(usersFrom, usersFrom + ADMIN_USER_PAGE_SIZE - 1),
     supabase.from("conversation_reports").select("id,conversation_id,reporter_id,reason_code,details,status,created_at").in("status",["open","under_review"]).order("created_at",{ascending:false}),
     supabase.from("arco_requests").select("id,user_id,request_type,description,status,admin_response,created_at").in("status",["received","in_review","needs_information"]).order("created_at"),
     supabase.from("orders").select("id,public_code,status,total_mxn,buyer_id,seller_id,created_at").not("status","in",'("completed","cancelled","refunded")').order("created_at",{ascending:false}).limit(20),
@@ -44,7 +51,7 @@ export default async function Admin() {
   ]);
 
   const { data: stalledDraftsRaw } = await supabase.rpc("admin_list_stalled_drafts");
-  const { data: pendingItems } = await supabase.rpc("admin_list_pending_items");
+  const { data: pendingItems } = await supabase.rpc("admin_list_pending_items").range(0, 49);
   const stalledDrafts = stalledDraftsRaw ?? [];
   let stalledDraftsWithBrand: any[] = stalledDrafts;
   if (stalledDrafts.length) {
@@ -63,7 +70,7 @@ export default async function Admin() {
   }
 
   return <main className="page">
-    <div className="title-row"><h1>Administración</h1><Link className="btn btn-secondary" href="/admin/pedidos">Todos los pedidos</Link></div>
+    <div className="title-row"><h1>Administración</h1></div>
     <section className="panel admin-pending-overview">
       <div className="title-row">
         <div>
@@ -93,6 +100,6 @@ export default async function Admin() {
         {!pendingError && !pendingPublications.length && <p>No hay publicaciones pendientes.</p>}
       </div>
     </section>
-    <AdminDashboard pendingItems={pendingItems??[]} paymentExceptions={paymentExceptions??[]} verifications={verifications??[]} claims={claims??[]} brands={brands??[]} suggestions={suggestions??[]} users={users??[]} reports={reports??[]} arco={arco??[]} orders={orders??[]} payments={payments??[]} shipments={shipments??[]} stalledDrafts={stalledDraftsWithBrand} />
+    <AdminDashboard pendingItems={pendingItems??[]} paymentExceptions={paymentExceptions??[]} verifications={verifications??[]} claims={claims??[]} brands={brands??[]} suggestions={suggestions??[]} brandAliases={brandAliases??[]} users={usersResult.data??[]} usersPage={usersPage} usersTotal={usersResult.count??0} usersPageSize={ADMIN_USER_PAGE_SIZE} reports={reports??[]} arco={arco??[]} orders={orders??[]} payments={payments??[]} shipments={shipments??[]} stalledDrafts={stalledDraftsWithBrand} />
   </main>;
 }
