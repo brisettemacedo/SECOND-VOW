@@ -68,10 +68,11 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
       <div style={{ aspectRatio: "3 / 4", background: "var(--color-background-secondary)", position: "relative" }}>
         {photo ? (
           <Image
-            src={dressImageUrl(photo.storage_path, photo.signed_url)}
+            src={dressImageUrl(photo.storage_path)}
             alt={`${brandName(dress.brands, dress.brand_suggestions)}${dress.model ? " " + dress.model : ""}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1100px) 33vw, 25vw"
+            quality={60}
             style={{ objectFit: "cover" }}
           />
         ) : (

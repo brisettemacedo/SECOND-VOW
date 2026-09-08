@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Reutiliza miniaturas sin mantener demasiado tiempo una foto retirada.
+    minimumCacheTTL: 60 * 60 * 6,
     remotePatterns: [
       {
         protocol: "https",
