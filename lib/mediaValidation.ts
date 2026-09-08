@@ -18,3 +18,41 @@ export async function validateUploadMedia(file: File, options: { allowPdf?: bool
   }
   throw new Error("Formato de archivo no permitido.");
 }
+
+const OPTIMIZED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+/**
+ * Reduce las fotografías del catálogo antes de enviarlas a Storage.
+ * 2,000 px conserva detalle suficiente para la ficha y evita almacenar y
+ * descargar originales de cámara de varios megabytes. También elimina EXIF,
+ * que puede contener ubicación y otros metadatos privados.
+ */
+export async function optimizeDressImage(file: File): Promise<File> {
+  if (!OPTIMIZED_IMAGE_TYPES.has(file.type)) return file;
+
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  try {
+    const scale = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) return file;
+    context.drawImage(bitmap, 0, 0, width, height);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/webp", 0.82),
+    );
+    if (!blob || blob.size >= file.size) return file;
+
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "vestido";
+    return new File([blob], `${baseName}.webp`, {
+      type: "image/webp",
+      lastModified: file.lastModified,
+    });
+  } finally {
+    bitmap.close();
+  }
+}

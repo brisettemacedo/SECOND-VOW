@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import DressCard, { type CatalogDress } from "@/components/DressCard";
 import { STATUS_LABELS } from "@/lib/catalogs";
-import { signDressCollections } from "@/lib/server/dressImageUrls";
 
 export const dynamic = "force-dynamic";
 
@@ -36,8 +35,9 @@ export default async function FavoritesPage() {
     );
   }
 
-  const rawItems = (favorites ?? []).map((f: any) => (Array.isArray(f.dresses) ? f.dresses[0] : f.dresses)).filter(Boolean);
-  const items = await signDressCollections(rawItems as any[]);
+  // Favoritos sólo muestra tarjetas de publicaciones aprobadas. Mantener la
+  // ruta estable evita crear una URL firmada distinta en cada visita.
+  const items = (favorites ?? []).map((f: any) => (Array.isArray(f.dresses) ? f.dresses[0] : f.dresses)).filter(Boolean);
 
   const disponibles = items.filter((d: any) => d.status === "approved");
   const noDisponibles = items.filter((d: any) => d.status !== "approved");

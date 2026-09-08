@@ -1,8 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    // Reutiliza miniaturas sin mantener demasiado tiempo una foto retirada.
-    minimumCacheTTL: 60 * 60 * 6,
+    // Las rutas de fotos públicas son estables: una miniatura puede reutilizarse
+    // durante el ciclo mensual en vez de volver a descargar el original desde
+    // Supabase varias veces al día.
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+    deviceSizes: [320, 480, 640, 750, 828, 1080, 1200, 1600],
+    imageSizes: [64, 96, 128, 256, 384],
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",

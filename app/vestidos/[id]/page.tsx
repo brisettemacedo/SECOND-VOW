@@ -9,7 +9,7 @@ import OfferButton from "@/components/OfferButton";
 import {
   SILUETAS, ESCOTES, ESPALDAS, MANGAS, TELAS, COLORES, COLAS, CONDICIONES, STATUS_LABELS,
 } from "@/lib/catalogs";
-import { signDressCollections, signDressPhotos } from "@/lib/server/dressImageUrls";
+import { signDressPhotos } from "@/lib/server/dressImageUrls";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +60,14 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  const photos = (await signDressPhotos([...(dress.dress_photos ?? [])])).sort((a, b) => {
+  // Las publicaciones públicas usan la ruta estable de la aplicación para que
+  // next/image pueda reutilizar la miniatura. Los borradores y publicaciones
+  // privadas conservan URLs firmadas porque el optimizador no recibe la sesión
+  // del navegador al solicitar la imagen original.
+  const visiblePhotos = dress.status === "approved"
+    ? [...(dress.dress_photos ?? [])]
+    : await signDressPhotos([...(dress.dress_photos ?? [])]);
+  const photos = visiblePhotos.sort((a, b) => {
     if (a.is_primary) return -1;
     if (b.is_primary) return 1;
     return a.position - b.position;
@@ -94,7 +101,7 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
     .eq("silueta", dress.silueta)
     .neq("id", dress.id)
     .limit(4);
-  const similaresFirmados = await signDressCollections((similares ?? []) as any[]);
+  const similaresFirmados = (similares ?? []) as any[];
 
   const isOwnerOrAdminPreview = ["draft", "pending_review", "changes_requested", "rejected", "archived"].includes(dress.status);
 

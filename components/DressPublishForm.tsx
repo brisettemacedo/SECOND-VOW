@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { DressCatalogData } from "@/lib/dressCatalogData";
 import { TERMS_VERSION } from "@/lib/site";
-import { validateUploadMedia } from "@/lib/mediaValidation";
+import { optimizeDressImage, validateUploadMedia } from "@/lib/mediaValidation";
 import { DRESS_REQUIRED_FIELDS } from "@/lib/dressRequirements";
 import { dressImageUrl } from "@/lib/storage";
 
@@ -252,9 +252,14 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       const id = await ensureDraft();
       for (const [i, file] of Array.from(files).entries()) {
         await validateUploadMedia(file);
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const optimizedFile = await optimizeDressImage(file);
+        const ext = optimizedFile.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `${userId}/${id}/${crypto.randomUUID()}.${ext}`;
-        const { error: up } = await supabase.storage.from("dress-images").upload(path, file, { upsert: false });
+        const { error: up } = await supabase.storage.from("dress-images").upload(path, optimizedFile, {
+          upsert: false,
+          contentType: optimizedFile.type,
+          cacheControl: "31536000",
+        });
         if (up) throw up;
         const { data, error } = await supabase.from("dress_photos").insert({ dress_id: id, storage_path: path, position: photos.length + i, is_primary: photos.length + i === 0, classification: "frontal" }).select().single();
         if (error) throw error;
