@@ -30,7 +30,14 @@ const OPTIMIZED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"])
 export async function optimizeDressImage(file: File): Promise<File> {
   if (!OPTIMIZED_IMAGE_TYPES.has(file.type)) return file;
 
-  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    // Algunos navegadores o formatos no admiten createImageBitmap. En ese
+    // caso se conserva el original para no bloquear la publicación.
+    return file;
+  }
   try {
     const scale = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
     const width = Math.max(1, Math.round(bitmap.width * scale));
