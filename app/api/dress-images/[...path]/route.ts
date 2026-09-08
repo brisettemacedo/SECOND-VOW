@@ -25,7 +25,17 @@ export async function GET(_request: Request,{params}:{params:Promise<{path:strin
   if(!allowed)return new NextResponse("No autorizado",{status:403});
  }
 
- const {data,error}=await admin.storage.from("dress-images").createSignedUrl(path,60*60);
- if(error||!data?.signedUrl)return new NextResponse("Imagen no disponible",{status:404});
- return NextResponse.redirect(data.signedUrl,{status:307,headers:{"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"}});
+ const {data,error}=await admin.storage.from("dress-images").download(path);
+ if(error||!data)return new NextResponse("Imagen no disponible",{status:404});
+
+ const headers=new Headers({
+  "Content-Type":data.type||"application/octet-stream",
+  "Content-Length":String(data.size),
+  "Content-Disposition":"inline",
+  "X-Content-Type-Options":"nosniff",
+  "Cache-Control":publiclyVisible
+   ? "public, max-age=3600, s-maxage=2592000, stale-while-revalidate=86400"
+   : "private, no-store",
+ });
+ return new NextResponse(data,{status:200,headers});
 }

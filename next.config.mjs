@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Los archivos ya se comprimen al subirlos y la ruta estable aplica caché.
+    // Evita los 404 que producía el optimizador con las fotos protegidas.
+    unoptimized: true,
     // Las rutas de fotos públicas son estables: una miniatura puede reutilizarse
     // durante el ciclo mensual en vez de volver a descargar el original desde
     // Supabase varias veces al día.
