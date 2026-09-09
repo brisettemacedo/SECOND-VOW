@@ -113,10 +113,10 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
           {o.note&&<p>{o.note}</p>}
           <small>Vence {new Date(o.expires_at).toLocaleString("es-MX")}</small>
           {canRespond&&<div className="commerce-actions">
-            <button className="btn btn-primary" disabled={busy} onClick={()=>acceptOffer(o.id)}>Aceptar y continuar al pago</button>
-            <button className="btn btn-secondary" disabled={busy} onClick={()=>declineOffer(o.id)}>Rechazar</button>
+            <button type="button" data-offer-action="accept" className="btn btn-primary" disabled={busy} onClick={()=>acceptOffer(o.id)}>Aceptar y continuar al pago</button>
+            <button type="button" data-offer-action="decline" className="btn btn-secondary" disabled={busy} onClick={()=>declineOffer(o.id)}>Rechazar</button>
           </div>}
-          {canCancel&&<div className="commerce-actions"><button className="btn btn-secondary" disabled={busy} onClick={()=>cancelOffer(o.id)}>Cancelar oferta pendiente</button></div>}
+          {canCancel&&<div className="commerce-actions"><button type="button" data-offer-action="cancel" className="btn btn-secondary" disabled={busy} onClick={()=>cancelOffer(o.id)}>Cancelar oferta pendiente</button></div>}
         </div>
       }
       if(item.kind==="order"){const o=item.data;return <div key={`ord-${o.id}`} className="commerce-event order-event"><div className="commerce-event-label">Pedido creado</div><strong>{money(o.subtotal_mxn)} vestido + {money(o.shipping_mxn)} envío = {money(o.total_mxn)}</strong><span className="badge">{ORDER_STATUS[o.status]||STATUS[o.status]||o.status}</span><Link href={`/pedidos/${o.id}`}>Abrir pedido</Link></div>}

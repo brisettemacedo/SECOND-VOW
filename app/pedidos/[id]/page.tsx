@@ -21,12 +21,28 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
   const [{ id }, query] = await Promise.all([params, searchParams ?? Promise.resolve<{ payment?: string }>({})]);
   const { supabase, user } = await requireUser();
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
-  let orderQuery = supabase.from("orders").select("*,dresses(id,model,brands(name)),claims(*),shipments(*),order_shipping_addresses(*)").eq("id", id);
+  // Carga primero el pedido. Si una relación anidada cambia o la caché de
+  // PostgREST todavía no la conoce, no debemos convertir un pedido válido en
+  // un 404 silencioso.
+  let orderQuery = supabase.from("orders").select("*").eq("id", id);
   if (profile?.role !== "admin") orderQuery = orderQuery.or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`);
-  const { data: order } = await orderQuery.maybeSingle();
+  const { data: baseOrder, error: orderError } = await orderQuery.maybeSingle();
+  if (orderError) throw orderError;
+  const order = baseOrder as any;
   if (!order) notFound();
 
-  const shipmentIds = (order.shipments ?? []).map((shipment: any) => shipment.id);
+  const [{ data: dress }, { data: claims }, { data: shipments }, { data: shippingAddresses }] = await Promise.all([
+    supabase.from("dresses").select("id,model,brands(name)").eq("id", order.dress_id).maybeSingle(),
+    supabase.from("claims").select("*").eq("order_id", order.id),
+    supabase.from("shipments").select("*").eq("order_id", order.id),
+    supabase.from("order_shipping_addresses").select("*").eq("order_id", order.id),
+  ]);
+  order.dresses = dress;
+  order.claims = claims ?? [];
+  order.shipments = shipments ?? [];
+  order.order_shipping_addresses = shippingAddresses ?? [];
+
+  const shipmentIds = order.shipments.map((shipment: any) => shipment.id);
   const [{ data: evidence }, { data: people }, { data: trackingEvents }, { data: payments }, { data: payouts }, { data: ledger }, { data: events }, { data: adminLogs }] = await Promise.all([
     supabase.from("order_evidence").select("id,evidence_type,storage_path,created_at,uploaded_by").eq("order_id", order.id).order("created_at"),
     supabase.from("profiles").select("id,full_name").in("id", [order.buyer_id, order.seller_id]),
