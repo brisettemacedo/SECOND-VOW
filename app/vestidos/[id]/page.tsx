@@ -205,7 +205,7 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
           )}
 
           <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-            {user?.id === dress.seller_id ? <Link className="btn btn-primary" href={`/publicar/${dress.id}`}>Editar mi publicación</Link> : <><ContactSellerButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} /><OfferButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} price={dress.precio_venta_mxn} status={dress.status} /><FavoriteButton dressId={dress.id} /></>}
+            {user?.id === dress.seller_id ? <Link className="btn btn-primary" href={`/publicar/${dress.id}`}>Editar mi publicación</Link> : <><ContactSellerButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} status={dress.status} /><OfferButton dressId={dress.id} sellerId={dress.seller_id} userId={user?.id} price={dress.precio_venta_mxn} status={dress.status} /><FavoriteButton dressId={dress.id} /></>}
           </div>
           
 
