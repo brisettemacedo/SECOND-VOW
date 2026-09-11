@@ -1,7 +1,13 @@
 import crypto from "node:crypto";
 
-const BASE = "https://api.stripe.com/v1";
+const V1_BASE = "https://api.stripe.com/v1";
+const V2_BASE = "https://api.stripe.com/v2";
+const V2_VERSION = process.env.STRIPE_V2_VERSION?.trim() || "2026-08-26.dahlia";
 function secret() { if (!process.env.STRIPE_SECRET_KEY) throw new Error("Falta STRIPE_SECRET_KEY"); return process.env.STRIPE_SECRET_KEY; }
+
+function stripeError(json: any, status: number) {
+  return json?.error?.message || json?.message || `Stripe respondió ${status}`;
+}
 
 export async function stripeRequest(path: string, params: URLSearchParams, connectedAccount?: string, idempotencyKey?: string) {
   const headers: Record<string,string> = {
@@ -10,23 +16,41 @@ export async function stripeRequest(path: string, params: URLSearchParams, conne
   };
   if (connectedAccount) headers["Stripe-Account"] = connectedAccount;
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
-  const res = await fetch(`${BASE}${path}`, { method: "POST", headers, body: params.toString(), cache: "no-store" });
+  const res = await fetch(`${V1_BASE}${path}`, { method: "POST", headers, body: params.toString(), cache: "no-store" });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json?.error?.message || `Stripe respondió ${res.status}`);
+  if (!res.ok) throw new Error(stripeError(json, res.status));
   return json;
 }
 
 export async function stripeGet(path: string, connectedAccount?: string) {
   const headers: Record<string,string> = { Authorization: `Bearer ${secret()}` };
   if (connectedAccount) headers["Stripe-Account"] = connectedAccount;
-  const res = await fetch(`${BASE}${path}`, { headers, cache: "no-store" });
+  const res = await fetch(`${V1_BASE}${path}`, { headers, cache: "no-store" });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json?.error?.message || `Stripe respondió ${res.status}`);
+  if (!res.ok) throw new Error(stripeError(json, res.status));
   return json;
 }
 
 export async function stripePost(path: string, params = new URLSearchParams(), connectedAccount?: string, idempotencyKey?: string) {
   return stripeRequest(path, params, connectedAccount, idempotencyKey);
+}
+
+export async function stripeV2Post(path: string, body: Record<string, unknown>, idempotencyKey?: string) {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${secret()}`,
+    "Content-Type": "application/json",
+    "Stripe-Version": V2_VERSION,
+  };
+  if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+  const res = await fetch(`${V2_BASE}${path}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(stripeError(json, res.status));
+  return json;
 }
 
 export function verifyStripeSignature(rawBody: string, signature: string | null) {
