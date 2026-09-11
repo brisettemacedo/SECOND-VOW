@@ -57,8 +57,9 @@ export default async function HomePage() {
       </div>
       <div className="home-seller-steps">
         <article><span>1</span><h3>Publica gratis</h3><p>Sube tus fotos, medidas y todos los detalles de tu vestido.</p></article>
-        <article><span>2</span><h3>Envía una oferta final</h3><p>Habla con la compradora y envíale una oferta con precio del vestido y envío fijo según su código postal.</p></article>
-        <article><span>3</span><h3>Recibe tu dinero</h3><p>SECOND VOW retiene <strong>18% del total con envío</strong>. Tú recibes el <strong>82% del total</strong> y de ese monto pagas la guía.</p></article>
+        <article><span>2</span><h3>Conversa en privado</h3><p>Responde preguntas y recibe el domicilio o sucursal de entrega sin publicar datos personales.</p></article>
+        <article><span>3</span><h3>Envía la oferta final</h3><p>Cotiza la guía y fija claramente el precio del vestido y del envío antes del pago.</p></article>
+        <article><span>4</span><h3>Envía y recibe tu dinero</h3><p>Registra la guía rastreable. SECOND VOW retiene <strong>18% del total</strong>; tú recibes el 82% y de ahí pagas el envío.</p></article>
       </div>
       <SellerRecoveryCalculator />
     </section>
