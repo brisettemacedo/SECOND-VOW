@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isSameOriginRequest } from "@/lib/server/requestSecurity";
 import { sendPendingNotificationEmails } from "@/lib/server/notificationEmail";
 
-const CAMPAIGN = "2026-09-11-publicacion-simple";
+const CAMPAIGN = "2026-09-11-publicacion-marca-no-bloqueante";
 
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) return NextResponse.json({ error: "Origen no permitido" }, { status: 403 });
