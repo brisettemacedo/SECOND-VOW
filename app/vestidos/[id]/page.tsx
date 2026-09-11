@@ -47,7 +47,7 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
       tuvo_ajustes, ajustes_detalle,
       precio_original_mxn, precio_venta_mxn,
       envio_nacional,
-      descripcion, status, created_at, seller_id,
+      descripcion, status, created_at, seller_id, brand_suggestion_id,
       brands ( name ), brand_suggestions!dresses_brand_suggestion_id_fkey ( suggested_name ),
       dress_photos ( id, storage_path, is_primary, position, classification ),
       dress_characteristics ( characteristics ( id, label ) )
@@ -76,10 +76,7 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
   const brandName = Array.isArray(dress.brands)
     ? (dress.brands as any[])[0]?.name
     : (dress.brands as any)?.name;
-  const suggestedBrand = Array.isArray((dress as any).brand_suggestions)
-    ? (dress as any).brand_suggestions[0]?.suggested_name
-    : (dress as any).brand_suggestions?.suggested_name;
-  const displayBrand = brandName || (suggestedBrand ? `${suggestedBrand} (marca en confirmación)` : "Marca no especificada");
+  const displayBrand = brandName || (dress.brand_suggestion_id ? "Marca pendiente de confirmación" : "Marca no especificada");
   const { data: seller } = await supabase
     .from("public_profiles")
     .select("id, display_name, identity_verified, response_time_minutes, rating_average")
@@ -93,7 +90,7 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
     .from("dresses")
     .select(`
       id, model, talla_etiqueta, silueta, condicion, precio_original_mxn,
-      precio_venta_mxn, envio_nacional,
+      precio_venta_mxn, envio_nacional, brand_suggestion_id,
       brands ( name ), brand_suggestions!dresses_brand_suggestion_id_fkey ( suggested_name ), dress_photos ( storage_path, is_primary, position )
     `)
     .eq("status", "approved")

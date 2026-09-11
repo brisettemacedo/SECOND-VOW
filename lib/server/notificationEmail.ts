@@ -6,16 +6,18 @@ function escapeHtml(value: unknown) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]!);
 }
 
-export async function sendPendingNotificationEmails(limit = 40) {
+export async function sendPendingNotificationEmails(limit = 40, kinds?: string[]) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
   if (!apiKey || !from) return { sent: 0, failed: 0, skipped: true };
   const admin = createAdminClient();
-  const { data: rows, error } = await admin.from("notifications")
-    .select("id,user_id,order_id,dress_id,kind,title,body,email_attempts")
+  let query = admin.from("notifications")
+    .select("id,user_id,order_id,dress_id,kind,title,body,metadata,email_attempts")
     .in("email_status", ["pending", "failed"])
     .or(`email_next_attempt_at.is.null,email_next_attempt_at.lte.${new Date().toISOString()}`)
     .order("created_at", { ascending: true }).limit(limit);
+  if (kinds?.length) query = query.in("kind", kinds);
+  const { data: rows, error } = await query;
   if (error) throw error;
   let sent = 0; let failed = 0;
   for (const row of rows ?? []) {
@@ -26,12 +28,15 @@ export async function sendPendingNotificationEmails(limit = 40) {
       await admin.from("notifications").update({ email_status: "not_required", email_attempts: attempts, email_last_attempt_at: new Date().toISOString(), email_last_error: "La cuenta no tiene correo" }).eq("id", row.id);
       continue;
     }
-    const href = row.order_id ? `${SITE_URL}/pedidos/${row.order_id}` : row.dress_id ? `${SITE_URL}/vestidos/${row.dress_id}` : SITE_URL;
+    const requestedPath = typeof row.metadata?.href_path === "string" ? row.metadata.href_path : "";
+    const safePath = /^\/[a-zA-Z0-9/_?=&.-]+$/.test(requestedPath) && !requestedPath.startsWith("//") ? requestedPath : "";
+    const href = safePath ? `${SITE_URL}${safePath}` : row.order_id ? `${SITE_URL}/pedidos/${row.order_id}` : row.dress_id ? `${SITE_URL}/vestidos/${row.dress_id}` : SITE_URL;
+    const buttonLabel = row.kind === "draft_publication_help" ? "Continuar mi publicación" : "Abrir SECOND VOW";
     try {
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "Idempotency-Key": `notification-${row.id}` },
-        body: JSON.stringify({ from, to: [to], subject: row.title, html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#2f2926"><h1 style="font-size:24px">${escapeHtml(row.title)}</h1><p style="font-size:16px;line-height:1.6">${escapeHtml(row.body)}</p><p><a href="${href}" style="background:#66633f;color:white;text-decoration:none;padding:12px 18px;border-radius:999px;display:inline-block">Abrir SECOND VOW</a></p><p style="font-size:12px;color:#756f6a">Este es un aviso operativo de tu cuenta.</p></div>` })
+        body: JSON.stringify({ from, to: [to], subject: row.title, html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#2f2926"><h1 style="font-size:24px">${escapeHtml(row.title)}</h1><p style="font-size:16px;line-height:1.6">${escapeHtml(row.body)}</p><p><a href="${href}" style="background:#66633f;color:white;text-decoration:none;padding:12px 18px;border-radius:999px;display:inline-block">${buttonLabel}</a></p><p style="font-size:12px;color:#756f6a">Este es un aviso operativo de tu cuenta.</p></div>` })
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result?.message || `Resend ${response.status}`);

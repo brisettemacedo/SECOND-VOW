@@ -9,7 +9,7 @@ const CATALOG_COLUMNS = `
   id, model, talla_etiqueta, silueta, escote, espalda, manga,
   tela_principal, color_principal, cola, condicion,
   precio_original_mxn, precio_venta_mxn,
-  envio_nacional, status, created_at,
+  envio_nacional, status, created_at, brand_suggestion_id,
   brands ( name ), brand_suggestions!dresses_brand_suggestion_id_fkey ( suggested_name ),
   dress_photos ( storage_path, is_primary, position )
 `;

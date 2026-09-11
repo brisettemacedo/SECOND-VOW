@@ -72,6 +72,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
   const autosaveReady = useRef(false);
 
   const exactBrand = brands.find((b) => b.name.localeCompare(brandQuery.trim(), undefined, { sensitivity: "base" }) === 0);
+  const noBrand = brands.find((b) => b.name.localeCompare("SIN MARCA", undefined, { sensitivity: "base" }) === 0);
   const matches = brandQuery.trim() ? brands.filter((b) => b.name.toLowerCase().includes(brandQuery.trim().toLowerCase())).slice(0, 8) : brands.slice(0, 8);
 
   function issuesForStep(stepIndex: number): ValidationIssue[] {
@@ -81,7 +82,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     };
     const results: (ValidationIssue | null)[] = [];
 
-    if (stepIndex === 0 && !dress.brand_id && !dress.brand_suggestion_id) results.push({ step: 0, key: "brand", label: "Marca", message: "Selecciona una marca o envíala para revisión." });
+    if (stepIndex === 0 && !dress.brand_id && !dress.brand_suggestion_id) results.push({ step: 0, key: "brand", label: "Marca", message: "Selecciona una marca, usa Sin marca o escribe una nueva. No necesitas esperar autorización." });
     if (stepIndex === 0 && dress.year_approx !== null && dress.year_approx !== undefined && String(dress.year_approx).trim() !== "") {
       const year = Number(dress.year_approx);
       if (!Number.isInteger(year) || year < 1950 || year > 2100) results.push({ step: 0, key: "year_approx", label: "Año aproximado", message: "Ingresa un año entre 1950 y 2100." });
@@ -128,7 +129,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       }
     };
     if (!row?.brand_id && !row?.brand_suggestion_id) {
-      results.push({ step: 0, key: "brand", label: "Marca", message: "Selecciona una marca o envíala para revisión." });
+      results.push({ step: 0, key: "brand", label: "Marca", message: "Selecciona una marca, usa Sin marca o escribe una nueva." });
     }
     add(1, "talla_etiqueta", "Talla de etiqueta", row?.talla_etiqueta);
     add(2, "silueta", "Silueta", row?.silueta);
@@ -176,6 +177,15 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     clearError("brand");
   }
 
+  function chooseNoBrand() {
+    if (!noBrand) {
+      setMessage("No pudimos seleccionar Sin marca. Escribe el nombre que aparezca en la etiqueta o solicita ayuda.");
+      return;
+    }
+    chooseBrand(noBrand);
+    setMessage("Seleccionaste Sin marca. Puedes continuar con el siguiente paso.");
+  }
+
   async function suggestBrand() {
     const name = brandQuery.trim();
     if (name.length < 2) {
@@ -187,9 +197,12 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       const id = await ensureDraft();
       const { data, error } = await supabase.from("brand_suggestions").insert({ suggested_name: name, seller_id: userId, dress_id: id }).select("id,suggested_name,status").single();
       if (error) throw error;
+      const { error: dressError } = await supabase.from("dresses").update({ brand_id: null, brand_suggestion_id: data.id }).eq("id", id);
+      if (dressError) throw dressError;
       setDress((d) => ({ ...d, brand_id: null, brand_suggestion_id: data.id, brand_suggestions: data }));
       clearError("brand");
-      setMessage("Marca enviada para revisión. Puedes seguir guardando tu borrador.");
+      setMessage("Marca agregada. No necesitas esperar autorización: puedes continuar ahora.");
+      setStep(1);
     } catch (e: any) {
       setMessage(e.message);
     } finally {
@@ -433,7 +446,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     <section className="panel">
       <h1>{initialDress?.id ? "Editar vestido" : "Publicar vestido"}</h1>
       <h2>{stepNames[step]}</h2>
-      <p className="required-note"><span className="required-mark">*</span> Campo obligatorio. No podrás pasar al siguiente paso si falta alguno de los requisitos marcados.</p>
+      <p className="required-note"><span className="required-mark">*</span> Campo obligatorio. Si escribes una marca nueva, puedes continuar y publicar sin esperar a que sea confirmada.</p>
       {Object.keys(errors).length > 0 && (
         <div className="validation-banner" role="alert">
           <strong>Revisa este paso antes de continuar.</strong>
@@ -448,9 +461,11 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
         <div className={`field brand-search ${errors.brand ? "field-invalid" : ""}`}>
           <label>Marca<span className="required-mark"> *</span></label>
           <input value={brandQuery} onChange={(e) => { setBrandQuery(e.target.value); setDress((d) => ({ ...d, brand_id: null, brand_suggestion_id: null })); clearError("brand"); }} placeholder="Empieza a escribir una marca…" aria-invalid={Boolean(errors.brand)} />
+          <p className="muted">¿No aparece? Escríbela y continúa. SECOND VOW la revisará después; no necesitas esperar autorización.</p>
           <div className="brand-suggestions">{matches.map((b) => <button type="button" key={b.id} onClick={() => chooseBrand(b)}>{b.name}</button>)}</div>
-          {brandQuery.trim() && !exactBrand && !dress.brand_suggestion_id && <div className="brand-new"><p>No encontramos una coincidencia exacta.</p><strong>Nombre de la marca</strong><div>{brandQuery}</div><button type="button" className="btn btn-secondary" disabled={busy} onClick={suggestBrand}>Enviar marca para revisión</button></div>}
-          {dress.brand_suggestion_id && <p className="muted">Marca: <strong>{dress.brand_suggestions?.suggested_name || brandQuery}</strong> (marca en confirmación). Esto no detiene la publicación.</p>}
+          {noBrand && <button type="button" className="link-button" disabled={busy} onClick={chooseNoBrand}>No conozco la marca / Sin marca</button>}
+          {brandQuery.trim() && !exactBrand && !dress.brand_suggestion_id && <div className="brand-new"><p>No encontramos una coincidencia exacta.</p><strong>Nombre de la marca</strong><div>{brandQuery}</div><button type="button" className="btn btn-secondary" disabled={busy} onClick={suggestBrand}>Usar esta marca y continuar</button></div>}
+          {dress.brand_suggestion_id && <p className="muted">Marca: <strong>{dress.brand_suggestions?.suggested_name || brandQuery}</strong>. La revisaremos después; puedes continuar y publicar sin esperar.</p>}
           {errors.brand && <p className="field-error">{errors.brand}</p>}
         </div>
         {input("model", "Modelo")}{input("collection", "Colección")}{input("year_approx", "Año aproximado", "number")}
@@ -474,7 +489,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
           <h3>{pendingByStep.length ? "Antes de enviar, completa lo siguiente:" : "Publicación completa"}</h3>
           {pendingByStep.length ? pendingByStep.map((group) => <div className="review-summary-step" key={group.index}><button type="button" onClick={() => setStep(group.index)}>{group.index + 1}. {group.name}</button><ul>{group.items.map((issue) => <li key={issue.key}>{issue.label}: {issue.message}</li>)}</ul></div>) : <p>Ya completaste los datos obligatorios. Tu vestido se publicará en cuanto confirmes las declaraciones.</p>}
         </div>
-        {missingRecommendations().length > 0 && <div className="review-summary review-summary-recommend"><h3>Recomendado, no obligatorio</h3><p>Completar {missingRecommendations().join(", ")} ayuda a que tu vestido inspire más confianza, pero no es necesario para publicarlo. <button type="button" onClick={() => setStep(2)}>Ir a Diseño</button></p></div>}
+        {missingRecommendations().length > 0 && <div className="review-summary review-summary-recommend"><h3>Recomendado, no obligatorio</h3><p>Completar {missingRecommendations().join(", ")} ayuda a que tu vestido inspire más confianza, pero no es necesario para publicarlo.</p></div>}
         <p>Antes de publicar confirma lo siguiente:</p>
         <label className={`check ${errors.decl_authentic ? "check-invalid" : ""}`}><input type="checkbox" checked={decl.authentic} onChange={(e) => { setDecl((d) => ({ ...d, authentic: e.target.checked })); clearError("decl_authentic"); }} /><span>Declaro bajo protesta que el vestido es auténtico y no una falsificación.</span></label>
         <label className={`check ${errors.decl_photos ? "check-invalid" : ""}`}><input type="checkbox" checked={decl.photos} onChange={(e) => { setDecl((d) => ({ ...d, photos: e.target.checked })); clearError("decl_photos"); }} /><span>Declaro que las fotografías corresponden al vestido anunciado.</span></label>

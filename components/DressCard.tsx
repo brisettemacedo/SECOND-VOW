@@ -15,6 +15,7 @@ export type CatalogDress = {
   precio_original_mxn: number | null;
   precio_venta_mxn: number;
   envio_nacional: boolean;
+  brand_suggestion_id?: string | null;
   brands: { name: string } | { name: string }[] | null;
   brand_suggestions?: { suggested_name: string } | { suggested_name: string }[] | null;
   dress_photos: DressPhoto[];
@@ -24,9 +25,8 @@ function labelFor(list: { value: string; label: string }[], value: string) {
   return list.find((o) => o.value === value)?.label ?? value;
 }
 
-function brandName(brands: CatalogDress["brands"], suggestions?: CatalogDress["brand_suggestions"]) {
-  const suggested = Array.isArray(suggestions) ? suggestions[0]?.suggested_name : suggestions?.suggested_name;
-  if (!brands && suggested) return `${suggested} (marca en confirmación)`;
+function brandName(brands: CatalogDress["brands"], suggestionId?: string | null) {
+  if (!brands && suggestionId) return "Marca pendiente de confirmación";
   if (!brands) return "Marca no especificada";
   if (Array.isArray(brands)) return brands[0]?.name ?? "Marca no especificada";
   return brands.name;
@@ -69,7 +69,7 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
         {photo ? (
           <Image
             src={dressImageUrl(photo.storage_path)}
-            alt={`${brandName(dress.brands, dress.brand_suggestions)}${dress.model ? " " + dress.model : ""}`}
+            alt={`${brandName(dress.brands, dress.brand_suggestion_id)}${dress.model ? " " + dress.model : ""}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1100px) 33vw, 25vw"
             quality={60}
@@ -87,7 +87,7 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
 
       <div style={{ padding: "12px 14px" }}>
         <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 0.5, color: "var(--color-action-primary)" }}>
-          {brandName(dress.brands, dress.brand_suggestions)}
+          {brandName(dress.brands, dress.brand_suggestion_id)}
         </div>
         <h3 style={{ fontSize: 16, margin: "4px 0 8px" }}>
           {labelFor(SILUETAS, dress.silueta)}

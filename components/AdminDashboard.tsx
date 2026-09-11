@@ -104,7 +104,7 @@ export default function AdminDashboard(p: { pendingItems?: any[]; paymentExcepti
 
   const cards = [["Pedidos activos", p.orders.length], ["Pagos por revisar", p.payments.filter((x) => !["paid", "refunded"].includes(x.status)).length], ["Envíos activos", p.shipments.filter((x) => !["delivered", "cancelled"].includes(x.status)).length], ["Reclamaciones", p.claims.length], ["Marcas por revisar", p.suggestions.length], ["Solicitudes ARCO", p.arco.length]];
   return <div className="admin-operations">
-    <section className="panel"><h2>Bandeja única de pendientes</h2><p className="muted">Todo lo que requiere atención, en un solo lugar. Se muestran hasta 50 pendientes.</p><div className="admin-pending-scroll">{(p.pendingItems??[]).map((item:any,index:number)=><Link className="admin-mini-row" href={item.url} key={`${item.tipo}-${item.created_at}-${index}`}><span>{item.etiqueta}</span><span className="badge">{item.tipo}</span><small>{new Date(item.created_at).toLocaleDateString("es-MX")}</small></Link>)}{!p.pendingItems?.length&&<p>No hay pendientes.</p>}</div></section>
+    <section className="panel"><h2>Bandeja única de pendientes</h2><p className="muted">Solo muestra tareas que requieren acción administrativa. Los borradores de las usuarias aparecen por separado y no requieren autorizar su marca. Se muestran hasta 50 tareas.</p><div className="admin-pending-scroll">{(p.pendingItems??[]).map((item:any,index:number)=><Link className="admin-mini-row" href={item.url} key={`${item.tipo}-${item.created_at}-${index}`}><span>{item.etiqueta}</span><span className="badge">{item.tipo}</span><small>{new Date(item.created_at).toLocaleDateString("es-MX")}</small></Link>)}{!p.pendingItems?.length&&<p>No hay pendientes.</p>}</div></section>
     <section className="admin-stat-grid">{cards.map(([label, count]) => <div className="admin-stat" key={String(label)}><strong>{count}</strong><span>{label}</span></div>)}</section>
     <section className="panel" id="usuarias"><div className="admin-title"><div><h2>Usuarias</h2><p className="muted">{p.usersTotal} cuentas registradas · página {p.usersPage} de {Math.max(1, Math.ceil(p.usersTotal / p.usersPageSize))}.</p></div><button className="btn btn-secondary" onClick={() => csvDownload(`usuarios-pagina-${p.usersPage}.csv`, p.users)}>Exportar página</button></div><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Usuaria</th><th>Estado</th><th>Registro</th><th>Acción</th></tr></thead><tbody>{p.users.map((user) => <tr key={user.id}><td>{user.full_name || "Sin nombre"}</td><td><span className="badge">{user.is_blocked ? "Bloqueada" : "Activa"}</span></td><td>{user.created_at ? new Date(user.created_at).toLocaleDateString("es-MX") : "No disponible"}</td><td><button className="table-action" onClick={() => block(user)}>{user.is_blocked ? "Desbloquear" : "Bloquear"}</button></td></tr>)}</tbody></table></div><nav className="admin-pagination" aria-label="Páginas de usuarias">{p.usersPage > 1 ? <Link className="btn btn-secondary" href={`/admin?users_page=${p.usersPage - 1}#usuarias`}>Anterior</Link> : <span />}{p.usersPage * p.usersPageSize < p.usersTotal ? <Link className="btn btn-secondary" href={`/admin?users_page=${p.usersPage + 1}#usuarias`}>Siguiente</Link> : null}</nav></section>
     <div className="admin-module-grid">
@@ -113,13 +113,13 @@ export default function AdminDashboard(p: { pendingItems?: any[]; paymentExcepti
     </div>
     {!!(p.stalledDrafts && p.stalledDrafts.length) && (
       <section className="panel">
-        <h2>Publicaciones sin terminar de publicar</h2>
-        <p className="muted">Ya tienen marca (resuelta o pendiente) pero no se publicaron solas porque les falta algo más. Contacta a la vendedora para completar lo que falta.</p>
+        <h2>Borradores de las usuarias</h2>
+        <p className="muted">No son autorizaciones pendientes. La usuaria puede continuar aunque su marca no exista aún; debe completar todos los campos obligatorios del formulario y publicar.</p>
         <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Vestido</th><th>Marca</th><th>Falta</th><th>Actualizado</th></tr></thead><tbody>
           {p.stalledDrafts.map((d: any) => {
             const missing = [
-              d.falta_talla && "talla", d.falta_diseno && "diseño", d.falta_condicion && "condición",
-              d.falta_precio && "precio", d.falta_fotos && "fotos", d.falta_declaraciones && "declaraciones",
+              !d.brand_id && !d.brand_suggestion_id && "marca", d.falta_talla && "talla", d.falta_diseno && "diseño",
+              d.falta_condicion && "condición", d.falta_precio && "precio", d.falta_fotos && "una foto", d.falta_declaraciones && "declaraciones",
             ].filter(Boolean);
             return <tr key={d.id}>
               <td><Link href={`/admin/publicaciones/${d.id}`}>{d.model || d.id.slice(0, 8)}</Link></td>
