@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import AdminClaimsPanel from "@/components/AdminClaimsPanel";
 
 function csvDownload(name: string, rows: any[]) {
   if (!rows.length) return;
@@ -16,7 +17,7 @@ function csvDownload(name: string, rows: any[]) {
   URL.revokeObjectURL(anchor.href);
 }
 
-export default function AdminDashboard(p: { pendingItems?: any[]; paymentExceptions?: any[]; verifications: any[]; claims: any[]; brands: any[]; suggestions: any[]; brandAliases: any[]; users: any[]; usersPage: number; usersTotal: number; usersPageSize: number; reports: any[]; arco: any[]; orders: any[]; payments: any[]; shipments: any[]; stalledDrafts?: any[] }) {
+export default function AdminDashboard(p: { pendingItems?: any[]; paymentExceptions?: any[]; sellerDebts?: any[]; incidents?: any[]; verifications: any[]; claims: any[]; brands: any[]; suggestions: any[]; brandAliases: any[]; users: any[]; usersPage: number; usersTotal: number; usersPageSize: number; reports: any[]; arco: any[]; orders: any[]; payments: any[]; shipments: any[]; stalledDrafts?: any[] }) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const [link, setLink] = useState<Record<string, string>>({});
@@ -82,26 +83,18 @@ export default function AdminDashboard(p: { pendingItems?: any[]; paymentExcepti
     const { error } = await supabase.from("conversation_reports").update({ status }).eq("id", id);
     if (error) alert(error.message); else refresh();
   }
-  async function claimAction(claim: any, action: "authorize" | "reject" | "refund") {
-    setBusy(claim.id);
-    try {
-      if (action === "refund") {
-        if (!confirm("¿Confirmas el reembolso total al medio de pago original?")) return;
-        const res = await fetch("/api/stripe/refund", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ claimId: claim.id }) });
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(json.error || "No fue posible procesar el reembolso");
-      } else if (action === "authorize") {
-        const { error } = await supabase.rpc("admin_authorize_return", { p_claim_id: claim.id });
-        if (error) throw new Error(error.message);
-      } else {
-        const { error } = await supabase.from("claims").update({ status: "rejected", resolved_at: new Date().toISOString() }).eq("id", claim.id);
-        if (error) throw new Error(error.message);
-      }
-      refresh();
-    } catch (error: any) { alert(error?.message ?? "No fue posible completar la acción"); }
-    finally { setBusy(""); }
+  async function waiveDebt(id: string) {
+    const reason = prompt("Motivo de la condonación (obligatorio)")?.trim();
+    if (!reason || reason.length < 10) return alert("Registra un motivo de al menos 10 caracteres.");
+    const { error } = await supabase.rpc("admin_waive_seller_debt", { p_debt_id: id, p_reason: reason });
+    if (error) alert(error.message); else refresh();
   }
-
+  async function reverseIncident(id: string) {
+    const reason = prompt("Motivo de la reversión (obligatorio)")?.trim();
+    if (!reason || reason.length < 10) return alert("Registra un motivo de al menos 10 caracteres.");
+    const { error } = await supabase.rpc("admin_reverse_user_incident", { p_incident_id: id, p_reason: reason });
+    if (error) alert(error.message); else refresh();
+  }
   const cards = [["Pedidos activos", p.orders.length], ["Pagos por revisar", p.payments.filter((x) => !["paid", "refunded"].includes(x.status)).length], ["Envíos activos", p.shipments.filter((x) => !["delivered", "cancelled"].includes(x.status)).length], ["Reclamaciones", p.claims.length], ["Marcas por revisar", p.suggestions.length], ["Solicitudes ARCO", p.arco.length]];
   return <div className="admin-operations">
     <section className="panel"><h2>Bandeja única de pendientes</h2><p className="muted">Solo muestra tareas que requieren acción administrativa. Los borradores de las usuarias aparecen por separado y no requieren autorizar su marca. Se muestran hasta 50 tareas.</p><div className="admin-pending-scroll">{(p.pendingItems??[]).map((item:any,index:number)=><Link className="admin-mini-row" href={item.url} key={`${item.tipo}-${item.created_at}-${index}`}><span>{item.etiqueta}</span><span className="badge">{item.tipo}</span><small>{new Date(item.created_at).toLocaleDateString("es-MX")}</small></Link>)}{!p.pendingItems?.length&&<p>No hay pendientes.</p>}</div></section>
@@ -154,7 +147,11 @@ export default function AdminDashboard(p: { pendingItems?: any[]; paymentExcepti
       <div className="actions"><button className="btn btn-secondary" disabled={!brandSource || !brandNewName.trim() || busy.startsWith("brand-")} onClick={() => manageOfficialBrand("rename")}>Renombrar</button><button className="btn btn-primary" disabled={!brandSource || !brandTarget || busy.startsWith("brand-")} onClick={() => manageOfficialBrand("merge")}>Fusionar con existente</button></div>
     </section>
     <section className="panel" id="pagos"><h2>Excepciones de pago</h2>{(p.paymentExceptions??[]).map((exception:any)=><Link className="admin-mini-row" key={exception.id} href={`/pedidos/${exception.order_id}`}><span>{exception.exception_type}</span><span className="badge">Revisión requerida</span><small>{new Date(exception.created_at).toLocaleString("es-MX")}</small></Link>)}{!p.paymentExceptions?.length&&<p className="muted">Sin excepciones abiertas.</p>}</section>
-    <section className="panel" id="reclamaciones"><h2>Reclamaciones y devoluciones</h2>{p.claims.map((claim) => <div className="admin-compact-item" key={claim.id}><strong>{claim.reason}</strong><p>{claim.description}</p><span className="badge">{claim.status}</span><div className="actions">{["open", "under_review"].includes(claim.status) && <><button className="btn btn-primary" disabled={busy === claim.id} onClick={() => claimAction(claim, "authorize")}>Autorizar devolución</button><button className="btn btn-secondary" disabled={busy === claim.id} onClick={() => claimAction(claim, "reject")}>Rechazar</button></>}{claim.status === "approved_return" && <span>Esperando que la compradora registre la devolución.</span>}{claim.status === "return_shipped" && <span>Devolución en tránsito.</span>}{claim.status === "refund_pending" && <button className="btn btn-primary" disabled={busy === claim.id} onClick={() => claimAction(claim, "refund")}>Reembolsar ahora</button>}</div></div>)}{!p.claims.length && <p className="muted">Sin reclamaciones pendientes.</p>}</section>
+    <AdminClaimsPanel claims={p.claims} />
+    <div className="admin-module-grid">
+      <section className="panel"><h2>Adeudos de vendedoras</h2><p className="muted">Se compensan con saldos futuros; nunca generan un débito bancario automático.</p>{(p.sellerDebts??[]).map((debt:any)=><div className="admin-compact-item" key={debt.id}><Link href={`/pedidos/${debt.order_id}`}>Pedido {debt.order_id.slice(0,8)}</Link><strong>${Math.max(0,Number(debt.original_amount_mxn)-Number(debt.recovered_amount_mxn)).toLocaleString("es-MX")} MXN pendientes</strong><small>18%: ${Number(debt.breach_charge_mxn).toLocaleString("es-MX")} · retorno: ${Number(debt.return_shipping_mxn).toLocaleString("es-MX")}</small><button className="btn btn-secondary" onClick={()=>waiveDebt(debt.id)}>Condonar con motivo</button></div>)}{!p.sellerDebts?.length&&<p className="muted">Sin adeudos abiertos.</p>}</section>
+      <section className="panel"><h2>Incidencias confirmadas</h2><p className="muted">Ayudan a detectar reincidencia sin sancionar una reclamación presentada de buena fe.</p>{(p.incidents??[]).map((incident:any)=><div className="admin-compact-item" key={incident.id}><strong>{incident.actor_role} · nivel {incident.severity}</strong><span>{String(incident.incident_code).replaceAll("_"," ")}</span><small>{incident.notes}</small><button className="btn btn-secondary" onClick={()=>reverseIncident(incident.id)}>Revertir con motivo</button></div>)}{!p.incidents?.length&&<p className="muted">Sin incidencias confirmadas.</p>}</section>
+    </div>
     <div className="admin-module-grid"><section className="panel"><h2>Reportes</h2>{p.reports.map((report) => <div className="admin-compact-item" key={report.id}><strong>{report.reason_code}</strong><p>{report.details}</p><div className="actions"><button className="btn btn-primary" onClick={() => reportAction(report.id, "resolved")}>Resolver</button><button className="btn btn-secondary" onClick={() => reportAction(report.id, "dismissed")}>Descartar</button></div></div>)}{!p.reports.length && <p className="muted">Sin reportes abiertos.</p>}</section><section className="panel"><div className="admin-title"><h2>Solicitudes ARCO</h2><button className="btn btn-secondary" onClick={() => csvDownload("solicitudes-arco.csv", p.arco)}>Exportar</button></div>{p.arco.map((request) => <div className="admin-compact-item" key={request.id}><strong>{request.request_type}</strong><p>{request.description}</p><span className="badge">{request.status}</span><div className="actions"><button className="btn btn-primary" onClick={() => arcoAction(request.id, "resolved")}>Resolver</button><button className="btn btn-secondary" onClick={() => arcoAction(request.id, "needs_information")}>Pedir información</button></div></div>)}{!p.arco.length && <p className="muted">Sin solicitudes pendientes.</p>}</section></div>
   </div>;
 }

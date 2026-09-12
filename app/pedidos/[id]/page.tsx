@@ -11,6 +11,7 @@ import RatingForm from "@/components/RatingForm";
 import PaymentReconciler from "@/components/PaymentReconciler";
 import { signDressPhotos } from "@/lib/server/dressImageUrls";
 import { dressImageUrl } from "@/lib/storage";
+import ClaimResolutionStatus from "@/components/ClaimResolutionStatus";
 
 function cleanModel(value: any) {
   const text = String(value ?? "").trim();
@@ -37,7 +38,7 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
 
   const [{ data: dress }, { data: claims }, { data: shipments }, { data: shippingAddresses }] = await Promise.all([
     supabase.from("dresses").select("id,model,precio_original_mxn,precio_venta_mxn,brands(name),dress_photos(storage_path,is_primary,position)").eq("id", order.dress_id).maybeSingle(),
-    supabase.from("claims").select("*").eq("order_id", order.id),
+    supabase.from("claims").select("*,claim_resolutions(*)").eq("order_id", order.id),
     supabase.from("shipments").select("*").eq("order_id", order.id),
     supabase.from("order_shipping_addresses").select("*").eq("order_id", order.id),
   ]);
@@ -76,7 +77,7 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
     {(trackingEvents ?? []).length > 0 && <section className="panel"><h2>Seguimiento del envío</h2>{(trackingEvents ?? []).map((event: any, index: number) => <div className="tracking-row" key={`${event.occurred_at}-${index}`}><strong>{ORDER_STATUS[event.status_milestone] || String(event.status_milestone || event.raw_status || "Actualización").replaceAll("_", " ")}</strong><span>{new Date(event.occurred_at).toLocaleString("es-MX")}</span></div>)}</section>}
     <OrderActions order={order} userId={user.id} evidence={evidence ?? []} />
     {order.buyer_id===user.id&&order.status==="completed"&&<RatingForm orderId={order.id} revieweeId={order.seller_id} reviewerId={user.id}/>} 
-    {(order.claims ?? []).length > 0 && <section className="panel"><h2>Reclamaciones</h2>{order.claims.map((claim: any) => <div key={claim.id}><strong>{claim.status}</strong><p>{claim.description}</p></div>)}</section>}
+    {(order.claims ?? []).length > 0 && <section className="panel"><h2>Reclamaciones</h2>{order.claims.map((claim: any) => <ClaimResolutionStatus claim={claim} key={claim.id} />)}</section>}
     {profile?.role==="admin"&&<><section className="panel"><h2>Expediente administrativo</h2><p><strong>PaymentIntent:</strong> {order.stripe_payment_intent_id||"—"}<br/><strong>Checkout:</strong> {order.stripe_checkout_session_id||"—"}<br/><strong>Cargo:</strong> {order.stripe_charge_id||"—"}<br/><strong>Comisión:</strong> ${Number(order.commission_mxn||0).toLocaleString("es-MX")}<br/><strong>Comisión real Stripe:</strong> ${Number(order.processor_fee_mxn||0).toLocaleString("es-MX")}<br/><strong>Margen estimado SECOND VOW:</strong> ${Math.max(0,Number(order.commission_mxn||0)-Number(order.processor_fee_mxn||0)).toLocaleString("es-MX")}<br/><strong>Versión aceptada:</strong> {order.checkout_terms_version||"—"}</p><details><summary>Destino congelado</summary><pre>{JSON.stringify(order.order_shipping_addresses?.[0]??null,null,2)}</pre></details><details><summary>Pagos y saldo</summary><pre>{JSON.stringify({payments,payouts,ledger},null,2)}</pre></details><details><summary>Cronología y actuaciones</summary><pre>{JSON.stringify({events,adminLogs},null,2)}</pre></details></section><AdminOrderControls orderId={order.id}/></>}
   </main>;
 }

@@ -16,7 +16,7 @@ if (production) {
 }
 export const PRIVACY_EMAIL = publicSetting("NEXT_PUBLIC_PRIVACY_EMAIL", process.env.NEXT_PUBLIC_PRIVACY_EMAIL, "privacidad@secondvow.com");
 export const CONTACT_EMAIL = publicSetting("NEXT_PUBLIC_CONTACT_EMAIL", process.env.NEXT_PUBLIC_CONTACT_EMAIL, "hola@secondvow.com");
-export const TERMS_VERSION = "2026-09-04.1";
+export const TERMS_VERSION = "2026-09-12.1";
 export const PRIVACY_VERSION = "2026-09-04";
 export const COOKIES_VERSION = "2026-08-22";
-export const LEGAL_BUNDLE_SHA256 = "0e53b880fbeaa1094cd71fc03de00ea78675d909f0ddd55da11c6e61e2b6fca1";
+export const LEGAL_BUNDLE_SHA256 = "e43e480b6e72b62bd36e55d02f8275689c0526f3de44a215e21882c470bc40dd";

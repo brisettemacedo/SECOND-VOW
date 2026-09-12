@@ -19,17 +19,24 @@ export async function POST(req: Request) {
   if (!claimId) return NextResponse.json({ error: "Reclamación inválida" }, { status: 400 });
   const admin = createAdminClient();
   const { data: claim } = await admin.from("claims").select("id,order_id,status").eq("id", claimId).maybeSingle();
-  if (!claim || !["returned", "refund_pending"].includes(claim.status)) {
+  if (!claim) return NextResponse.json({ error: "Reclamación inexistente" }, { status: 404 });
+  const { data: existingRefund } = await admin.from("refunds").select("provider_refund_id,status").eq("claim_id", claim.id).in("status", ["processing", "succeeded"]).maybeSingle();
+  if (existingRefund) return NextResponse.json({ ok: true, status: existingRefund.status, refundId: existingRefund.provider_refund_id, repeated: true });
+  if (!["returned", "refund_pending"].includes(claim.status)) {
     return NextResponse.json({ error: "La devolución todavía no está lista para reembolso" }, { status: 409 });
   }
+  const { data: resolution } = await admin.from("claim_resolutions").select("decision,status,appeal_deadline_at").eq("claim_id", claim.id).maybeSingle();
+  if (!resolution || resolution.decision !== "authorize_return") return NextResponse.json({ error: "Falta una resolución administrativa motivada" }, { status: 409 });
+  if (resolution.status === "appealed") return NextResponse.json({ error: "La resolución está en revisión; el reembolso permanece bloqueado" }, { status: 409 });
+  if (resolution.status !== "final" && new Date(resolution.appeal_deadline_at).getTime() > Date.now()) return NextResponse.json({ error: "El plazo de revisión de tres días aún no concluye" }, { status: 409 });
   const { data: order } = await admin.from("orders").select("id,status,amount_charged_mxn,total_mxn,stripe_charge_id").eq("id", claim.order_id).single();
-  const { data: payout } = await admin.from("seller_payouts").select("id,status,amount_mxn,transfer_id").eq("order_id", claim.order_id).maybeSingle();
+  const { data: payout } = await admin.from("seller_payouts").select("id,status,amount_mxn,transfer_amount_mxn,transfer_id").eq("order_id", claim.order_id).maybeSingle();
   if (!order?.stripe_charge_id) return NextResponse.json({ error: "El pedido no tiene un cargo conciliado" }, { status: 409 });
 
   try {
     if (payout?.transfer_id && !["reversed", "failed"].includes(payout.status)) {
       const reversal = new URLSearchParams();
-      reversal.set("amount", String(Math.round(Number(payout.amount_mxn) * 100)));
+      reversal.set("amount", String(Math.round(Number(payout.transfer_amount_mxn ?? payout.amount_mxn) * 100)));
       reversal.set("metadata[order_id]", order.id);
       await stripeRequest(`/transfers/${payout.transfer_id}/reversals`, reversal, undefined, `reversal_${payout.id}`);
     }
@@ -45,7 +52,7 @@ export async function POST(req: Request) {
     const { error } = await admin.rpc("backend_record_refund", { p_order_id: order.id, p_provider_refund_id: refund.id, p_amount_mxn: amountMxn, p_status: status, p_reason_code: "claim_approved" });
     if (error) throw new Error(error.message);
     await admin.from("claims").update({ status: status === "succeeded" ? "refunded" : "refund_pending", refund_amount_mxn: amountMxn, resolved_at: status === "succeeded" ? new Date().toISOString() : null }).eq("id", claim.id);
-    return NextResponse.json({ ok: true, status });
+    return NextResponse.json({ ok: true, status, refundId: refund.id });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message ?? "No fue posible procesar el reembolso" }, { status: 502 });
   }

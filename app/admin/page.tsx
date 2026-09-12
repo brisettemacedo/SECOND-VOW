@@ -31,13 +31,15 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     { data: payments },
     { data: shipments },
     { data: paymentExceptions },
+    { data: sellerDebts },
+    { data: incidents },
   ] = await Promise.all([
     supabase.from("dresses")
       .select("id,brand_id,brand_suggestion_id,model,status,updated_at,talla_etiqueta,precio_venta_mxn,dress_photos(id)")
       .eq("status", "pending_review")
       .order("updated_at", { ascending: true }),
     supabase.from("identity_verifications").select("id,user_id,legal_name,document_path,status,document_type,created_at").eq("status","pending").order("created_at"),
-    supabase.from("claims").select("id,order_id,reason,description,status,created_at").in("status",["open","under_review","approved_return","return_shipped","refund_pending"]).order("created_at"),
+    supabase.from("claims").select("id,order_id,reason,description,status,created_at,claim_resolutions(*),orders(total_mxn,amount_charged_mxn,processor_fee_mxn)").in("status",["open","under_review","approved_return","rejected","return_shipped","refund_pending"]).order("created_at").limit(50),
     supabase.from("brands").select("id,name").eq("is_active",true).order("name"),
     supabase.from("brand_suggestions").select("id,suggested_name,seller_id,status,created_at").eq("status","pending").order("created_at"),
     supabase.from("brand_aliases").select("alias_name,brand_id,brands(name)").order("alias_name"),
@@ -48,6 +50,8 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     supabase.from("payments").select("id,order_id,status,amount_mxn,created_at").order("created_at",{ascending:false}).limit(20),
     supabase.from("shipments").select("id,order_id,status,carrier,tracking_number,created_at").order("created_at",{ascending:false}).limit(20),
     supabase.from("payment_exceptions").select("id,order_id,exception_type,status,details,created_at").eq("status","open").order("created_at",{ascending:false}).limit(50),
+    supabase.from("seller_debts").select("id,seller_id,order_id,breach_charge_mxn,return_shipping_mxn,original_amount_mxn,recovered_amount_mxn,status,created_at").in("status",["open","partially_recovered"]).order("created_at",{ascending:false}).limit(50),
+    supabase.from("user_incidents").select("id,user_id,order_id,actor_role,incident_code,severity,status,notes,created_at").eq("status","confirmed").order("created_at",{ascending:false}).limit(50),
   ]);
 
   const { data: stalledDraftsRaw } = await supabase.rpc("admin_list_stalled_drafts");
@@ -100,6 +104,6 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         {!pendingError && !pendingPublications.length && <p>No hay publicaciones pendientes.</p>}
       </div>
     </section>
-    <AdminDashboard pendingItems={pendingItems??[]} paymentExceptions={paymentExceptions??[]} verifications={verifications??[]} claims={claims??[]} brands={brands??[]} suggestions={suggestions??[]} brandAliases={brandAliases??[]} users={usersResult.data??[]} usersPage={usersPage} usersTotal={usersResult.count??0} usersPageSize={ADMIN_USER_PAGE_SIZE} reports={reports??[]} arco={arco??[]} orders={orders??[]} payments={payments??[]} shipments={shipments??[]} stalledDrafts={stalledDraftsWithBrand} />
+    <AdminDashboard pendingItems={pendingItems??[]} paymentExceptions={paymentExceptions??[]} sellerDebts={sellerDebts??[]} incidents={incidents??[]} verifications={verifications??[]} claims={claims??[]} brands={brands??[]} suggestions={suggestions??[]} brandAliases={brandAliases??[]} users={usersResult.data??[]} usersPage={usersPage} usersTotal={usersResult.count??0} usersPageSize={ADMIN_USER_PAGE_SIZE} reports={reports??[]} arco={arco??[]} orders={orders??[]} payments={payments??[]} shipments={shipments??[]} stalledDrafts={stalledDraftsWithBrand} />
   </main>;
 }
