@@ -39,7 +39,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
       .eq("status", "pending_review")
       .order("updated_at", { ascending: true }),
     supabase.from("identity_verifications").select("id,user_id,legal_name,document_path,status,document_type,created_at").eq("status","pending").order("created_at"),
-    supabase.from("claims").select("id,order_id,reason,description,status,created_at,claim_resolutions(*),orders(total_mxn,amount_charged_mxn,processor_fee_mxn)").in("status",["open","under_review","approved_return","rejected","return_shipped","refund_pending"]).order("created_at").limit(50),
+    supabase.from("claims").select("id,order_id,reason,reason_code,description,status,created_at,seller_response,seller_response_due_at,seller_responded_at,claim_resolutions(*),orders(total_mxn,amount_charged_mxn,processor_fee_mxn,checkout_terms_version)").in("status",["open","under_review","seller_response","approved_return","rejected","return_shipped","refund_pending"]).order("created_at").limit(50),
     supabase.from("brands").select("id,name").eq("is_active",true).order("name"),
     supabase.from("brand_suggestions").select("id,suggested_name,seller_id,status,created_at").eq("status","pending").order("created_at"),
     supabase.from("brand_aliases").select("alias_name,brand_id,brands(name)").order("alias_name"),

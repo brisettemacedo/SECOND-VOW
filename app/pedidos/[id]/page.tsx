@@ -59,6 +59,13 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
     profile?.role==="admin"?supabase.from("admin_action_logs").select("*").eq("order_id",order.id).order("created_at",{ascending:false}):Promise.resolve({data:[]} as any),
   ]);
   const names = Object.fromEntries((people ?? []).map((person: any) => [person.id, safeDisplayName(person.full_name)]));
+  const evidenceRows = evidence ?? [];
+  const labelEvidence = evidenceRows.filter((item: any) => item.evidence_type === "seller_return_label");
+  const signedLabelResult = labelEvidence.length
+    ? await supabase.storage.from("order-evidence").createSignedUrls(labelEvidence.map((item: any) => item.storage_path), 3600)
+    : { data: [] as any[] };
+  const signedLabelByPath = new Map((signedLabelResult.data ?? []).map((item: any) => [item.path, item.signedUrl ?? item.signed_url]));
+  const evidenceWithLinks = evidenceRows.map((item: any) => ({ ...item, signed_url: item.evidence_type === "seller_return_label" ? signedLabelByPath.get(item.storage_path) : undefined }));
   const model = cleanModel(order.dresses?.model);
   const title = [order.dresses?.brands?.name, model].filter(Boolean).join(" ") || "Vestido";
   const primaryPhoto = [...(order.dresses?.dress_photos ?? [])].sort((a: any, b: any) => Number(Boolean(b.is_primary)) - Number(Boolean(a.is_primary)) || Number(a.position) - Number(b.position))[0];
@@ -75,7 +82,7 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
     <section className="panel purchase-protection"><h2>Protección de compra</h2><p>SECOND VOW revisará la evidencia disponible si ocurre una controversia.</p><div className="protection-columns"><div><h3>Sí puede proceder</h3><ul><li>No coincide materialmente con la publicación</li><li>Daño relevante no declarado</li><li>Producto falsificado</li><li>El paquete no llega</li></ul></div><div className="not-covered"><h3>No procede por</h3><ul><li>La talla o el ajuste no te quedan</li><li>No te gustó o cambiaste de opinión</li></ul></div></div><p className="muted">Estas reglas no eliminan derechos irrenunciables que resulten aplicables.</p></section>
     {(order.shipments ?? []).some((shipment: any) => shipment.tracking_error) && <div className="alert-info"><strong>Seguimiento pendiente de validación.</strong> La guía está registrada, pero el proveedor todavía no la reconoce. Esto no acredita que el envío esté confirmado ni entregado.</div>}
     {(trackingEvents ?? []).length > 0 && <section className="panel"><h2>Seguimiento del envío</h2>{(trackingEvents ?? []).map((event: any, index: number) => <div className="tracking-row" key={`${event.occurred_at}-${index}`}><strong>{ORDER_STATUS[event.status_milestone] || String(event.status_milestone || event.raw_status || "Actualización").replaceAll("_", " ")}</strong><span>{new Date(event.occurred_at).toLocaleString("es-MX")}</span></div>)}</section>}
-    <OrderActions order={order} userId={user.id} evidence={evidence ?? []} />
+    <OrderActions order={order} userId={user.id} evidence={evidenceWithLinks} />
     {order.buyer_id===user.id&&order.status==="completed"&&<RatingForm orderId={order.id} revieweeId={order.seller_id} reviewerId={user.id}/>} 
     {(order.claims ?? []).length > 0 && <section className="panel"><h2>Reclamaciones</h2>{order.claims.map((claim: any) => <ClaimResolutionStatus claim={claim} key={claim.id} />)}</section>}
     {profile?.role==="admin"&&<><section className="panel"><h2>Expediente administrativo</h2><p><strong>PaymentIntent:</strong> {order.stripe_payment_intent_id||"—"}<br/><strong>Checkout:</strong> {order.stripe_checkout_session_id||"—"}<br/><strong>Cargo:</strong> {order.stripe_charge_id||"—"}<br/><strong>Comisión:</strong> ${Number(order.commission_mxn||0).toLocaleString("es-MX")}<br/><strong>Comisión real Stripe:</strong> ${Number(order.processor_fee_mxn||0).toLocaleString("es-MX")}<br/><strong>Margen estimado SECOND VOW:</strong> ${Math.max(0,Number(order.commission_mxn||0)-Number(order.processor_fee_mxn||0)).toLocaleString("es-MX")}<br/><strong>Versión aceptada:</strong> {order.checkout_terms_version||"—"}</p><details><summary>Destino congelado</summary><pre>{JSON.stringify(order.order_shipping_addresses?.[0]??null,null,2)}</pre></details><details><summary>Pagos y saldo</summary><pre>{JSON.stringify({payments,payouts,ledger},null,2)}</pre></details><details><summary>Cronología y actuaciones</summary><pre>{JSON.stringify({events,adminLogs},null,2)}</pre></details></section><AdminOrderControls orderId={order.id}/></>}

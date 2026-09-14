@@ -63,5 +63,28 @@ export default async function HomePage() {
       </div>
       <SellerRecoveryCalculator />
     </section>
+
+    <section className="home-how-it-works" aria-labelledby="how-second-vow-works">
+      <div className="home-section-heading">
+        <p className="eyebrow">Así funciona SECOND VOW</p>
+        <h2 id="how-second-vow-works">Hablen con confianza. Acuerden con claridad.</h2>
+        <p>La compradora pregunta; la vendedora responde con honestidad y prepara una oferta final con el envío ya cotizado.</p>
+      </div>
+      <div className="how-chat-scene">
+        <Image src="/images/how-it-works-chat.webp" alt="Compradora y vendedora conversando a distancia sobre un vestido de novia" width={1400} height={700} sizes="(max-width: 760px) 100vw, 1200px" className="how-chat-illustration" />
+        <div className="how-chat-bubbles" aria-label="Ejemplo de conversación">
+          <p className="chat-bubble buyer"><span>Compradora</span>¿Tiene algún detalle el vestido?</p>
+          <p className="chat-bubble seller"><span>Vendedora</span>¡Hola! Solo una manchita que puede salir con una limpieza profunda.</p>
+          <p className="chat-bubble buyer"><span>Compradora</span>¿Me lo dejarías en $10,000?</p>
+          <p className="chat-bubble seller"><span>Vendedora</span>¡Sí! Compárteme tu código postal para cotizar el envío y enviarte la oferta final.</p>
+        </div>
+      </div>
+      <div className="how-flow-steps">
+        <article><strong>1</strong><span>Pregunta y aclara todos los detalles.</span></article>
+        <article><strong>2</strong><span>Acuerden precio y destino en el chat privado.</span></article>
+        <article><strong>3</strong><span>La vendedora envía la oferta con envío.</span></article>
+        <article><strong>4</strong><span>Paga dentro de SECOND VOW y sigue la guía.</span></article>
+      </div>
+    </section>
   </main>;
 }
