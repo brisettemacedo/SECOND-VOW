@@ -1,4 +1,11 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Cómo comprar y vender vestidos de novia usados",
+  description: "Conoce cómo publicar, negociar, pagar, enviar y recibir un vestido de novia de segunda mano en SECOND VOW México.",
+  alternates: { canonical: "/como-funciona" },
+};
 
 const buyerSteps=[
   ["Encuentra tu vestido","Explora el catálogo, guarda tus favoritos y pregunta medidas o detalles directamente a la vendedora."],
@@ -24,5 +31,5 @@ export default function How(){return <main className="legal-page how-page">
   <section><h2>Quiero vender</h2><StepList steps={sellerSteps}/></section>
   <section className="how-protection"><h2>Protección después de la entrega</h2><p>La compradora debe recibir contra identificación y firma. Desde que SECOND VOW registra la entrega cuenta con 48 horas para reportar daños relevantes o información materialmente incorrecta que no hubiera sido declarada.</p><p>No procede una devolución porque el vestido no quede, no guste o exista un cambio de opinión. Ninguna regla interna elimina los derechos irrenunciables que resulten aplicables.</p></section>
   <section className="how-support"><div><p className="eyebrow">Estamos para ayudarte</p><h2>Acompañamiento humano cuando lo necesites</h2><p>Si algo no está claro durante tu publicación o venta, escríbenos. Queremos ayudarte a llegar al siguiente paso con seguridad.</p></div><a className="btn btn-primary" href="mailto:team@auth.second-vow.com">Contactar a SECOND VOW</a></section>
-  <div className="actions"><Link className="btn btn-primary" href="/vender">Publicar mi vestido</Link><Link className="btn btn-secondary" href="/vestidos">Ver vestidos</Link></div>
+  <div className="actions"><Link className="btn btn-primary" href="/publicar">Publicar mi vestido</Link><Link className="btn btn-secondary" href="/vestidos">Ver vestidos</Link></div>
 </main>}

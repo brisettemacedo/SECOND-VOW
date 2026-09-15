@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import DressGallery from "@/components/DressGallery";
@@ -10,8 +11,77 @@ import {
   SILUETAS, ESCOTES, ESPALDAS, MANGAS, TELAS, COLORES, COLAS, CONDICIONES, STATUS_LABELS,
 } from "@/lib/catalogs";
 import { signDressPhotos } from "@/lib/server/dressImageUrls";
+import { createAdminClient } from "@/lib/server/adminSupabase";
+import { dressImageUrl } from "@/lib/storage";
+import { SITE_URL } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+
+type SeoDress = {
+  id: string;
+  model: string | null;
+  talla_etiqueta: string | null;
+  silueta: string | null;
+  condicion: string | null;
+  precio_venta_mxn: number | null;
+  descripcion: string | null;
+  status: string;
+  brands: { name: string } | { name: string }[] | null;
+  dress_photos: Array<{ storage_path: string; is_primary: boolean; position: number }>;
+};
+
+function confirmedBrand(dress: Pick<SeoDress, "brands">) {
+  return Array.isArray(dress.brands) ? dress.brands[0]?.name : dress.brands?.name;
+}
+
+function seoName(dress: SeoDress) {
+  const parts = [confirmedBrand(dress), dress.model, dress.silueta ? labelFor(SILUETAS, dress.silueta) : null]
+    .filter((value, index, all) => value && all.indexOf(value) === index);
+  return parts.join(" ") || "Vestido de novia";
+}
+
+function seoDescription(dress: SeoDress) {
+  const details = [
+    seoName(dress),
+    dress.talla_etiqueta ? `talla ${dress.talla_etiqueta}` : null,
+    dress.condicion ? labelFor(CONDICIONES, dress.condicion) : null,
+    dress.precio_venta_mxn ? `por ${fmtPrice(dress.precio_venta_mxn)}` : null,
+  ].filter(Boolean).join(", ");
+  return `${details}. Compra vestidos de novia de segunda mano en México con pago seguro en SECOND VOW.`.slice(0, 158);
+}
+
+async function getSeoDress(id: string): Promise<SeoDress | null> {
+  const { data } = await createAdminClient().from("dresses").select(`
+    id, model, talla_etiqueta, silueta, condicion, precio_venta_mxn, descripcion, status,
+    brands ( name ), dress_photos ( storage_path, is_primary, position )
+  `).eq("id", id).is("removed_by_seller_at", null).maybeSingle();
+  return data as SeoDress | null;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const dress = await getSeoDress(id);
+  if (!dress) return { title: "Vestido no encontrado", robots: { index: false, follow: false } };
+
+  const publicListing = ["approved", "reserved"].includes(dress.status);
+  const name = seoName(dress);
+  const title = `${name}${dress.talla_etiqueta ? ` talla ${dress.talla_etiqueta}` : ""}`;
+  const photos = [...(dress.dress_photos ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.position - b.position);
+  const image = photos[0] ? new URL(dressImageUrl(photos[0].storage_path), SITE_URL).toString() : undefined;
+
+  return {
+    title,
+    description: seoDescription(dress),
+    alternates: { canonical: `/vestidos/${dress.id}` },
+    robots: publicListing ? { index: true, follow: true } : { index: false, follow: false },
+    openGraph: {
+      title: `${title} | SECOND VOW`,
+      description: seoDescription(dress),
+      url: `/vestidos/${dress.id}`,
+      images: image ? [{ url: image, alt: name }] : undefined,
+    },
+  };
+}
 
 function labelFor(list: { value: string; label: string }[], value: string | null) {
   if (!value) return "No especificado";
@@ -101,9 +171,49 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
   const similaresFirmados = (similares ?? []) as any[];
 
   const isOwnerOrAdminPreview = ["draft", "pending_review", "changes_requested", "rejected", "archived"].includes(dress.status);
+  const canonicalUrl = `${SITE_URL}/vestidos/${dress.id}`;
+  const structuredName = seoName(dress as SeoDress);
+  const structuredImages = photos.map((photo) => new URL(dressImageUrl(photo.storage_path), SITE_URL).toString());
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "@id": `${canonicalUrl}#product`,
+      name: structuredName,
+      description: dress.descripcion || seoDescription(dress as SeoDress),
+      image: structuredImages,
+      sku: dress.id,
+      category: "Vestidos de novia",
+      brand: brandName ? { "@type": "Brand", name: brandName } : undefined,
+      color: dress.color_principal || undefined,
+      size: dress.talla_etiqueta || undefined,
+      itemCondition: String(dress.condicion).startsWith("nuevo")
+        ? "https://schema.org/NewCondition"
+        : "https://schema.org/UsedCondition",
+      offers: {
+        "@type": "Offer",
+        url: canonicalUrl,
+        priceCurrency: "MXN",
+        price: dress.precio_venta_mxn,
+        availability: dress.status === "approved"
+          ? "https://schema.org/InStock"
+          : "https://schema.org/LimitedAvailability",
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Vestidos de novia", item: `${SITE_URL}/vestidos` },
+        { "@type": "ListItem", position: 3, name: structuredName, item: canonicalUrl },
+      ],
+    },
+  ];
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px" }}>
+      {!isOwnerOrAdminPreview && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />}
       {isOwnerOrAdminPreview && (
         <div className="alert-error" style={{ marginBottom: 20 }}>
           Vista previa: esta publicación está en estado &quot;{STATUS_LABELS[dress.status]}&quot; y todavía no es visible públicamente.

@@ -1,10 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import SellerRecoveryCalculator from "@/components/SellerRecoveryCalculator";
 import HeroRotationMarker from "@/components/HeroRotationMarker";
+import { SITE_URL } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 const HERO_IMAGES = [1,2,3,4].map(index=>({src:`/images/hero-${index}.webp`,alt:`Vestido de novia destacado ${index}`}));
 
@@ -28,7 +31,29 @@ export default async function HomePage() {
   const lastIndex = Number(cookieStore.get("second_vow_hero")?.value ?? -1);
   const heroIndex = images.length ? (Number.isInteger(lastIndex) ? (lastIndex + 1) % images.length : 0) : 0;
   const heroImage = images[heroIndex];
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: "SECOND VOW",
+        url: SITE_URL,
+        logo: `${SITE_URL}/icon.svg`,
+        areaServed: { "@type": "Country", name: "México" },
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
+        name: "SECOND VOW",
+        url: SITE_URL,
+        inLanguage: "es-MX",
+        publisher: { "@id": `${SITE_URL}/#organization` },
+      },
+    ],
+  };
   return <main className="home-page">
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
     <section className="home-hero">
       {heroImage && <Image src={heroImage.src} alt={heroImage.alt} fill priority sizes="100vw" className="home-hero-image" />}
       <HeroRotationMarker index={heroIndex} />
@@ -36,8 +61,11 @@ export default async function HomePage() {
       <div className="home-hero-content">
         <p className="home-wordmark">SECOND VOW</p>
         <h1><span>Tu vestido ya tuvo un gran día.</span><span>¡Puede tener otro!</span></h1>
-        <p className="home-hero-subtitle">Compra y vende vestidos de novia en México.</p>
-        <Link className="btn home-hero-cta" href="/vestidos">Encontrar mi vestido</Link>
+        <p className="home-hero-subtitle">Compra y vende vestidos de novia de segunda mano en México.</p>
+        <div className="home-hero-actions">
+          <Link className="btn home-hero-cta" href="/vestidos">Encontrar mi vestido</Link>
+          <Link className="btn home-hero-sell-cta" href="/vender-vestido-de-novia">Vender mi vestido</Link>
+        </div>
       </div>
     </section>
 
@@ -52,8 +80,8 @@ export default async function HomePage() {
     <section className="home-sell-section">
       <div className="home-section-heading">
         <p className="eyebrow">Vende en SECOND VOW</p>
-        <h2>¿Lista para darle una segunda vida a tu vestido?</h2>
-        <p>Publicarlo es gratis.</p>
+        <h2>¿Tu vestido sigue guardado después de la boda?</h2>
+        <p>Publícalo gratis para que otra novia pueda encontrarlo y tú recuperes parte de lo que invertiste.</p>
       </div>
       <div className="home-seller-steps">
         <article><span>1</span><h3>Publica gratis</h3><p>Sube tus fotos, medidas y todos los detalles de tu vestido.</p></article>
@@ -61,6 +89,7 @@ export default async function HomePage() {
         <article><span>3</span><h3>Envía la oferta final</h3><p>Cotiza la guía y fija claramente el precio del vestido y del envío antes del pago.</p></article>
         <article><span>4</span><h3>Envía y recibe tu dinero</h3><p>Registra la guía rastreable. SECOND VOW retiene <strong>18% del total</strong>; tú recibes el 82% y de ahí pagas el envío.</p></article>
       </div>
+      <div className="home-seller-links"><Link className="btn btn-primary" href="/publicar">Publicar mi vestido gratis</Link><Link href="/que-hacer-con-mi-vestido-de-novia">¿Qué puedo hacer con mi vestido después de la boda?</Link></div>
       <SellerRecoveryCalculator />
     </section>
 

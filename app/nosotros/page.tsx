@@ -1,3 +1,11 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "SECOND VOW México: vestidos con una segunda historia",
+  description: "Conoce SECOND VOW, el marketplace mexicano para comprar y vender vestidos de novia de segunda mano de forma clara y segura.",
+  alternates: { canonical: "/nosotros" },
+};
+
 export default function About() {
   return (
     <main className="legal-page">
