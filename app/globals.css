@@ -338,6 +338,32 @@ body .step-missing-count { font-size: 11px !important; }
 
 /* v1.9.2: contenido rastreable y página orgánica para vendedoras */
 .catalog-intro{max-width:780px;margin:-16px 0 24px;color:var(--color-text-muted);line-height:1.65}
+
+/* v1.9.3: mensajería minimalista */
+.messaging{gap:0;background:#fff;border:1px solid #e3e4df;border-radius:12px;overflow:hidden;min-height:620px}
+.messaging aside{background:#fff;border-right:1px solid #e8e9e5}
+.messaging aside button{padding:17px 18px;border-bottom:1px solid #eff0ed;background:#fff;transition:background-color .15s ease}
+.messaging aside button:hover{background:#f7f7f5}
+.messaging aside button.active{background:#f1f2ee;box-shadow:inset 3px 0 0 var(--color-action-primary)}
+.messaging .chat.panel{min-width:0;padding:0;background:#fff;border:0;border-radius:0}
+.chat-dress-header{padding:18px 22px 16px;margin:0;background:#fff;border-bottom:1px solid #e8e9e5}
+.chat-flow-steps{padding:14px 22px 0;margin:0}
+.chat-flow-steps li{background:#f6f6f3;border:1px solid #ecece8;border-radius:8px}
+.safety-callout,.messaging .alert-info,.messaging .chat-offer-box,.messaging .price-proposal,.messaging .quick-replies,.messaging .composer{margin-left:22px;margin-right:22px}
+.safety-callout{background:#faf9f4;border-color:#e8e3d3}
+.messages{min-height:280px;padding:24px 22px 18px;background:#fff;gap:8px;scrollbar-width:thin;scrollbar-color:#d5d6d1 transparent}
+.bubble{max-width:min(72%,560px);padding:10px 14px;background:#f0f1ee;border-radius:16px 16px 16px 5px;line-height:1.48;overflow-wrap:anywhere}
+.bubble.mine{align-self:flex-end;background:#e4e8dd;border-radius:16px 16px 5px 16px}
+.bubble small{margin-top:4px;color:#777d76;font-size:10px!important;text-align:left}
+.bubble.mine small{text-align:right}
+.commerce-event{margin:5px 0;background:#fafaf8;border-color:#e1e3dd;border-radius:10px;box-shadow:none}
+.quick-replies{padding-top:4px}
+.quick-replies button,.offer-suggestions button{background:#fff;border-color:#d8dad3}
+.composer{position:sticky;bottom:0;padding:12px 0 18px;background:#fff;border-top:1px solid #eeeeea}
+.composer textarea{min-height:46px;max-height:130px;resize:vertical;background:#f7f7f5!important;border-color:#dfe1dc!important;border-radius:12px!important}
+.composer .btn{align-self:stretch;border-radius:10px}
+@media(max-width:850px){.messaging{border-radius:8px}.messaging aside{max-height:210px;overflow-y:auto;border-right:0;border-bottom:1px solid #e8e9e5}.messaging aside button.active{box-shadow:inset 3px 0 0 var(--color-action-primary)}.chat-dress-header{padding:16px 18px}.chat-flow-steps{padding-left:18px;padding-right:18px}.safety-callout,.messaging .alert-info,.messaging .chat-offer-box,.messaging .price-proposal,.messaging .quick-replies,.messaging .composer{margin-left:18px;margin-right:18px}.messages{padding-left:18px;padding-right:18px}}
+@media(max-width:640px){.messaging{margin-left:-6px;margin-right:-6px;min-height:0}.chat-dress-header{align-items:flex-start}.chat-dress-header .btn{padding:9px 12px}.bubble{max-width:86%}.messages{min-height:360px}.composer{grid-template-columns:1fr}.composer .btn{justify-self:end;min-width:94px}.quick-replies{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.quick-replies button{white-space:nowrap}}
 .catalog-seo-copy{max-width:880px;margin:72px auto 0;padding:30px;border-top:1px solid var(--color-border);line-height:1.7}.catalog-seo-copy h2{margin-bottom:12px}.catalog-seo-copy a{font-weight:700}
 .seo-landing{max-width:1120px;margin:0 auto;padding:64px 28px 90px}.seo-landing>section{margin-top:70px}.seo-landing-hero{max-width:860px}.seo-landing-hero h1{margin:10px 0 18px;font-family:var(--font-logo),Georgia,serif!important;font-size:clamp(40px,6vw,68px)!important;line-height:1}.seo-landing-hero>p:not(.eyebrow){font-size:18px!important;line-height:1.7;color:var(--color-text-muted);max-width:760px}.seo-landing-hero .btn{margin-top:14px;text-decoration:none}.seo-step-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}.seo-step-grid article{display:flex;gap:16px;padding:22px;border:1px solid var(--color-border);background:var(--color-surface)}.seo-step-grid article>strong{display:grid;place-items:center;flex:0 0 34px;height:34px;border-radius:50%;background:var(--color-action-primary);color:var(--color-action-on-primary)}.seo-step-grid h3{margin:4px 0 7px}.seo-step-grid p,.seo-trust-copy p,.seo-faq p{color:var(--color-text-muted);line-height:1.65}.seo-trust-copy{max-width:850px}.seo-faq details{padding:17px 0;border-bottom:1px solid var(--color-border)}.seo-faq summary{font-weight:700;cursor:pointer}.seo-faq details p{margin-bottom:0}
 @media(max-width:700px){.seo-landing{padding:46px 20px 70px}.seo-step-grid{grid-template-columns:1fr}.catalog-seo-copy{padding:24px 0}.seo-landing-hero h1{font-size:40px!important}}
