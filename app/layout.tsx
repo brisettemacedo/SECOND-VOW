@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   },
   description: "Compra y vende vestidos de novia de segunda mano en México. Explora vestidos nuevos y usados, conversa con la vendedora y paga de forma segura.",
   applicationName: "SECOND VOW",
+  verification: { google: "reVqMc0xMVVWK1xfyO8Zu9XPb3MwG9lNIBNectbxbmQ" },
   keywords: ["vestidos de novia de segunda mano", "vestidos de novia usados", "comprar vestido de novia", "vender vestido de novia", "vestidos de novia México"],
   alternates: { languages: { "es-MX": "/" } },
   openGraph: {
