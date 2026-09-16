@@ -52,7 +52,7 @@ function firstIncompleteStep(dress?: Dress, declaration?: any) {
   if (!dress.silueta || !dress.escote || !dress.espalda || !dress.manga) return 2;
   if (!dress.condicion) return 3;
   if (!dress.precio_venta_mxn || Number(dress.precio_venta_mxn) <= 0) return 5;
-  if (!(dress.dress_photos?.length > 0)) return 8;
+  if ((dress.dress_photos?.length ?? 0) === 0) return 8;
   if (!declaration?.authenticity_declared || !declaration?.photos_correspond_declared || !declaration?.right_to_sell_declared || !declaration?.information_true_declared) return 9;
   return 9;
 }
