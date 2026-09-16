@@ -45,6 +45,18 @@ const recommendedKeys: { key: string; label: string }[] = [
   { key: "cola", label: "Cola" },
 ];
 
+function firstIncompleteStep(dress?: Dress, declaration?: any) {
+  if (!dress?.id) return 0;
+  if (!dress.brand_id && !dress.brand_suggestion_id) return 0;
+  if (!dress.talla_etiqueta) return 1;
+  if (!dress.silueta || !dress.escote || !dress.espalda || !dress.manga) return 2;
+  if (!dress.condicion) return 3;
+  if (!dress.precio_venta_mxn || Number(dress.precio_venta_mxn) <= 0) return 5;
+  if (!(dress.dress_photos?.length > 0)) return 8;
+  if (!declaration?.authenticity_declared || !declaration?.photos_correspond_declared || !declaration?.right_to_sell_declared || !declaration?.information_true_declared) return 9;
+  return 9;
+}
+
 export default function DressPublishForm({ initialDress, brands, catalogs, userId }: { initialDress?: Dress; brands: Brand[]; catalogs: DressCatalogData; userId: string }) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
@@ -53,7 +65,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     : initialDress?.brand_suggestions?.suggested_name || "";
   const initialDeclaration = Array.isArray(initialDress?.dress_declarations) ? initialDress?.dress_declarations?.[0] : initialDress?.dress_declarations;
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => firstIncompleteStep(initialDress, initialDeclaration));
   const [dress, setDress] = useState<Dress>(initialDress ?? { seller_id: userId, status: "draft", sistema_talla: "MX", envio_nacional: true });
   const [brandQuery, setBrandQuery] = useState(initialBrand);
   const [message, setMessage] = useState("");
@@ -442,6 +454,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
   const pendingByStep = stepNames.map((name, index) => ({ name, index, items: pending.filter((issue) => issue.step === index) })).filter((group) => group.items.length > 0);
 
   return <div className="wizard">
+    {initialDress?.id && pending.length > 0 && <div className="alert-info draft-resume-banner"><strong>Continúa donde te quedaste.</strong> Te faltan {pending.length} requisito{pending.length === 1 ? "" : "s"}. Abrimos el primer paso pendiente para que termines más rápido.</div>}
     <div className="stepper">{stepNames.map((n, i) => { const count = issuesForStep(i).length; return <button key={n} type="button" className={`${i === step ? "active" : ""} ${count ? "step-has-missing" : "step-complete"}`} onClick={() => stepClick(i)}>{i + 1}. {n}{count ? <span className="step-missing-count" aria-label={`${count} campos pendientes`}>{count}</span> : null}</button>; })}</div>
     <section className="panel">
       <h1>{initialDress?.id ? "Editar vestido" : "Publicar vestido"}</h1>

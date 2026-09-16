@@ -65,7 +65,6 @@ export default async function MyDresses({ searchParams }: { searchParams: Promis
         // sobre este vestido, y no esté ya reservado/vendido.
         const hasActivePayment=paymentDressIds.has(d.id);
         const editable = ["draft", "pending_review", "changes_requested", "rejected", "approved"].includes(d.status) && !hasActivePayment;
-        const hasOrderHistory = (d.orders?.[0]?.count ?? 0) > 0;
         const brand = brandNames?.nameFor(d) ?? "Sin marca";
         const model = cleanModel(d.model);
         const photo=[...(d.dress_photos??[])].sort((a:any,b:any)=>(b.is_primary?1:0)-(a.is_primary?1:0)||a.position-b.position)[0];
@@ -85,8 +84,8 @@ export default async function MyDresses({ searchParams }: { searchParams: Promis
           {(feedbackByDress[d.id]??[]).map((notice:any)=><div className="alert-info" key={notice.id}><strong>Sugerencia de SECOND VOW</strong><p>{notice.body}</p></div>)}
           {d.status === "reserved" && <div className="alert-info">Hay un pago en proceso sobre este vestido. No puede editarse hasta que se complete o se cancele.</div>}
           <div className="actions">
-            {editable && <Link href={`/publicar/${d.id}`} className="btn btn-secondary">{d.status === "changes_requested" ? "Corregir publicación" : "Editar publicación"}</Link>}
-            {editable && <DeleteDraftButton dressId={d.id} hasOrderHistory={hasOrderHistory} />}
+            {editable && <Link href={`/publicar/${d.id}`} className="btn btn-primary">{d.status === "draft" ? "Continuar publicación" : d.status === "changes_requested" ? "Corregir publicación" : "Editar publicación"}</Link>}
+            {editable && <DeleteDraftButton dressId={d.id} />}
             <Link href={`/vestidos/${d.id}`} className="btn btn-secondary">Ver</Link>
           </div>
           </div>

@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isSameOriginRequest } from "@/lib/server/requestSecurity";
 import { sendPendingNotificationEmails } from "@/lib/server/notificationEmail";
 
-const CAMPAIGN = "2026-09-11-publicacion-marca-no-bloqueante";
+const CAMPAIGN = "2026-09-16-borradores-incompletos-v2";
 
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) return NextResponse.json({ error: "Origen no permitido" }, { status: 403 });
@@ -15,6 +15,6 @@ export async function POST(request: Request) {
 
   const { data: queued, error } = await supabase.rpc("admin_queue_draft_reminders", { p_campaign: CAMPAIGN });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  const email = await sendPendingNotificationEmails(25, ["draft_publication_help"]);
+  const email = await sendPendingNotificationEmails(100, ["draft_publication_help"]);
   return NextResponse.json({ campaign: CAMPAIGN, queued, ...email });
 }
