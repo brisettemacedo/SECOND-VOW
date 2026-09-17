@@ -13,6 +13,7 @@ const STATIC_PAGES = [
   ["/nosotros", "monthly", 0.6],
   ["/faq", "monthly", 0.7],
   ["/contacto", "yearly", 0.4],
+  ["/legal/comunidad", "yearly", 0.3],
 ] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

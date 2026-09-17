@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import OrderNextActionCard from "@/components/OrderNextActionCard";
 import { ORDER_STATUS } from "@/lib/orderDisplay";
+import { hasDisallowedContactContent, OFF_PLATFORM_MESSAGE } from "@/lib/contentModeration";
 
 type Conv={id:string;dress_id:string;buyer_id:string;seller_id:string;buyer_postal_code?:string|null;shipping_destination_type?:"home"|"carrier_branch"|null;recipient_full_name?:string|null;recipient_phone?:string|null;shipping_street1?:string|null;shipping_street2?:string|null;shipping_neighborhood?:string|null;shipping_city?:string|null;shipping_state?:string|null;shipping_branch_name?:string|null;shipping_destination_set_at?:string|null;buyer_name?:string;seller_name?:string;last_message_at:string;dresses?:any;messages?:any[];offers?:any[];orders?:any[]};
 function cleanModel(v:any){const s=String(v??"").trim();return /^(na|n\/?a|no aplica|sin modelo)$/i.test(s)?"":s}
@@ -46,13 +47,19 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
    setMessages([...(messageResult.data??[])].reverse());setOffers(offerResult.data??[]);setOrders(orderResult.data??[]);setDetailsLoading(false);
    await supabase.rpc("mark_conversation_read",{p_conversation_id:id});
  }
- async function send(){const text=body.trim();if(!text||!active)return; const {data,error}=await supabase.from("messages").insert({conversation_id:active,sender_id:userId,body:text}).select().single();if(error){setError(error.message);return}if(data){setMessages(m=>[...m,data]);setBody("")}}
+ async function send(){
+   const text=body.trim();if(!text||!active)return;
+   if(hasDisallowedContactContent(text)){setError(OFF_PLATFORM_MESSAGE);return}
+   const {data,error}=await supabase.from("messages").insert({conversation_id:active,sender_id:userId,body:text}).select().single();
+   if(error){setError(error.message);return}if(data){setMessages(m=>[...m,data]);setBody("");setError("")}
+ }
  async function createOffer(){
    if(!activeConv)return;
    const amount=Number(offerAmount);
    const shipping=Number(offerShipping||0);
    if(!amount||amount<=0)return;
    if(offerShipping!==""&&shipping<0)return;
+   if(offerNote.trim()&&hasDisallowedContactContent(offerNote)){setError(OFF_PLATFORM_MESSAGE);return}
    setBusy(true);setError("");
    const {error}=await supabase.rpc("create_offer",{p_dress_id:activeConv.dress_id,p_amount_mxn:amount,p_shipping_mxn:shipping,p_conversation_id:activeConv.id,p_note:offerNote.trim()||null});
    setBusy(false);
@@ -152,7 +159,7 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
       </details>}
       <div className="messages">{conversationMessages.length?conversationMessages.map((item:any)=>{const m=item.data;return <div key={`m-${m.id}`} className={m.sender_id===userId?"bubble mine":"bubble"}>{m.body}<small>{new Date(m.created_at).toLocaleString("es-MX")}</small></div>}):<p className="chat-empty">Aún no hay mensajes. Escribe para iniciar la conversación.</p>}</div>
     </>}
-    {error&&<div className="alert-error">{error}</div>}
+    {error&&<div className="alert-error moderation-copy" role="alert">{error}</div>}
 
     {activeConv?.seller_id===userId&&!activeConv.shipping_destination_set_at&&<div className="chat-offer-box"><p className="muted">La compradora aún debe compartir su domicilio o sucursal de entrega y el nombre completo de quien recibirá.</p></div>}
     {canOffer&&hasActivePendingOffer&&<div className="chat-offer-box"><p className="muted">Ya enviaste una oferta. Podrás enviar otra cuando la compradora la acepte, la rechace, la canceles o venza.</p></div>}
@@ -175,7 +182,7 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
 
     {isBuyer&&!hasActiveOrder&&<div className="price-proposal"><strong>¿Quieres proponer otro precio?</strong><p className="muted">Tu propuesta se enviará como mensaje. La oferta final con envío siempre la prepara la vendedora.</p><div><input type="number" min="1" max={activeConv.dresses?.precio_venta_mxn} value={proposalAmount} onChange={e=>setProposalAmount(e.target.value)} placeholder="Tu propuesta en MXN"/><button type="button" className="btn btn-secondary" disabled={!proposalAmount} onClick={proposePrice}>Preparar mensaje</button></div></div>}
     <div className="quick-replies" aria-label="Mensajes sugeridos">{quickReplies.map(reply=><button type="button" key={reply} onClick={()=>setBody(reply)}>{reply}</button>)}</div>
-    <div className="composer"><textarea value={body} onChange={e=>setBody(e.target.value)} maxLength={2000} placeholder="Escribe un mensaje"/><button className="btn btn-primary" onClick={send}>Enviar</button></div>
+    <div className="composer"><textarea value={body} onChange={e=>{setBody(e.target.value);if(error===OFF_PLATFORM_MESSAGE)setError("")}} maxLength={2000} placeholder="Escribe un mensaje"/><button className="btn btn-primary" onClick={send}>Enviar</button></div>
   </>:<p>Selecciona una conversación.</p>}</section>
  </div>
 }

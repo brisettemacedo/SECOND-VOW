@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CONTACT_EMAIL, LEGAL_NAME, TERMS_VERSION } from "@/lib/site";
 
 export default function Terms() {
@@ -57,6 +58,7 @@ export default function Terms() {
 
     <h2>12. Moderación, seguridad y pagos externos</h2>
     <p>SECOND VOW puede aprobar, pedir cambios, rechazar, archivar o retirar publicaciones y limitar cuentas ante reportes fundados, falsificación, fraude o riesgos de seguridad. Podrá registrar incidencias confirmadas de compradoras o vendedoras, graduarlas según gravedad y reincidencia y revertirlas si una revisión cambia la decisión. Ninguna medida se basará exclusivamente en que una usuaria haya presentado de buena fe una reclamación. La moderación no constituye certificación absoluta de autenticidad o calidad. Los pagos y acuerdos efectuados fuera de SECOND VOW carecen de la trazabilidad y protección operativa de la plataforma.</p>
+    <p>Los mensajes, notas de ofertas y comentarios pueden someterse a controles automáticos y revisión humana para detectar datos de contacto, enlaces, pagos externos, spam, fraude o invitaciones a evadir la plataforma. Consulta las <Link href="/legal/comunidad">Normas de la comunidad</Link>.</p>
 
     <h2>13. Propiedad intelectual y avisos</h2>
     <p>El nombre, interfaz, software y contenidos propios de SECOND VOW están protegidos. Una persona titular puede reportar material presuntamente infractor al correo de contacto, identificando sus datos, el derecho invocado, la publicación, la ubicación del contenido y evidencia razonable de titularidad. SECOND VOW acusará recibo, podrá ocultar preventivamente el contenido, notificará a la usuaria que lo publicó y evaluará cualquier respuesta. Podrá retirar definitivamente el contenido cuando exista evidencia suficiente, reiteración, orden de autoridad o falta de respuesta. Las declaraciones deliberadamente falsas podrán ocasionar suspensión y responsabilidad de quien las formula.</p>

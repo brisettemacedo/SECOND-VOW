@@ -117,6 +117,7 @@ button {
   font-size: 13.5px;
   margin-bottom: 16px;
 }
+.moderation-copy{white-space:pre-line}
 .alert-success {
   background: var(--color-success-bg);
   color: var(--color-success);
