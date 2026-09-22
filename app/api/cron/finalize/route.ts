@@ -53,6 +53,16 @@ export async function GET(req: Request) {
     } catch (refundError: any) { refundErrors.push(`${order.id}: ${refundError?.message ?? "error"}`); }
   }
   const { data: offerReminders } = await admin.rpc("backend_generate_offer_reminders");
+  const { data: weeklyDraftReminders, error: draftReminderError } = await admin.rpc("backend_queue_weekly_draft_notifications");
   const email = await sendPendingNotificationEmails();
-  return NextResponse.json({ expiredPayments: expiredPayments ?? 0, finalized: data ?? 0, offerReminders: offerReminders ?? 0, refundsRequested, refundErrors, email });
+  return NextResponse.json({
+    expiredPayments: expiredPayments ?? 0,
+    finalized: data ?? 0,
+    offerReminders: offerReminders ?? 0,
+    weeklyDraftReminders: weeklyDraftReminders ?? 0,
+    draftReminderError: draftReminderError?.message ?? null,
+    refundsRequested,
+    refundErrors,
+    email,
+  });
 }

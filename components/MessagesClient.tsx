@@ -24,6 +24,8 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
  const [orders,setOrders]=useState<any[]>(activeConv?.orders??[]);
  const [body,setBody]=useState("");
  const [proposalAmount,setProposalAmount]=useState("");
+ const [proposalOpen,setProposalOpen]=useState(false);
+ const [purchaseHelpOpen,setPurchaseHelpOpen]=useState(false);
  const [offerOpen,setOfferOpen]=useState(false);
  const [offerAmount,setOfferAmount]=useState("");
  const [offerShipping,setOfferShipping]=useState("");
@@ -35,7 +37,7 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
  async function refreshConversation(){router.refresh()}
  async function load(id:string){
    const next=convs.find(c=>c.id===id);if(!next)return;
-   setActive(id);setDetailsLoading(true);setError("");setBody("");setProposalAmount("");
+   setActive(id);setDetailsLoading(true);setError("");setBody("");setProposalAmount("");setProposalOpen(false);setPurchaseHelpOpen(false);setOfferOpen(false);
    setPostalCode(next.buyer_postal_code??"");setDestination({type:next.shipping_destination_type??"home",name:next.recipient_full_name??"",phone:next.recipient_phone??"",street1:next.shipping_street1??"",street2:next.shipping_street2??"",neighborhood:next.shipping_neighborhood??"",city:next.shipping_city??"",state:next.shipping_state??"",branch:next.shipping_branch_name??""});
    const [messageResult,offerResult,orderResult]=await Promise.all([
      supabase.from("messages").select("id,sender_id,body,created_at,read_at").eq("conversation_id",id).order("created_at",{ascending:false}).limit(100),
@@ -95,6 +97,13 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
  function proposePrice(){
    const amount=Number(proposalAmount);if(!amount||amount<=0)return;
    setBody(`Hola, ¿aceptarías ${money(amount)} por el vestido? Cuando tengas el envío cotizado, ¿me mandas la oferta final?`);
+   setProposalOpen(false);
+ }
+ function showCurrentOffer(){
+   const activity=document.getElementById("current-offer") as HTMLDetailsElement|null;
+   if(!activity)return;
+   activity.open=true;
+   activity.scrollIntoView({behavior:"smooth",block:"center"});
  }
  useEffect(()=>{if(!active)return;const ch=supabase.channel(`messages:${active}`).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:`conversation_id=eq.${active}`},(p:any)=>{const row=p.new as any;setMessages(m=>m.some(x=>x.id===row.id)?m:[...m,row])}).subscribe();return()=>{supabase.removeChannel(ch)}},[active,supabase]);
  const timeline=useMemo(()=>{if(!activeConv)return[];const items:any[]=[];(messages??[]).forEach(m=>items.push({kind:"message",at:m.created_at,data:m}));offers.forEach(o=>items.push({kind:"offer",at:o.created_at,data:o}));orders.forEach(o=>{items.push({kind:"order",at:o.created_at,data:o});if(o.shipping_quote_set_at)items.push({kind:"shipping",at:o.shipping_quote_set_at,data:o});if(o.shipped_at)items.push({kind:"shipment",at:o.shipped_at,data:o})});return items.sort((a,b)=>String(a.at).localeCompare(String(b.at)))},[activeConv,messages,offers,orders]);
@@ -112,6 +121,7 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
  // (create_offer también lo bloquea en el backend; esto solo evita el viaje
  // de red innecesario y el mensaje de error confuso).
  const hasActivePendingOffer=offers.some((o:any)=>o.status==="pending"&&new Date(o.expires_at).getTime()>Date.now());
+ const activePendingOffer=[...offers].reverse().find((o:any)=>o.status==="pending"&&new Date(o.expires_at).getTime()>Date.now());
 
  // ¿La compradora tiene una oferta ya vencida sin haber pagado? Le ofrecemos
  // el atajo de pedir el reenvío (regla 2), en vez de dejarla adivinar qué hacer.
@@ -124,15 +134,22 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
  return <div className="messaging">
   <aside>{convs.map(c=>{const other=c.buyer_id===userId?c.seller_name:c.buyer_name;return <button key={c.id} className={active===c.id?"active":""} onClick={()=>load(c.id)}><strong>{dressTitle(c.dresses)}</strong><span className="conversation-meta">Con {other||"Usuaria"}</span><span>{new Date(c.last_message_at).toLocaleDateString("es-MX")}</span></button>})}</aside>
   <section className="chat panel">{activeConv?<>
-    <div className="chat-dress-header"><div><span className="muted">Conversación sobre</span><h2><Link href={`/vestidos/${activeConv.dress_id}`} target="_blank" rel="noopener noreferrer">{dressTitle(activeConv.dresses)}</Link></h2>{activeConv.dresses?.precio_venta_mxn&&<span>{money(activeConv.dresses.precio_venta_mxn)}</span>}<div className="chat-party-line"><span><strong>Vendedora:</strong> {activeConv.seller_name||"Vendedora"}</span><span><strong>Compradora:</strong> {activeConv.buyer_name||"Compradora"}</span></div></div><Link className="btn btn-secondary" href={`/vestidos/${activeConv.dress_id}`} target="_blank" rel="noopener noreferrer">Ver vestido</Link></div>
-    <ol className="chat-flow-steps" aria-label="Siguientes pasos">{(isBuyer?["Comparte destino","Recibe oferta final","Acepta y paga"]:["Revisa el destino","Cotiza el envío","Envía la oferta final"]).map((step,index)=><li key={step}><span>{index+1}</span>{step}</li>)}</ol>
+    <div className="chat-dress-header">
+      <div><span className="muted">Conversación con {isBuyer?(activeConv.seller_name||"la vendedora"):(activeConv.buyer_name||"la compradora")}</span><h2><Link href={`/vestidos/${activeConv.dress_id}`} target="_blank" rel="noopener noreferrer">{dressTitle(activeConv.dresses)}</Link></h2>{activeConv.dresses?.precio_venta_mxn&&<span>{money(activeConv.dresses.precio_venta_mxn)}</span>}</div>
+      <div className="chat-header-actions">
+        {isBuyer&&!hasActiveOrder&&<button type="button" className="btn btn-secondary" onClick={()=>setProposalOpen(true)}>Proponer precio</button>}
+        {isBuyer&&!hasActiveOrder&&<button type="button" className="btn btn-primary" onClick={()=>activePendingOffer?showCurrentOffer():setPurchaseHelpOpen(true)}>{activePendingOffer?"Ver oferta":"Comprar"}</button>}
+        {canOffer&&!hasActivePendingOffer&&<button type="button" className="btn btn-primary" onClick={()=>setOfferOpen(true)}>Enviar oferta final</button>}
+        <Link className="btn btn-secondary" href={`/vestidos/${activeConv.dress_id}`} target="_blank" rel="noopener noreferrer">Ver vestido</Link>
+      </div>
+    </div>
     {currentOrder&&<OrderNextActionCard order={currentOrder} userId={userId} compact />}
-    <div className="safety-callout"><strong>Mantén todo dentro de SECOND VOW.</strong><span>No recomendamos reunirse en persona ni realizar pagos o acuerdos fuera de la plataforma. El historial del chat, ofertas y pedidos es importante si existe una reclamación.</span></div>
-    {activeConv?.buyer_id===userId&&!activeConv.shipping_destination_set_at&&<div className="chat-offer-box"><strong>Comparte el destino privado del envío</strong><p className="muted">Solo la vendedora de este vestido y SECOND VOW podrán verlo. La vendedora lo necesita para cotizar el envío asegurado.</p><div className="grid-2"><label><span>Entrega en</span><select value={destination.type} onChange={e=>setDestination(v=>({...v,type:e.target.value as "home"|"carrier_branch"}))}><option value="home">Mi domicilio</option><option value="carrier_branch">Ocurre / sucursal</option></select></label><label><span>Nombre completo de quien recibirá</span><input value={destination.name} onChange={e=>setDestination(v=>({...v,name:e.target.value}))}/></label><label><span>Teléfono</span><input value={destination.phone} onChange={e=>setDestination(v=>({...v,phone:e.target.value}))}/></label><label><span>Calle y número o dirección de sucursal</span><input value={destination.street1} onChange={e=>setDestination(v=>({...v,street1:e.target.value}))}/></label><label><span>Interior o referencia</span><input value={destination.street2} onChange={e=>setDestination(v=>({...v,street2:e.target.value}))}/></label><label><span>Colonia</span><input value={destination.neighborhood} onChange={e=>setDestination(v=>({...v,neighborhood:e.target.value}))}/></label><label><span>Ciudad</span><input value={destination.city} onChange={e=>setDestination(v=>({...v,city:e.target.value}))}/></label><label><span>Estado</span><input value={destination.state} onChange={e=>setDestination(v=>({...v,state:e.target.value}))}/></label><label><span>Código postal</span><input inputMode="numeric" pattern="[0-9]{5}" maxLength={5} value={postalCode} onChange={e=>setPostalCode(e.target.value.replace(/\D/g,"").slice(0,5))}/></label>{destination.type==="carrier_branch"&&<label><span>Paquetería y nombre de sucursal</span><input value={destination.branch} onChange={e=>setDestination(v=>({...v,branch:e.target.value}))}/></label>}</div><button className="btn btn-primary" disabled={busy} onClick={saveDestination}>Compartir destino con la vendedora</button></div>}
-    {activeConv?.shipping_destination_set_at&&<div className="alert-info"><strong>Destino compartido para cotización.</strong> {activeConv.shipping_destination_type==="carrier_branch"?`${activeConv.shipping_branch_name}: `:""}{activeConv.shipping_street1}, {activeConv.shipping_city}, {activeConv.shipping_state}, C.P. {activeConv.buyer_postal_code}. Recibe: {activeConv.recipient_full_name}. La entrega deberá ser contra identificación y firma.</div>}
-    {activeConv?.seller_id===userId&&<div className="alert-info">Cuando una compradora comparta su domicilio postal, podrás cotizar el envío asegurado y enviarle una oferta final. {activeConv.shipping_destination_set_at?`Cotiza al C.P. ${activeConv.buyer_postal_code}.`:"Aún falta el destino."}</div>}
+    <details className="chat-help"><summary>Compra y conversa con seguridad</summary><p>Mantén la conversación, la oferta y el pago dentro de SECOND VOW. El historial protege a ambas si existe una reclamación.</p></details>
+    {activeConv?.buyer_id===userId&&!activeConv.shipping_destination_set_at&&<details id="shipping-destination" className="chat-context" open><summary>1. Comparte tu destino para cotizar el envío</summary><div className="chat-context-body"><p className="muted">Solo la vendedora y SECOND VOW podrán verlo.</p><div className="grid-2"><label><span>Entrega en</span><select value={destination.type} onChange={e=>setDestination(v=>({...v,type:e.target.value as "home"|"carrier_branch"}))}><option value="home">Mi domicilio</option><option value="carrier_branch">Ocurre / sucursal</option></select></label><label><span>Nombre completo de quien recibirá</span><input value={destination.name} onChange={e=>setDestination(v=>({...v,name:e.target.value}))}/></label><label><span>Teléfono</span><input value={destination.phone} onChange={e=>setDestination(v=>({...v,phone:e.target.value}))}/></label><label><span>Calle y número o dirección de sucursal</span><input value={destination.street1} onChange={e=>setDestination(v=>({...v,street1:e.target.value}))}/></label><label><span>Interior o referencia</span><input value={destination.street2} onChange={e=>setDestination(v=>({...v,street2:e.target.value}))}/></label><label><span>Colonia</span><input value={destination.neighborhood} onChange={e=>setDestination(v=>({...v,neighborhood:e.target.value}))}/></label><label><span>Ciudad</span><input value={destination.city} onChange={e=>setDestination(v=>({...v,city:e.target.value}))}/></label><label><span>Estado</span><input value={destination.state} onChange={e=>setDestination(v=>({...v,state:e.target.value}))}/></label><label><span>Código postal</span><input inputMode="numeric" pattern="[0-9]{5}" maxLength={5} value={postalCode} onChange={e=>setPostalCode(e.target.value.replace(/\D/g,"").slice(0,5))}/></label>{destination.type==="carrier_branch"&&<label><span>Paquetería y nombre de sucursal</span><input value={destination.branch} onChange={e=>setDestination(v=>({...v,branch:e.target.value}))}/></label>}</div><button className="btn btn-primary" disabled={busy} onClick={saveDestination}>Guardar destino</button></div></details>}
+    {activeConv?.shipping_destination_set_at&&<details className="chat-context"><summary>Destino listo · C.P. {activeConv.buyer_postal_code}</summary><div className="chat-context-body"><p>{activeConv.shipping_destination_type==="carrier_branch"?`${activeConv.shipping_branch_name}: `:""}{activeConv.shipping_street1}, {activeConv.shipping_city}, {activeConv.shipping_state}. Recibe: {activeConv.recipient_full_name}.</p></div></details>}
+    {activeConv?.seller_id===userId&&!activeConv.shipping_destination_set_at&&<p className="chat-status-note">La compradora aún debe compartir su destino antes de que puedas enviar la oferta final.</p>}
     {detailsLoading?<div className="chat-loading">Cargando conversación…</div>:<>
-      {operationActivity.length>0&&<details className="operation-activity" open={hasActivePendingOffer}>
+      {operationActivity.length>0&&<details id="current-offer" className="operation-activity">
         <summary><span>Actividad de la operación</span><small>{operationActivity.length} {operationActivity.length===1?"movimiento":"movimientos"}</small></summary>
         <div className="operation-activity-list">{operationActivity.map((item:any)=>{if(item.kind==="offer"){
         const o=item.data;
@@ -161,28 +178,21 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
     </>}
     {error&&<div className="alert-error moderation-copy" role="alert">{error}</div>}
 
-    {activeConv?.seller_id===userId&&!activeConv.shipping_destination_set_at&&<div className="chat-offer-box"><p className="muted">La compradora aún debe compartir su domicilio o sucursal de entrega y el nombre completo de quien recibirá.</p></div>}
-    {canOffer&&hasActivePendingOffer&&<div className="chat-offer-box"><p className="muted">Ya enviaste una oferta. Podrás enviar otra cuando la compradora la acepte, la rechace, la canceles o venza.</p></div>}
-    {canOffer&&!hasActivePendingOffer&&<div className="chat-offer-box">
-      {!offerOpen
-        ? <button className="btn btn-secondary" onClick={()=>setOfferOpen(true)}>Hacer oferta</button>
-        : <div className="offer-compose">
-            <label><span>Precio del vestido (MXN)</span><input type="number" min="1" max={activeConv.dresses.precio_venta_mxn} value={offerAmount} onChange={e=>setOfferAmount(e.target.value)} placeholder="Ej. 18000"/><span className="offer-suggestions">{[.85,.9,1].map(rate=>{const suggestion=Math.round(Number(activeConv.dresses.precio_venta_mxn)*rate);return <button type="button" key={rate} onClick={()=>setOfferAmount(String(suggestion))}>{money(suggestion)}</button>})}</span></label>
-            <label><span>Costo de envío (MXN)</span><input type="number" min="0" value={offerShipping} onChange={e=>setOfferShipping(e.target.value)} placeholder="Ej. 250"/></label>
-            {offerAmount&&<p className="muted">Total que pagará la compradora: {money(Number(offerAmount||0)+Number(offerShipping||0))}.</p>}
-            <label><span>Mensaje opcional</span><input value={offerNote} maxLength={500} onChange={e=>setOfferNote(e.target.value)} placeholder="Ej. Este precio ya incluye el envío asegurado"/></label>
-            <div className="actions"><button className="btn btn-primary" disabled={busy||!offerAmount} onClick={createOffer}>Enviar oferta</button><button className="btn btn-secondary" onClick={()=>setOfferOpen(false)}>Cancelar</button></div>
-          </div>}
-    </div>}
+    {canOffer&&hasActivePendingOffer&&<p className="chat-status-note">La oferta está pendiente. Podrás enviar otra cuando la compradora responda o venza.</p>}
 
     {hasExpiredOfferForBuyer && !canOffer && <div className="chat-offer-box">
       <p className="muted">La oferta anterior ya venció. Si sigues interesada, pídele a la vendedora que te la vuelva a enviar.</p>
       <button className="btn btn-secondary" onClick={askToResend}>Pedir que reenvíe la oferta</button>
     </div>}
 
-    {isBuyer&&!hasActiveOrder&&<div className="price-proposal"><strong>¿Quieres proponer otro precio?</strong><p className="muted">Tu propuesta se enviará como mensaje. La oferta final con envío siempre la prepara la vendedora.</p><div><input type="number" min="1" max={activeConv.dresses?.precio_venta_mxn} value={proposalAmount} onChange={e=>setProposalAmount(e.target.value)} placeholder="Tu propuesta en MXN"/><button type="button" className="btn btn-secondary" disabled={!proposalAmount} onClick={proposePrice}>Preparar mensaje</button></div></div>}
     <div className="quick-replies" aria-label="Mensajes sugeridos">{quickReplies.map(reply=><button type="button" key={reply} onClick={()=>setBody(reply)}>{reply}</button>)}</div>
     <div className="composer"><textarea value={body} onChange={e=>{setBody(e.target.value);if(error===OFF_PLATFORM_MESSAGE)setError("")}} maxLength={2000} placeholder="Escribe un mensaje"/><button className="btn btn-primary" onClick={send}>Enviar</button></div>
+
+    {proposalOpen&&<div className="sv-modal-backdrop" role="presentation" onMouseDown={()=>setProposalOpen(false)}><div className="sv-modal" role="dialog" aria-modal="true" aria-labelledby="proposal-title" onMouseDown={event=>event.stopPropagation()}><button className="sv-modal-close" type="button" aria-label="Cerrar" onClick={()=>setProposalOpen(false)}>×</button><h2 id="proposal-title">Proponer precio</h2><p>Precio publicado: <strong>{money(activeConv.dresses?.precio_venta_mxn)}</strong></p><label><span>Tu propuesta</span><div className="modal-money-input"><span>$</span><input autoFocus type="number" min="1" max={activeConv.dresses?.precio_venta_mxn} value={proposalAmount} onChange={e=>setProposalAmount(e.target.value)} placeholder="0"/></div></label><div className="modal-suggestions">{[.85,.9,.95].map(rate=>{const suggestion=Math.round(Number(activeConv.dresses?.precio_venta_mxn||0)*rate);return <button type="button" key={rate} onClick={()=>setProposalAmount(String(suggestion))}>{money(suggestion)}</button>})}</div><p className="muted">Se preparará un mensaje para la vendedora. Ella enviará la oferta final con el envío cotizado.</p><button type="button" className="btn btn-primary" disabled={!proposalAmount} onClick={proposePrice}>Agregar al mensaje</button></div></div>}
+
+    {purchaseHelpOpen&&<div className="sv-modal-backdrop" role="presentation" onMouseDown={()=>setPurchaseHelpOpen(false)}><div className="sv-modal" role="dialog" aria-modal="true" aria-labelledby="purchase-title" onMouseDown={event=>event.stopPropagation()}><button className="sv-modal-close" type="button" aria-label="Cerrar" onClick={()=>setPurchaseHelpOpen(false)}>×</button><h2 id="purchase-title">Comprar este vestido</h2><p>{activeConv.shipping_destination_set_at?"Pide a la vendedora que te envíe la oferta final con el costo de envío.":"Primero comparte tu destino para que la vendedora pueda cotizar el envío."}</p><button type="button" className="btn btn-primary" onClick={()=>{setPurchaseHelpOpen(false);if(activeConv.shipping_destination_set_at){setBody("Hola, quiero comprar el vestido. ¿Me envías la oferta final con el envío cotizado?")}else{document.getElementById("shipping-destination")?.scrollIntoView({behavior:"smooth",block:"start"})}}}>{activeConv.shipping_destination_set_at?"Pedir oferta final":"Compartir destino"}</button></div></div>}
+
+    {offerOpen&&<div className="sv-modal-backdrop" role="presentation" onMouseDown={()=>setOfferOpen(false)}><div className="sv-modal" role="dialog" aria-modal="true" aria-labelledby="offer-title" onMouseDown={event=>event.stopPropagation()}><button className="sv-modal-close" type="button" aria-label="Cerrar" onClick={()=>setOfferOpen(false)}>×</button><h2 id="offer-title">Enviar oferta final</h2><p>Precio publicado: <strong>{money(activeConv.dresses?.precio_venta_mxn)}</strong></p><label><span>Precio acordado del vestido</span><div className="modal-money-input"><span>$</span><input autoFocus type="number" min="1" max={activeConv.dresses?.precio_venta_mxn} value={offerAmount} onChange={e=>setOfferAmount(e.target.value)} placeholder="0"/></div></label><div className="modal-suggestions">{[.85,.9,1].map(rate=>{const suggestion=Math.round(Number(activeConv.dresses?.precio_venta_mxn||0)*rate);return <button type="button" key={rate} onClick={()=>setOfferAmount(String(suggestion))}>{money(suggestion)}</button>})}</div><label><span>Envío cotizado</span><div className="modal-money-input"><span>$</span><input type="number" min="0" value={offerShipping} onChange={e=>setOfferShipping(e.target.value)} placeholder="0"/></div></label>{offerAmount&&<p className="offer-total">Total para la compradora: <strong>{money(Number(offerAmount||0)+Number(offerShipping||0))}</strong></p>}<label><span>Mensaje opcional</span><input value={offerNote} maxLength={500} onChange={e=>setOfferNote(e.target.value)} placeholder="Ej. Incluye envío asegurado"/></label><button type="button" className="btn btn-primary" disabled={busy||!offerAmount} onClick={createOffer}>Enviar oferta final</button></div></div>}
   </>:<p>Selecciona una conversación.</p>}</section>
  </div>
 }
