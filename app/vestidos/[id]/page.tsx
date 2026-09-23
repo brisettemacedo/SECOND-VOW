@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/server/adminSupabase";
 import DressGallery from "@/components/DressGallery";
 import DressCard, { type CatalogDress } from "@/components/DressCard";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -11,7 +12,6 @@ import {
   SILUETAS, ESCOTES, ESPALDAS, MANGAS, TELAS, COLORES, COLAS, CONDICIONES, STATUS_LABELS,
 } from "@/lib/catalogs";
 import { signDressPhotos } from "@/lib/server/dressImageUrls";
-import { createAdminClient } from "@/lib/server/adminSupabase";
 import { dressImageUrl } from "@/lib/storage";
 import { SITE_URL } from "@/lib/site";
 
@@ -99,9 +99,10 @@ export default async function DressDetailPage({ params }: { params: Promise<{ id
   if (!id) notFound();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Si el pago de este vestido quedó abandonado, libéralo antes de leer su estado.
+  // Si el pago quedó abandonado, el servidor libera la reserva. La RPC no se
+  // expone a visitantes anónimos porque modifica pedidos y publicaciones.
   try {
-    await supabase.rpc("expire_dress_reservation_if_stale", { p_dress_id: id });
+    await createAdminClient().rpc("expire_dress_reservation_if_stale", { p_dress_id: id });
   } catch {}
 
   const { data: dress, error } = await supabase
