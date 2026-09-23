@@ -1,6 +1,7 @@
 import MessagesClient from "@/components/MessagesClient";
 import { requireUser } from "@/lib/auth";
 import { safeDisplayName } from "@/lib/displayName";
+import { createAdminClient } from "@/lib/server/adminSupabase";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export default async function MessagesPage({searchParams}:{searchParams?:Promise
   const from=(page-1)*PAGE_SIZE;
   const to=from+PAGE_SIZE-1;
   const {supabase,user}=await requireUser();
-  await supabase.rpc("expire_stale_offers");
+  await createAdminClient().rpc("expire_stale_offers");
   await supabase.rpc("refresh_my_offer_reminders");
   const {data,error,count}=await supabase.from("conversations")
     .select("id,dress_id,buyer_id,seller_id,buyer_postal_code,shipping_destination_type,recipient_full_name,recipient_phone,shipping_street1,shipping_street2,shipping_neighborhood,shipping_city,shipping_state,shipping_branch_name,shipping_destination_set_at,last_message_at,dresses(id,model,precio_venta_mxn,brands(name))",{count:"exact"})
