@@ -23,7 +23,7 @@ export default async function SiteHeader() {
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .in("status", ["awaiting_payment", "paid", "preparing_shipment", "shipped"]),
       supabase.from("notifications")
-        .select("id,kind,title,body,created_at,metadata")
+        .select("id,order_id,dress_id,kind,title,body,created_at,metadata")
         .eq("user_id", user.id)
         .is("read_at", null)
         .order("created_at", { ascending: false })

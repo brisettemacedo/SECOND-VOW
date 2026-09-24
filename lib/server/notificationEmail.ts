@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/server/adminSupabase";
 import { SITE_URL } from "@/lib/site";
+import { notificationHref, notificationPresentation } from "@/lib/notifications";
 
 function escapeHtml(value: unknown) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]!);
@@ -29,11 +30,9 @@ export async function sendPendingNotificationEmails(limit = 40, kinds?: string[]
       await admin.from("notifications").update({ email_status: "not_required", email_attempts: attempts, email_last_attempt_at: new Date().toISOString(), email_last_error: "La cuenta no tiene correo" }).eq("id", row.id);
       continue;
     }
-    const requestedPath = typeof row.metadata?.href_path === "string" ? row.metadata.href_path : "";
-    const safePath = /^\/[a-zA-Z0-9/_?=&.-]+$/.test(requestedPath) && !requestedPath.startsWith("//") ? requestedPath : "";
-    const href = safePath ? `${SITE_URL}${safePath}` : row.order_id ? `${SITE_URL}/pedidos/${row.order_id}` : row.dress_id ? `${SITE_URL}/vestidos/${row.dress_id}` : SITE_URL;
+    const href = `${SITE_URL}${notificationHref(row)}`;
     const isDraftReminder = ["draft_publication_help", "weekly_draft_reminder"].includes(row.kind);
-    const buttonLabel = isDraftReminder ? "Continuar mi publicación" : "Abrir SECOND VOW";
+    const buttonLabel = isDraftReminder ? "Continuar mi publicación" : notificationPresentation(row).action;
     const emailSubject = typeof row.metadata?.email_subject === "string" ? row.metadata.email_subject : row.title;
     const emailBody = typeof row.metadata?.email_body === "string" ? row.metadata.email_body : row.body;
     const emailParagraphs = escapeHtml(emailBody).split("\n\n").map((paragraph) => `<p style="font-size:16px;line-height:1.6">${paragraph}</p>`).join("");
