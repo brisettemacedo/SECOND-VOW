@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { notificationHref, notificationPresentation } from "@/lib/notifications";
 
 type NotificationRow = {
   id: string;
@@ -10,7 +11,9 @@ type NotificationRow = {
   title: string;
   body: string;
   created_at: string;
-  metadata?: { href_path?: string } | null;
+  order_id?: string | null;
+  dress_id?: string | null;
+  metadata?: Record<string, unknown> | null;
 };
 
 export default function NotificationMenu({ initial }: { initial: NotificationRow[] }) {
@@ -41,15 +44,17 @@ export default function NotificationMenu({ initial }: { initial: NotificationRow
         <div className="notification-popover" role="dialog" aria-label="Notificaciones">
           <div className="notification-popover-title">Notificaciones</div>
           {notifications.slice(0, 5).map((notification) => {
-            const href = notification.metadata?.href_path || "/cuenta";
-            const body = ["draft_publication_help", "weekly_draft_reminder"].includes(notification.kind)
-              ? "Para vender más rápido: Finaliza tu borrador! :)"
-              : notification.body;
+            const href = notificationHref(notification);
+            const copy = notificationPresentation(notification);
             return (
               <div className="notification-item" key={notification.id}>
                 <Link href={href} onClick={() => void markRead(notification.id)}>
-                  <strong>{body}</strong>
-                  <small>{new Date(notification.created_at).toLocaleDateString("es-MX")}</small>
+                  <strong>{copy.title}</strong>
+                  <span>{copy.body}</span>
+                  <small>
+                    <time dateTime={notification.created_at}>{new Date(notification.created_at).toLocaleDateString("es-MX")}</time>
+                    <b>{copy.action} →</b>
+                  </small>
                 </Link>
                 <button type="button" aria-label="Marcar como leída" onClick={() => void markRead(notification.id)}>×</button>
               </div>
