@@ -63,7 +63,7 @@ export default async function HomePage() {
   return <main className="home-page">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
     <section className="home-hero">
-      {heroImage && <Image src={heroImage.src} alt={heroImage.alt} fill priority sizes="100vw" className="home-hero-image" />}
+      {heroImage && <Image src={heroImage.src} alt={heroImage.alt} fill priority sizes="100vw" className={`home-hero-image${heroIndex === 3 ? " home-hero-image-framed" : ""}`} />}
       <HeroRotationMarker index={heroIndex} />
       <div className="home-hero-overlay" />
       <div className="home-hero-content">

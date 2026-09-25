@@ -381,6 +381,44 @@ body .step-missing-count { font-size: 11px !important; }
 @media(max-width:700px){.seo-landing{padding:46px 20px 70px}.seo-step-grid{grid-template-columns:1fr}.catalog-seo-copy{padding:24px 0}.seo-landing-hero h1{font-size:40px!important}}
 .home-hero-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}.home-hero-sell-cta{padding:14px 25px;border:1px solid var(--color-background-primary);color:var(--color-text-inverse);text-transform:uppercase;letter-spacing:.07em;font-weight:700;text-decoration:none}.home-hero-sell-cta:hover{background:rgba(255,248,220,.12)}
 
+/* La cuarta foto incluye franjas claras en el archivo original. */
+.home-hero-image-framed{transform:scale(1.25)}
+
+/* Catálogo compacto en pantallas pequeñas. */
+@media(max-width:600px){
+  .catalog-page{padding:20px 16px 56px}
+  .catalog-heading-row{gap:0;margin-bottom:18px}
+  .catalog-heading-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  .catalog-filter-bar{justify-content:flex-start}
+  .filter-trigger{flex:0 0 auto;min-width:0;padding:10px 18px}
+  .catalog-count{margin-bottom:14px}
+  .catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 12px}
+  .catalog-dress-info{padding:9px 7px!important}
+  .catalog-dress-title{font-size:14px!important;line-height:1.25;margin:3px 0 5px!important}
+  .catalog-dress-brand{font-size:11px!important;line-height:1.25;overflow-wrap:anywhere}
+  .catalog-dress-size{font-size:12px!important;margin-bottom:5px!important}
+  .catalog-dress-condition,.catalog-dress-original-price,.catalog-dress-discount{display:none}
+  .catalog-dress-price{font-size:15px!important}
+}
+
+/* Página para vendedoras: una jerarquía de títulos y frases breves. */
+.seo-landing{max-width:1000px}
+.seo-landing>section{margin-top:48px}
+.seo-landing-hero h1{font-family:var(--font-site),sans-serif!important;font-size:clamp(34px,4vw,48px)!important;line-height:1.12}
+.seo-landing-hero>p:not(.eyebrow){font-size:16px!important;line-height:1.55}
+.seo-landing section>h2{font-family:var(--font-site),sans-serif!important;font-size:24px!important;line-height:1.2;margin-bottom:18px}
+.seo-step-grid h3{font-size:18px!important;margin:0 0 5px}
+.seo-step-grid p,.seo-trust-copy p,.seo-faq p{font-size:16px!important;line-height:1.5}
+.seo-landing .recovery-calculator-intro h2{font-family:var(--font-site),sans-serif!important;font-size:24px!important;line-height:1.2}
+.seo-landing .recovery-total strong{font-family:var(--font-site),sans-serif;font-size:28px}
+@media(max-width:700px){
+  .seo-landing{padding:32px 18px 64px}
+  .seo-landing>section{margin-top:40px}
+  .seo-landing-hero h1{font-size:36px!important}
+  .seo-step-grid{gap:10px}
+  .seo-step-grid article{padding:16px}
+}
+
 /* v1.9.4: avisos dentro de la plataforma */
 .notification-menu{position:relative}.notification-trigger{position:relative;border:0;background:transparent;color:inherit;font:inherit;font-size:13px;padding:4px 7px;cursor:pointer}.notification-trigger .nav-count{position:absolute;top:-5px;right:-7px}.notification-popover{position:absolute;z-index:40;top:calc(100% + 12px);right:0;width:min(390px,calc(100vw - 28px));padding:8px;background:#fff;border:1px solid #e1e3dd;border-radius:12px;box-shadow:0 16px 45px rgba(22,35,25,.15)}.notification-popover-title{padding:9px 11px;font-weight:800}.notification-item{display:grid;grid-template-columns:1fr auto;align-items:start;gap:8px;padding:12px 10px;border-top:1px solid #eff0ed}.notification-item a{display:grid!important;gap:5px;text-decoration:none}.notification-item strong{font-size:14px;line-height:1.35}.notification-item a>span{color:var(--color-text-muted);font-size:12px;line-height:1.45}.notification-item small{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--color-text-muted);font-size:11px}.notification-item small b{color:var(--color-action-primary);font-size:11px}.notification-item>button{border:0;background:transparent;color:var(--color-text-muted);font-size:20px;line-height:1;cursor:pointer}
 
