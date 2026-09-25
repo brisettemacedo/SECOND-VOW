@@ -1,12 +1,18 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import SellerRecoveryCalculator from "@/components/SellerRecoveryCalculator";
+import HeroRotationMarker from "@/components/HeroRotationMarker";
 import { SITE_URL } from "@/lib/site";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
-const HERO_IMAGE = { src: "/images/hero-1.webp", alt: "Vestido de novia de segunda mano en SECOND VOW México" };
+const HERO_IMAGES = [1, 2, 3, 4].map((index) => ({
+  src: `/images/hero-${index}.webp`,
+  alt: `Vestido de novia de segunda mano destacado en SECOND VOW México ${index}`,
+}));
 
 const BENEFITS = [
   { icon: "tag", title: "Mejor precio", text: "Encuentra vestidos de diseñador por una fracción de su precio original." },
@@ -22,8 +28,13 @@ function BenefitIcon({ name }: { name: typeof BENEFITS[number]["icon"] }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4 12 22l-9-9 8.6-8.6A2 2 0 0 1 13 4h6a1 1 0 0 1 1 1v6a2 2 0 0 1-.4 1.4Z"/><circle cx="16.5" cy="7.5" r="1.4"/></svg>;
 }
 
-export default function HomePage() {
-  const heroImage = HERO_IMAGE;
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const previousIndex = Number(cookieStore.get("second_vow_hero")?.value ?? -1);
+  const validPrevious = Number.isInteger(previousIndex) && previousIndex >= 0 && previousIndex < HERO_IMAGES.length;
+  const randomPosition = Math.floor(Math.random() * (validPrevious ? HERO_IMAGES.length - 1 : HERO_IMAGES.length));
+  const heroIndex = validPrevious && randomPosition >= previousIndex ? randomPosition + 1 : randomPosition;
+  const heroImage = HERO_IMAGES[heroIndex];
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
@@ -53,6 +64,7 @@ export default function HomePage() {
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
     <section className="home-hero">
       {heroImage && <Image src={heroImage.src} alt={heroImage.alt} fill priority sizes="100vw" className="home-hero-image" />}
+      <HeroRotationMarker index={heroIndex} />
       <div className="home-hero-overlay" />
       <div className="home-hero-content">
         <p className="home-wordmark">SECOND VOW</p>
