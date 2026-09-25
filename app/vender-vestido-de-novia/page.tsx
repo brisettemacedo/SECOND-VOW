@@ -15,41 +15,40 @@ export const metadata: Metadata = {
 };
 
 const steps = [
-  ["Crea tu publicación", "Sube fotografías claras e indica marca, talla, medidas, condición, ajustes y cualquier detalle relevante."],
-  ["Habla con las interesadas", "Responde preguntas dentro del chat privado y recibe el código postal o destino para cotizar el envío."],
-  ["Envía la oferta final", "Separa el precio del vestido y el costo del envío para que la compradora conozca el total antes de pagar."],
-  ["Envía y recibe tu saldo", "Después del pago registra una guía con rastreo. SECOND VOW libera el saldo conforme al periodo de protección."],
+  ["Publica gratis", "Sube fotos, talla, medidas y detalles del vestido."],
+  ["Habla con la compradora", "Responde sus dudas por mensaje y acuerden el precio."],
+  ["Envía una oferta", "Cotiza el envío y muestra el total antes del pago."],
+  ["Envía y cobra", "Registra la guía. Recibirás tu dinero después del plazo de protección."],
 ] as const;
 
 export default function SellWeddingDressPage() {
   return <main className="seo-landing">
     <header className="seo-landing-hero">
-      <p className="eyebrow">Vende desde cualquier parte de México</p>
-      <h1>¿Dónde vender mi vestido de novia usado?</h1>
-      <p>En SECOND VOW puedes publicar gratis tu vestido de novia de segunda mano o nuevo sin usar, hablar directamente con compradoras y recibir el pago dentro de la plataforma.</p>
+      <p className="eyebrow">Vende en SECOND VOW</p>
+      <h1>Vende tu vestido de novia</h1>
+      <p>Publícalo gratis, habla con compradoras y recibe tu pago en SECOND VOW.</p>
       <Link className="btn btn-primary" href="/publicar">Publicar mi vestido gratis</Link>
     </header>
 
     <section aria-labelledby="sell-steps-title">
-      <h2 id="sell-steps-title">Cómo vender tu vestido de novia</h2>
+      <h2 id="sell-steps-title">Así funciona</h2>
       <div className="seo-step-grid">{steps.map(([title, text], index) => <article key={title}><strong>{index + 1}</strong><div><h3>{title}</h3><p>{text}</p></div></article>)}</div>
     </section>
 
     <section className="seo-trust-copy">
-      <h2>Una publicación especializada para tu vestido</h2>
-      <p>SECOND VOW está diseñado específicamente para vestidos de novia en México. Las compradoras pueden filtrar por talla, silueta, marca, tela, condición y precio, en lugar de buscar entre miles de productos que no tienen relación.</p>
-      <p>Publicar no tiene costo. Cuando se concreta una venta, SECOND VOW retiene una comisión del 18% sobre el total de vestido y envío; la comisión de procesamiento de Stripe está incluida.</p>
-      <p>Si todavía no sabes si venderlo, consulta nuestra guía sobre <Link href="/que-hacer-con-mi-vestido-de-novia">qué hacer con tu vestido de novia después de la boda</Link>.</p>
+      <h2>Publicar es gratis</h2>
+      <p>Si vendes tu vestido, SECOND VOW retiene el 18% del total, incluido el envío. La comisión de procesamiento ya está incluida.</p>
+      <p>¿Aún no decides qué hacer con él? <Link href="/que-hacer-con-mi-vestido-de-novia">Lee esta guía</Link>.</p>
     </section>
 
     <SellerRecoveryCalculator />
 
     <section className="seo-faq" aria-labelledby="sell-faq-title">
-      <h2 id="sell-faq-title">Preguntas sobre vender un vestido de novia</h2>
-      <details><summary>¿Puedo publicar un vestido nuevo?</summary><p>Sí. Puedes publicar vestidos usados y vestidos nuevos que no fueron utilizados, siempre describiendo correctamente su condición.</p></details>
-      <details><summary>¿Necesito esperar si mi marca no aparece?</summary><p>No. Puedes terminar la publicación. Mientras revisamos la marca, el vestido se muestra sin marca confirmada y se actualiza cuando la administradora la autoriza.</p></details>
-      <details><summary>¿Quién calcula el envío?</summary><p>La vendedora cotiza el envío cuando la compradora comparte en privado su código postal o la sucursal de paquetería elegida.</p></details>
-      <details><summary>¿Cuándo recibo mi dinero?</summary><p>El pago permanece protegido durante el envío y el plazo de revisión. Después se habilita el saldo conforme al estado del pedido.</p></details>
+      <h2 id="sell-faq-title">Preguntas frecuentes</h2>
+      <details><summary>¿Puedo publicar un vestido nuevo?</summary><p>Sí, si no se usó. Indica su condición real.</p></details>
+      <details><summary>¿Y si mi marca no aparece?</summary><p>Puedes publicar. La revisaremos y la añadiremos después.</p></details>
+      <details><summary>¿Quién cotiza el envío?</summary><p>Tú, cuando la compradora te comparta su destino por mensaje.</p></details>
+      <details><summary>¿Cuándo recibo mi dinero?</summary><p>Después de la entrega y del plazo de protección, si no hay reclamaciones.</p></details>
     </section>
   </main>;
 }

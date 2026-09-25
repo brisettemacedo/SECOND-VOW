@@ -19,8 +19,8 @@ export default function SellerRecoveryCalculator() {
   return <div className="recovery-calculator">
     <div className="recovery-calculator-intro">
       <p className="eyebrow">Calcula tu venta</p>
-      <h2>¿Cuánto podrías recuperar por tu vestido?</h2>
-      <p>Prueba distintos precios para estimar cuánto recibirías después de la comisión.</p>
+      <h2>Calcula cuánto recibirías</h2>
+      <p>Elige un precio para ver una estimación.</p>
     </div>
     <div className="recovery-calculator-grid">
       <div className="recovery-controls">
@@ -29,17 +29,17 @@ export default function SellerRecoveryCalculator() {
         <div className="discount-heading"><label htmlFor="discount">Descuento sugerido</label><strong>{discount}%</strong></div>
         <input id="discount" className="discount-slider" type="range" min="10" max="70" step="5" value={discount} onChange={(event) => setDiscount(Number(event.target.value))} />
         <div className="slider-labels"><span>10%</span><span>70%</span></div>
-        <div className="shipping-to-define"><strong>Envío por definir</strong><span>Se cotiza cuando una compradora comparta su código postal o sucursal de entrega.</span></div>
+        <div className="shipping-to-define"><strong>Envío por definir</strong><span>Lo cotizarás cuando sepas el destino.</span></div>
       </div>
       <div className="recovery-results" aria-live="polite">
         <div><span>Precio estimado de venta</span><strong>{money.format(result.salePrice)}</strong></div>
         <div><span>Envío</span><strong>Por definir</strong></div>
         <div><span>SECOND VOW (18% estimado)</span><strong>− {money.format(result.commission)}</strong></div>
         <div className="recovery-total"><span>Recibirías por el vestido</span><strong>{money.format(result.sellerReceives)}</strong></div>
-        <small>Estimación sin envío. En la oferta final, la comisión se calcula sobre vestido + envío.</small>
+        <small>La comisión final incluye el costo del envío.</small>
       </div>
     </div>
-    <p className="recovery-note">Este cálculo es orientativo y no constituye una promesa de venta. El precio ideal dependerá de la marca, antigüedad, condición y modificaciones. El envío se integra después, según el destino de la compradora.</p>
+    <p className="recovery-note">Monto aproximado sin envío. El precio de venta lo decides tú.</p>
     <Link className="btn btn-primary" href="/publicar">Vender mi vestido</Link>
   </div>;
 }

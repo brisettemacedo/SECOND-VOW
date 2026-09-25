@@ -55,6 +55,7 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
   return (
     <Link
       href={`/vestidos/${dress.id}`}
+      className="catalog-dress-card"
       style={{
         display: "block",
         border: "1px solid var(--color-border)",
@@ -85,33 +86,33 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
         </div>
       </div>
 
-      <div style={{ padding: "12px 14px" }}>
-        <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 0.5, color: "var(--color-action-primary)" }}>
+      <div className="catalog-dress-info" style={{ padding: "12px 14px" }}>
+        <div className="catalog-dress-brand" style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 0.5, color: "var(--color-action-primary)" }}>
           {brandName(dress.brands, dress.brand_suggestion_id)}
         </div>
-        <h3 style={{ fontSize: 16, margin: "4px 0 8px" }}>
+        <h3 className="catalog-dress-title" style={{ fontSize: 16, margin: "4px 0 8px" }}>
           {labelFor(SILUETAS, dress.silueta)}
         </h3>
-        <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 8 }}>
+        <div className="catalog-dress-size" style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 8 }}>
           Talla {dress.talla_etiqueta}
         </div>
-        <div style={{ fontSize: 11.5, color: "var(--color-text-muted)", marginBottom: 8 }}>
+        <div className="catalog-dress-condition" style={{ fontSize: 11.5, color: "var(--color-text-muted)", marginBottom: 8 }}>
           {labelFor(CONDICIONES, dress.condicion)}
           {dress.envio_nacional ? " | Envío nacional" : ""}
         </div>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+        <div className="catalog-dress-price-row" style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
           <div>
             {dress.precio_original_mxn && (
-              <span style={{ fontSize: 11.5, color: "var(--color-text-muted)", textDecoration: "line-through", marginRight: 6 }}>
+              <span className="catalog-dress-original-price" style={{ fontSize: 11.5, color: "var(--color-text-muted)", textDecoration: "line-through", marginRight: 6 }}>
                 {fmtPrice(dress.precio_original_mxn)}
               </span>
             )}
-            <span style={{ fontFamily: "var(--font-heading)", fontSize: 17, fontWeight: 600 }}>
+            <span className="catalog-dress-price" style={{ fontFamily: "var(--font-heading)", fontSize: 17, fontWeight: 600 }}>
               {fmtPrice(dress.precio_venta_mxn)}
             </span>
           </div>
           {discount !== null && (
-            <span style={{ fontSize: 10.5, background: "var(--color-success-bg)", color: "var(--color-success)", padding: "3px 7px", borderRadius: 2 }}>
+            <span className="catalog-dress-discount" style={{ fontSize: 10.5, background: "var(--color-success-bg)", color: "var(--color-success)", padding: "3px 7px", borderRadius: 2 }}>
               -{discount}%
             </span>
           )}

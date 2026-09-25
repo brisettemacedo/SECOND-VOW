@@ -48,7 +48,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   const query = await searchParams;
   return <main className="catalog-page">
     <div className="catalog-heading-row">
-      <div><p className="catalog-eyebrow">Encuentra el vestido indicado</p><h1>Vestidos de novia de segunda mano en México</h1><p className="catalog-intro">Vestidos usados y nuevos sin usar, publicados directamente por sus dueñas.</p></div>
+      <div className="catalog-heading-copy"><p className="catalog-eyebrow">Encuentra tu vestido</p><h1>Vestidos de novia de segunda mano en México</h1><p className="catalog-intro">Vestidos publicados por sus dueñas.</p></div>
       <Suspense fallback={<div className="filter-trigger-placeholder" />}><CatalogFilters /></Suspense>
     </div>
     <Suspense fallback={<p className="muted">Cargando vestidos...</p>}><CatalogResults searchParams={query} /></Suspense>
