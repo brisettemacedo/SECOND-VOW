@@ -64,11 +64,14 @@ export default function FavoriteButton({ dressId }: { dressId: string }) {
     <button
       onClick={handleClick}
       disabled={loading || userId === undefined}
-      className="btn btn-secondary"
+      className="favorite-button"
       aria-pressed={isFavorite}
       aria-label={isFavorite ? "Quitar de favoritos" : "Guardar en favoritos"}
+      title={isFavorite ? "Quitar de favoritos" : "Guardar en favoritos"}
     >
-      {isFavorite ? "Guardado ✓" : "Guardar"}
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
+      </svg>
     </button>
   );
 }

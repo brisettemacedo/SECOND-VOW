@@ -53,19 +53,17 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
       : null;
 
   return (
-    <Link
-      href={`/vestidos/${dress.id}`}
+    <article
       className="catalog-dress-card"
       style={{
-        display: "block",
         border: "1px solid var(--color-border)",
         borderRadius: 4,
         overflow: "hidden",
         background: "var(--color-surface)",
-        textDecoration: "none",
-        color: "inherit",
+        position: "relative",
       }}
     >
+      <Link href={`/vestidos/${dress.id}`} style={{ display: "block", textDecoration: "none", color: "inherit" }}>
       <div style={{ aspectRatio: "3 / 4", background: "var(--color-background-secondary)", position: "relative" }}>
         {photo ? (
           <Image
@@ -81,9 +79,6 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
             Sin fotografía
           </div>
         )}
-        <div style={{ position: "absolute", top: 8, right: 8 }}>
-          <FavoriteButton dressId={dress.id} />
-        </div>
       </div>
 
       <div className="catalog-dress-info" style={{ padding: "12px 14px" }}>
@@ -102,7 +97,7 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
         </div>
         <div className="catalog-dress-price-row" style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
           <div>
-            {dress.precio_original_mxn && (
+            {discount !== null && dress.precio_original_mxn && (
               <span className="catalog-dress-original-price" style={{ fontSize: 11.5, color: "var(--color-text-muted)", textDecoration: "line-through", marginRight: 6 }}>
                 {fmtPrice(dress.precio_original_mxn)}
               </span>
@@ -118,6 +113,10 @@ export default function DressCard({ dress }: { dress: CatalogDress }) {
           )}
         </div>
       </div>
-    </Link>
+      </Link>
+      <div style={{ position: "absolute", top: 8, right: 8 }}>
+        <FavoriteButton dressId={dress.id} />
+      </div>
+    </article>
   );
 }
