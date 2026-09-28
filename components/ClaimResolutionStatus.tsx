@@ -13,7 +13,16 @@ export default function ClaimResolutionStatus({ claim }: { claim: any }) {
   const router = useRouter();
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
-  if (!resolution) return <div><span className="badge">En revisión</span><p>{claim.description}</p>{claim.seller_response ? <div className="alert-info"><strong>Respuesta de la vendedora</strong><p>{claim.seller_response}</p></div> : <p className="muted">La vendedora puede responder hasta {claim.seller_response_due_at ? new Date(claim.seller_response_due_at).toLocaleString("es-MX") : "la fecha indicada"}. Después, SECOND VOW revisará el expediente.</p>}</div>;
+  if (!resolution) {
+    const closedStatus: Record<string, string> = {
+      rejected: "Reclamación rechazada",
+      refunded: "Reembolso completado",
+      closed: "Reclamación cerrada",
+    };
+    const label = closedStatus[claim.status];
+    if (label) return <div><span className="badge">{label}</span><p>{claim.description}</p></div>;
+    return <div><span className="badge">En revisión</span><p>{claim.description}</p>{claim.seller_response ? <div className="alert-info"><strong>Respuesta de la vendedora</strong><p>{claim.seller_response}</p></div> : <p className="muted">La vendedora puede responder hasta {claim.seller_response_due_at ? new Date(claim.seller_response_due_at).toLocaleString("es-MX") : "la fecha indicada"}. Después, SECOND VOW revisará el expediente.</p>}</div>;
+  }
   const canAppeal = resolution.status === "provisional" && new Date(resolution.appeal_deadline_at).getTime() > Date.now();
 
   async function appeal() {
