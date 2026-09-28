@@ -98,9 +98,7 @@ export default function AdminClaimsPanel({ claims }: { claims: any[] }) {
   }
 
   return <section className="panel" id="reclamaciones">
-    <h2>Reclamaciones y devoluciones</h2>
-    <div className="claim-process"><span><strong>1</strong> La compradora reporta</span><span><strong>2</strong> La vendedora responde</span><span><strong>3</strong> SECOND VOW decide</span></div>
-    <p className="muted">Si se autoriza una devolución, la resolución indicará cómo regresar el vestido y quién paga la guía.</p>
+    <h2>Reclamaciones</h2>
     {claims.map((claim) => {
       const form = forms[claim.id] ?? initial(claim);
       const resolution = claim.claim_resolutions?.[0];
@@ -110,6 +108,13 @@ export default function AdminClaimsPanel({ claims }: { claims: any[] }) {
       const oldTerms = String(claim.orders?.checkout_terms_version ?? "") < "2026-09-12.1";
       const isAppealed = resolution?.status === "appealed";
       const canDecide = isAppealed || (!resolution && ["open", "under_review", "seller_response"].includes(claim.status));
+      if (claim.status === "rejected" && !isAppealed) return <details className="admin-compact-item admin-claim" key={claim.id}>
+        <summary>{CLAIM_LABELS[claim.reason_code ?? claim.reason] ?? claim.reason} · Rechazada</summary>
+        <p>{claim.description}</p>
+        {resolution?.reason && <p><strong>Motivo:</strong> {resolution.reason}</p>}
+        <Link className="btn btn-secondary" href={`/pedidos/${claim.order_id}`}>Ver expediente</Link>
+        <p className="muted">Caso cerrado. Una nueva sospecha requiere revisar la evidencia y el estado del pago antes de tomar medidas.</p>
+      </details>;
       return <article className="admin-compact-item admin-claim" key={claim.id}>
         <div className="admin-title"><div><strong>{CLAIM_LABELS[claim.reason_code ?? claim.reason] ?? claim.reason}</strong><p><strong>Relato de la compradora:</strong> {claim.description}</p></div><span className="badge">{STATUS_LABELS[claim.status] ?? claim.status}</span></div>
         <div className={claim.seller_response ? "alert-info" : "claim-reply-pending"}><strong>Respuesta de la vendedora</strong>{claim.seller_response ? <p>{claim.seller_response}</p> : <p>{replyOpen ? `Puede responder hasta ${new Date(claim.seller_response_due_at).toLocaleString("es-MX")}.` : canDecide ? "No respondió dentro del plazo." : "No hay respuesta registrada."}</p>}</div>
@@ -117,12 +122,13 @@ export default function AdminClaimsPanel({ claims }: { claims: any[] }) {
         {resolution && <div className="alert-info"><strong>{isAppealed ? "Decisión impugnada" : resolution.status === "final" ? "Decisión final" : "Decisión provisional"}</strong><p>{resolution.reason}</p>{resolution.appeal_deadline_at && <small>Revisión hasta {new Date(resolution.appeal_deadline_at).toLocaleString("es-MX")}</small>}{resolution.appeal_reason && <p><strong>Solicitud de revisión:</strong> {resolution.appeal_reason}</p>}</div>}
         {replyOpen && <div className="alert-info"><strong>Aún no puede resolverse.</strong><p>Espera la respuesta de la vendedora o el vencimiento del plazo.</p></div>}
         {!replyOpen && canDecide && <div className="claim-decision-grid">
-          <label className="field"><span>Decisión</span><select value={form.action} onChange={(event) => update(claim.id, { action: event.target.value as FormState["action"], applyCharge: event.target.value === "reject" ? false : form.applyCharge })}><option value="authorize_return">Autorizar devolución</option><option value="reject">Rechazar reclamación</option></select></label>
-          <label className="field"><span>¿A quién corresponde el incumplimiento?</span><select value={form.liability} onChange={(event) => update(claim.id, { liability: event.target.value as FormState["liability"], applyCharge: event.target.value !== "seller" ? false : form.applyCharge })}><option value="seller">Vendedora</option><option value="buyer">Compradora</option><option value="carrier">Paquetería</option><option value="platform">SECOND VOW / procesador</option><option value="shared">Responsabilidad compartida</option><option value="none">No se acreditó</option></select></label>
-          <label className="field"><span>Hecho acreditado</span><select value={form.matrixCode} onChange={(event) => update(claim.id, { matrixCode: event.target.value })}>{MATRIX.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
-          <label className="field claim-reason"><span>Motivo de la decisión (obligatorio)</span><textarea rows={4} maxLength={2000} value={form.reason} onChange={(event) => update(claim.id, { reason: event.target.value })} placeholder="Explica qué hechos y evidencia sustentan la decisión" /></label>
+          <label className="field"><span>Resultado</span><select value={form.action} onChange={(event) => update(claim.id, { action: event.target.value as FormState["action"], applyCharge: event.target.value === "reject" ? false : form.applyCharge })}><option value="authorize_return">Autorizar devolución</option><option value="reject">Rechazar reclamación</option></select></label>
+          <label className="field"><span>Responsable</span><select value={form.liability} onChange={(event) => update(claim.id, { liability: event.target.value as FormState["liability"], applyCharge: event.target.value !== "seller" ? false : form.applyCharge })}><option value="seller">Vendedora</option><option value="buyer">Compradora</option><option value="carrier">Paquetería</option><option value="platform">SECOND VOW / procesador</option><option value="shared">Responsabilidad compartida</option><option value="none">No se acreditó</option></select></label>
+          <label className="field"><span>Qué ocurrió</span><select value={form.matrixCode} onChange={(event) => update(claim.id, { matrixCode: event.target.value })}>{MATRIX.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
+          <label className="field claim-reason"><span>Por qué tomas esta decisión</span><textarea rows={4} maxLength={2000} value={form.reason} onChange={(event) => update(claim.id, { reason: event.target.value })} placeholder="Resume los hechos y la evidencia" /></label>
           <label className="field claim-reason"><span>Cargo por incumplimiento de la vendedora</span><select value={form.applyCharge ? "yes" : "no"} disabled={oldTerms || form.action !== "authorize_return" || form.liability !== "seller"} onChange={(event) => update(claim.id, { applyCharge: event.target.value === "yes" })}><option value="no">No aplicar</option><option value="yes">Aplicar 18% del reembolso confirmado (estimado: ${estimate.toLocaleString("es-MX")} MXN)</option></select><small>{oldTerms ? "No disponible: este pedido aceptó términos anteriores." : "Solo se registra después de que Stripe confirme el reembolso; no se duplica la comisión."}</small></label>
-          {form.action === "authorize_return" && form.liability === "seller" && <div className="alert-info claim-reason"><strong>Envío de regreso</strong><p>La vendedora deberá cargar una guía prepagada. Después, la compradora la usará y confirmará la entrega a paquetería.</p></div>}
+          {form.action === "authorize_return" && form.liability === "seller" && <div className="alert-info claim-reason"><strong>Si autorizas la devolución</strong><p>La vendedora pagará la guía de regreso. La compradora la usará para devolver el vestido.</p></div>}
+          {!isAppealed && <p className="muted claim-reason">Las partes podrán pedir una revisión dentro de tres días. No se hará un reembolso desde este botón.</p>}
           <button className="btn btn-primary" disabled={busy === claim.id} onClick={() => decide(claim)}>{busy === claim.id ? "Guardando…" : isAppealed ? "Confirmar decisión final" : "Resolver reclamación"}</button>
         </div>}
         {claim.status === "return_shipped" && <span>Devolución en tránsito.</span>}
