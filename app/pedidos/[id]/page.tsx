@@ -7,6 +7,7 @@ import OrderNextActionCard from "@/components/OrderNextActionCard";
 import { ORDER_STATUS } from "@/lib/orderDisplay";
 import { safeDisplayName } from "@/lib/displayName";
 import AdminOrderControls from "@/components/AdminOrderControls";
+import AdminOrderRecord from "@/components/AdminOrderRecord";
 import RatingForm from "@/components/RatingForm";
 import PaymentReconciler from "@/components/PaymentReconciler";
 import { signDressPhotos } from "@/lib/server/dressImageUrls";
@@ -85,6 +86,6 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
     <OrderActions order={order} userId={user.id} evidence={evidenceWithLinks} />
     {order.buyer_id===user.id&&order.status==="completed"&&<RatingForm orderId={order.id} revieweeId={order.seller_id} reviewerId={user.id}/>} 
     {(order.claims ?? []).length > 0 && <section className="panel"><h2>Reclamaciones</h2>{order.claims.map((claim: any) => <ClaimResolutionStatus claim={claim} key={claim.id} />)}</section>}
-    {profile?.role==="admin"&&<><section className="panel"><h2>Expediente administrativo</h2><p><strong>PaymentIntent:</strong> {order.stripe_payment_intent_id||"—"}<br/><strong>Checkout:</strong> {order.stripe_checkout_session_id||"—"}<br/><strong>Cargo:</strong> {order.stripe_charge_id||"—"}<br/><strong>Comisión:</strong> ${Number(order.commission_mxn||0).toLocaleString("es-MX")}<br/><strong>Comisión real Stripe:</strong> ${Number(order.processor_fee_mxn||0).toLocaleString("es-MX")}<br/><strong>Margen estimado SECOND VOW:</strong> ${Math.max(0,Number(order.commission_mxn||0)-Number(order.processor_fee_mxn||0)).toLocaleString("es-MX")}<br/><strong>Versión aceptada:</strong> {order.checkout_terms_version||"—"}</p><details><summary>Destino congelado</summary><pre>{JSON.stringify(order.order_shipping_addresses?.[0]??null,null,2)}</pre></details><details><summary>Pagos y saldo</summary><pre>{JSON.stringify({payments,payouts,ledger},null,2)}</pre></details><details><summary>Cronología y actuaciones</summary><pre>{JSON.stringify({events,adminLogs},null,2)}</pre></details></section><AdminOrderControls orderId={order.id}/></>}
+    {profile?.role==="admin"&&<><AdminOrderRecord order={order} payments={payments??[]} payouts={payouts??[]} ledger={ledger??[]} events={events??[]} adminLogs={adminLogs??[]}/><details className="panel"><summary>Control del saldo</summary><AdminOrderControls orderId={order.id}/></details></>}
   </main>;
 }
