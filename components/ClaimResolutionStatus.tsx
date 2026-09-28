@@ -3,12 +3,13 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { claimResolution } from "@/lib/claimResolution";
 
 const LIABILITY: Record<string,string> = {seller:"Vendedora",buyer:"Compradora",carrier:"Paquetería",platform:"SECOND VOW / procesador",shared:"Compartida",none:"No acreditada"};
 const MATRIX: Record<string,string> = {seller_misrepresentation:"Información falsa o daño no declarado",seller_shipping_breach:"Incumplimiento de envío o embalaje",carrier_damage:"Daño o pérdida en paquetería",buyer_fit_or_remorse:"Talla, ajuste o cambio de opinión",buyer_address_or_misuse:"Domicilio incorrecto, uso o alteración",platform_or_processor:"Error de plataforma o procesamiento",insufficient_evidence:"Evidencia insuficiente",mutual_cancellation:"Cancelación acordada"};
 
 export default function ClaimResolutionStatus({ claim }: { claim: any }) {
-  const resolution = claim.claim_resolutions?.[0];
+  const resolution = claimResolution(claim);
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const [reason, setReason] = useState("");
@@ -34,7 +35,7 @@ export default function ClaimResolutionStatus({ claim }: { claim: any }) {
   }
 
   return <article className="claim-resolution-card">
-    <div className="admin-title"><strong>{resolution.decision === "authorize_return" ? "Devolución autorizada" : "Reclamación rechazada"}</strong><span className="badge">{resolution.status === "provisional" ? "Decisión provisional" : resolution.status === "appealed" ? "Revisión solicitada" : "Decisión final"}</span></div>
+    <div className="admin-title"><strong>{resolution.decision === "authorize_return" ? "Devolución autorizada" : "Reclamación rechazada"}</strong><span className="badge">{resolution.status === "provisional" ? canAppeal ? "Puedes pedir revisión" : "Plazo de revisión vencido" : resolution.status === "appealed" ? "Revisión solicitada" : "Decisión final"}</span></div>
     <p>{resolution.reason}</p>
     <p className="muted">Responsabilidad: {LIABILITY[resolution.liability] ?? resolution.liability} · Hecho acreditado: {MATRIX[resolution.matrix_code] ?? resolution.matrix_code}</p>
     {resolution.decision === "authorize_return" && resolution.liability === "seller" && <p>La vendedora debe pagar y compartir una guía prepagada. La compradora no debe adelantar ese gasto.</p>}
