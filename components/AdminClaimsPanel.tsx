@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { claimResolution } from "@/lib/claimResolution";
 
 const MATRIX = [
   ["seller_misrepresentation", "Información falsa o daño no declarado · vendedora"],
@@ -41,7 +42,7 @@ type FormState = {
 };
 
 function initial(claim: any): FormState {
-  const resolution = claim.claim_resolutions?.[0];
+  const resolution = claimResolution(claim);
   return {
     action: resolution?.decision ?? "authorize_return",
     liability: resolution?.liability ?? "seller",
@@ -63,7 +64,7 @@ export default function AdminClaimsPanel({ claims }: { claims: any[] }) {
 
   async function decide(claim: any) {
     const form = forms[claim.id] ?? initial(claim);
-    const isAppealed = claim.claim_resolutions?.[0]?.status === "appealed";
+    const isAppealed = claimResolution(claim)?.status === "appealed";
     if (form.reason.trim().length < 10) return alert("Registra un motivo claro de al menos 10 caracteres.");
     if (!form.matrixCode) return alert("Selecciona el supuesto de resolución.");
     if (form.applyCharge && (form.action !== "authorize_return" || form.liability !== "seller")) return alert("El cargo del 18% solo puede aplicarse cuando la devolución sea atribuible a la vendedora.");
@@ -101,7 +102,7 @@ export default function AdminClaimsPanel({ claims }: { claims: any[] }) {
     <h2>Reclamaciones</h2>
     {claims.map((claim) => {
       const form = forms[claim.id] ?? initial(claim);
-      const resolution = claim.claim_resolutions?.[0];
+      const resolution = claimResolution(claim);
       const total = Number(claim.orders?.amount_charged_mxn ?? claim.orders?.total_mxn ?? 0);
       const estimate = Math.round(total * .18);
       const replyOpen = !claim.seller_responded_at && claim.seller_response_due_at && new Date(claim.seller_response_due_at).getTime() > Date.now();
