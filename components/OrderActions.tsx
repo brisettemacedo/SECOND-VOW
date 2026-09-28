@@ -7,6 +7,7 @@ import Link from "next/link";
 import { LEGAL_BUNDLE_SHA256, TERMS_VERSION } from "@/lib/site";
 import { humanActionError } from "@/lib/actionErrors";
 import { paymentTimeRemaining } from "@/lib/orderDisplay";
+import { claimResolution } from "@/lib/claimResolution";
 
 const CLAIM_REASONS = [["not_received", "La guía dice entregado, pero no recibí el paquete"], ["false_or_materially_incorrect", "Información falsa o materialmente incorrecta"], ["damaged_undisclosed", "Daño relevante no informado"]] as const;
 
@@ -94,7 +95,7 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
   }
 
   const deadline = order.dispute_deadline_at || order.inspection_deadline_at || order.claim_deadline_at;
-  const resolution = activeClaim?.claim_resolutions?.[0];
+  const resolution = claimResolution(activeClaim);
   return <div className="actions-stack">
     {actionError && <div className="alert-error"><strong>{failedAction === "cancellation" ? "No se pudo cancelar la venta." : failedAction === "return" ? "No se pudo registrar la devolución." : "No se pudo iniciar el pago."}</strong><p>{actionError}</p></div>}
     {["awaiting_payment", "payment_processing"].includes(order.status) && order.payment_deadline_at && <div className="protection-deadline"><span>Plazo de pago</span><strong>{paymentTimeRemaining(order.payment_deadline_at)}</strong><span>El vestido sigue visible hasta que se confirme un pago.</span></div>}
