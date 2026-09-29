@@ -458,9 +458,9 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
   const pendingByStep = stepNames.map((name, index) => ({ name, index, items: pending.filter((issue) => issue.step === index) })).filter((group) => group.items.length > 0);
 
   return <div className="wizard">
-    {initialDress?.id && pending.length > 0 && <div className="alert-info draft-resume-banner"><strong>Continúa donde te quedaste.</strong> Te faltan {pending.length} requisito{pending.length === 1 ? "" : "s"}. Abrimos el primer paso pendiente para que termines más rápido.</div>}
     <div className="stepper">{stepNames.map((n, i) => { const count = issuesForStep(i).length; return <button key={n} type="button" className={`${i === step ? "active" : ""} ${count ? "step-has-missing" : "step-complete"}`} onClick={() => stepClick(i)}>{i + 1}. {n}{count ? <span className="step-missing-count" aria-label={`${count} campos pendientes`}>{count}</span> : null}</button>; })}</div>
     <section className="panel">
+      {initialDress?.id && pending.length > 0 && <div className="alert-info draft-resume-banner">Falta completar {pending.length} requisito{pending.length === 1 ? "" : "s"}. Sigue con {stepNames[step].toLowerCase()}.</div>}
       <h1>{initialDress?.id ? "Editar vestido" : "Publicar vestido"}</h1>
       <h2>{stepNames[step]}</h2>
       <p className="required-note"><span className="required-mark">*</span> Campo obligatorio</p>
