@@ -253,7 +253,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
         }
         savedCharacteristics.current = currentCharacteristics;
       }
-      if (!options.silent) setMessage(dress.status === "approved" ? "Cambios guardados en tu publicación." : "Borrador guardado automáticamente.");
+      if (!options.silent) setMessage("Cambios guardados.");
       return id;
     } catch (e: any) {
       setMessage(friendlyError(e));
@@ -463,7 +463,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     <section className="panel">
       <h1>{initialDress?.id ? "Editar vestido" : "Publicar vestido"}</h1>
       <h2>{stepNames[step]}</h2>
-      <p className="required-note"><span className="required-mark">*</span> Campo obligatorio. Si escribes una marca nueva, puedes continuar y publicar sin esperar a que sea confirmada.</p>
+      <p className="required-note"><span className="required-mark">*</span> Campo obligatorio</p>
       {Object.keys(errors).length > 0 && (
         <div className="validation-banner" role="alert">
           <strong>Revisa este paso antes de continuar.</strong>
@@ -498,7 +498,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
 
       {step === 5 && <><div className="grid-2">{input("precio_original_mxn", "Precio original (MXN)", "number")}{input("precio_venta_mxn", "Precio de venta (MXN)", "number")}</div><p className="muted">El precio del vestido no incluye el envío. Cuando una compradora te contacte y comparta su domicilio postal, podrás cotizar el envío asegurado y enviarle una oferta final.</p></>}
       {step === 6 && <div className="field"><label>Descripción adicional</label><textarea rows={10} value={dress.descripcion ?? ""} onChange={(e) => set("descripcion", e.target.value)} placeholder="Cuenta libremente la historia, detalles, accesorios incluidos o cualquier dato adicional relevante." /></div>}
-      {step === 7 && <><div className={`field ${errors.photos ? "field-invalid" : ""}`}><label>Fotografías (mínimo 1)<span className="required-mark"> *</span></label><input type="file" accept="image/*" multiple onChange={(e) => upload(e.target.files)} />{errors.photos && <p className="field-error">{errors.photos}</p>}<p className="muted">Recomendamos agregar frente, espalda, etiqueta, detalles y cualquier daño: una publicación visualmente completa inspira más confianza y suele venderse más rápido.</p></div>{photos.length > 0 && <div className="photo-editor"><div className="photo-editor-preview"><Image width={900} height={1200} src={dressImageUrl((photos.find((p) => p.id === previewPhotoId) ?? photos[0]).storage_path, (photos.find((p) => p.id === previewPhotoId) ?? photos[0]).signed_url)} alt="Vista previa de la fotografía seleccionada" /></div><div className="photo-list">{photos.map((p, i) => <article key={p.id} className={p.id === previewPhotoId ? "photo-editor-selected" : ""}><button type="button" className="photo-thumb-button" onClick={() => setPreviewPhotoId(p.id)} aria-label={`Ver fotografía ${i + 1} en grande`}><Image width={180} height={240} src={dressImageUrl(p.storage_path, p.signed_url)} alt={`Fotografía ${i + 1}`} /></button><strong>Foto {i + 1}{p.is_primary ? " · principal" : ""}</strong><div className="photo-editor-actions">{!p.is_primary && <button type="button" className="link-button" disabled={busy} onClick={() => makePrimary(p.id)}>Hacer principal</button>}<button type="button" className="link-button danger-link" disabled={busy} onClick={() => removePhoto(p)}>Eliminar</button></div></article>)}</div></div>}</>}
+      {step === 7 && <><div className={`field ${errors.photos ? "field-invalid" : ""}`}><label>Fotografías (mínimo 1)<span className="required-mark"> *</span></label><input type="file" accept="image/*" multiple onChange={(e) => upload(e.target.files)} />{errors.photos && <p className="field-error">{errors.photos}</p>}<p className="muted">Agrega fotos de frente, espalda, etiqueta y cualquier daño.</p></div>{photos.length > 0 && <div className="photo-editor"><div className="photo-editor-preview"><Image width={900} height={1200} src={dressImageUrl((photos.find((p) => p.id === previewPhotoId) ?? photos[0]).storage_path, (photos.find((p) => p.id === previewPhotoId) ?? photos[0]).signed_url)} alt="Vista previa de la fotografía seleccionada" /></div><div className="photo-list">{photos.map((p, i) => <article key={p.id} className={p.id === previewPhotoId ? "photo-editor-selected" : ""}><button type="button" className="photo-thumb-button" onClick={() => setPreviewPhotoId(p.id)} aria-label={`Ver fotografía ${i + 1} en grande`}><Image width={180} height={240} src={dressImageUrl(p.storage_path, p.signed_url)} alt={`Fotografía ${i + 1}`} /></button><strong>Foto {i + 1}{p.is_primary ? " · principal" : ""}</strong><div className="photo-editor-actions">{!p.is_primary && <button type="button" className="link-button" disabled={busy} onClick={() => makePrimary(p.id)}>Hacer principal</button>}<button type="button" className="link-button danger-link" disabled={busy} onClick={() => removePhoto(p)}>Eliminar</button></div></article>)}</div></div>}</>}
 
       {step === 8 && <div className="publish-declarations">
         <div className={pendingByStep.length ? "review-summary review-summary-pending" : "review-summary review-summary-complete"}>
