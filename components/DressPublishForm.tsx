@@ -22,7 +22,7 @@ type Dress = Record<string, any> & {
 
 type ValidationIssue = { step: number; key: string; label: string; message: string };
 
-const stepNames = ["Identidad", "Talla y medidas", "Diseño", "Condición", "Alteraciones", "Precio", "Envío", "Descripción", "Fotografías", "Revisión"];
+const stepNames = ["Identidad", "Talla y medidas", "Diseño", "Condición", "Alteraciones", "Precio", "Descripción", "Fotografías", "Revisión"];
 const fieldsByStep: string[][] = [
   ["brand_id", "brand_suggestion_id", "model", "collection", "year_approx"],
   ["talla_etiqueta", "sistema_talla", "busto_cm", "cintura_cm", "cadera_cm", "largo_hombro_piso_cm", "altura_persona_cm", "altura_tacon_cm", "puede_ampliarse", "puede_reducirse"],
@@ -30,7 +30,6 @@ const fieldsByStep: string[][] = [
   ["condicion", "tiene_manchas", "tiene_jalones", "tiene_roturas", "dano_dobladillo", "falta_aplicaciones", "tiene_reparaciones", "tiene_decoloracion", "descripcion_danos"],
   ["tuvo_ajustes", "ajustes_detalle", "conserva_margen_costura"],
   ["precio_original_mxn", "precio_venta_mxn"],
-  ["envio_nacional"],
   ["descripcion"],
   [],
   [],
@@ -52,9 +51,9 @@ function firstIncompleteStep(dress?: Dress, declaration?: any) {
   if (!dress.silueta || !dress.escote || !dress.espalda || !dress.manga) return 2;
   if (!dress.condicion) return 3;
   if (!dress.precio_venta_mxn || Number(dress.precio_venta_mxn) <= 0) return 5;
-  if ((dress.dress_photos?.length ?? 0) === 0) return 8;
-  if (!declaration?.authenticity_declared || !declaration?.photos_correspond_declared || !declaration?.right_to_sell_declared || !declaration?.information_true_declared) return 9;
-  return 9;
+  if ((dress.dress_photos?.length ?? 0) === 0) return 7;
+  if (!declaration?.authenticity_declared || !declaration?.photos_correspond_declared || !declaration?.right_to_sell_declared || !declaration?.information_true_declared) return 8;
+  return 8;
 }
 
 export default function DressPublishForm({ initialDress, brands, catalogs, userId }: { initialDress?: Dress; brands: Brand[]; catalogs: DressCatalogData; userId: string }) {
@@ -82,6 +81,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const autosaveReady = useRef(false);
+  const savedCharacteristics = useRef((initialDress?.dress_characteristics?.map((x: any) => x.characteristic_id) ?? []).slice().sort().join(","));
 
   const exactBrand = brands.find((b) => b.name.localeCompare(brandQuery.trim(), undefined, { sensitivity: "base" }) === 0);
   const noBrand = brands.find((b) => b.name.localeCompare("SIN MARCA", undefined, { sensitivity: "base" }) === 0);
@@ -108,12 +108,12 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       const price = Number(dress.precio_venta_mxn);
       if (!dress.precio_venta_mxn || !Number.isFinite(price) || price <= 0) results.push({ step: 5, key: "precio_venta_mxn", label: "Precio de venta", message: "Ingresa un precio de venta mayor a cero." });
     }
-    if (stepIndex === 8 && photos.length < 1) results.push({ step: 8, key: "photos", label: "Fotografías", message: `Sube al menos 1 fotografía.` });
-    if (stepIndex === 9) {
-      if (!decl.authentic) results.push({ step: 9, key: "decl_authentic", label: "Declaración de autenticidad", message: "Debes aceptar esta declaración." });
-      if (!decl.photos) results.push({ step: 9, key: "decl_photos", label: "Declaración sobre fotografías", message: "Debes aceptar esta declaración." });
-      if (!decl.right) results.push({ step: 9, key: "decl_right", label: "Declaración de derecho para vender", message: "Debes aceptar esta declaración." });
-      if (!decl.trueInfo) results.push({ step: 9, key: "decl_true", label: "Declaración de información verdadera", message: "Debes aceptar esta declaración." });
+    if (stepIndex === 7 && photos.length < 1) results.push({ step: 7, key: "photos", label: "Fotografías", message: `Sube al menos 1 fotografía.` });
+    if (stepIndex === 8) {
+      if (!decl.authentic) results.push({ step: 8, key: "decl_authentic", label: "Declaración de autenticidad", message: "Debes aceptar esta declaración." });
+      if (!decl.photos) results.push({ step: 8, key: "decl_photos", label: "Declaración sobre fotografías", message: "Debes aceptar esta declaración." });
+      if (!decl.right) results.push({ step: 8, key: "decl_right", label: "Declaración de derecho para vender", message: "Debes aceptar esta declaración." });
+      if (!decl.trueInfo) results.push({ step: 8, key: "decl_true", label: "Declaración de información verdadera", message: "Debes aceptar esta declaración." });
     }
     return results.filter(Boolean) as ValidationIssue[];
   }
@@ -225,8 +225,8 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
   function friendlyError(error: any) {
     const raw = String(error?.message || error || "");
     if (/year_approx|dresses_year_approx_valid/i.test(raw)) return "El año aproximado debe estar entre 1950 y 2100.";
-    if (/row-level security|policy for table/i.test(raw)) return "No pudimos guardar esos cambios. Actualiza la página e inténtalo otra vez; si existe un pago en proceso, la publicación no puede editarse temporalmente.";
-    return raw || "No fue posible guardar los cambios.";
+    if (/row-level security|policy for table/i.test(raw)) return "No pudimos guardar los cambios. Revisa si hay una compra en curso o si el vestido ya se vendió.";
+    return "No pudimos guardar los cambios. Inténtalo de nuevo o contáctanos si el problema continúa.";
   }
 
   async function save(options: { silent?: boolean } = {}) {
@@ -243,11 +243,15 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       }
       const { error } = await supabase.from("dresses").update(payload).eq("id", id);
       if (error) throw error;
-      const { error: deleteChars } = await supabase.from("dress_characteristics").delete().eq("dress_id", id);
-      if (deleteChars) throw deleteChars;
-      if (selectedCharacteristics.length) {
-        const { error: insertChars } = await supabase.from("dress_characteristics").insert(selectedCharacteristics.map((characteristic_id) => ({ dress_id: id, characteristic_id })));
-        if (insertChars) throw insertChars;
+      const currentCharacteristics = selectedCharacteristics.slice().sort().join(",");
+      if (currentCharacteristics !== savedCharacteristics.current) {
+        const { error: deleteChars } = await supabase.from("dress_characteristics").delete().eq("dress_id", id);
+        if (deleteChars) throw deleteChars;
+        if (selectedCharacteristics.length) {
+          const { error: insertChars } = await supabase.from("dress_characteristics").insert(selectedCharacteristics.map((characteristic_id) => ({ dress_id: id, characteristic_id })));
+          if (insertChars) throw insertChars;
+        }
+        savedCharacteristics.current = currentCharacteristics;
       }
       if (!options.silent) setMessage(dress.status === "approved" ? "Cambios guardados en tu publicación." : "Borrador guardado automáticamente.");
       return id;
@@ -338,7 +342,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     setErrors({});
     try {
       await save();
-      setStep((s) => Math.min(9, s + 1));
+      setStep((s) => Math.min(8, s + 1));
     } catch {}
   }
 
@@ -396,7 +400,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       router.push("/mis-vestidos?published=1");
       router.refresh();
     } catch (e: any) {
-      setMessage(e?.message || "No fue posible publicar el vestido.");
+      setMessage(friendlyError(e));
     } finally {
       setBusy(false);
     }
@@ -493,11 +497,10 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       {step === 4 && <>{check("tuvo_ajustes", "Tuvo ajustes o alteraciones")}<div className="field"><label>Detalle de ajustes</label><textarea rows={5} value={dress.ajustes_detalle ?? ""} onChange={(e) => set("ajustes_detalle", e.target.value)} /></div>{check("conserva_margen_costura", "Conserva margen de costura")}</>}
 
       {step === 5 && <><div className="grid-2">{input("precio_original_mxn", "Precio original (MXN)", "number")}{input("precio_venta_mxn", "Precio de venta (MXN)", "number")}</div><p className="muted">El precio del vestido no incluye el envío. Cuando una compradora te contacte y comparta su domicilio postal, podrás cotizar el envío asegurado y enviarle una oferta final.</p></>}
-      {step === 6 && <><p>Todos los vestidos publicados en SECOND VOW se envían; no se ofrecen pruebas ni entregas presenciales.</p><p className="muted">No necesitas capturar un costo de envío aquí. Cuando aceptes una oferta, podrás cotizar el envío real según el código postal de esa compradora, y ese costo se sumará a lo que ella pague dentro de SECOND VOW.</p></>}
-      {step === 7 && <div className="field"><label>Descripción adicional</label><textarea rows={10} value={dress.descripcion ?? ""} onChange={(e) => set("descripcion", e.target.value)} placeholder="Cuenta libremente la historia, detalles, accesorios incluidos o cualquier dato adicional relevante." /></div>}
-      {step === 8 && <><div className={`field ${errors.photos ? "field-invalid" : ""}`}><label>Fotografías (mínimo 1)<span className="required-mark"> *</span></label><input type="file" accept="image/*" multiple onChange={(e) => upload(e.target.files)} />{errors.photos && <p className="field-error">{errors.photos}</p>}<p className="muted">Recomendamos agregar frente, espalda, etiqueta, detalles y cualquier daño: una publicación visualmente completa inspira más confianza y suele venderse más rápido.</p></div>{photos.length > 0 && <div className="photo-editor"><div className="photo-editor-preview"><Image width={900} height={1200} src={dressImageUrl((photos.find((p) => p.id === previewPhotoId) ?? photos[0]).storage_path, (photos.find((p) => p.id === previewPhotoId) ?? photos[0]).signed_url)} alt="Vista previa de la fotografía seleccionada" /></div><div className="photo-list">{photos.map((p, i) => <article key={p.id} className={p.id === previewPhotoId ? "photo-editor-selected" : ""}><button type="button" className="photo-thumb-button" onClick={() => setPreviewPhotoId(p.id)} aria-label={`Ver fotografía ${i + 1} en grande`}><Image width={180} height={240} src={dressImageUrl(p.storage_path, p.signed_url)} alt={`Fotografía ${i + 1}`} /></button><strong>Foto {i + 1}{p.is_primary ? " · principal" : ""}</strong><div className="photo-editor-actions">{!p.is_primary && <button type="button" className="link-button" disabled={busy} onClick={() => makePrimary(p.id)}>Hacer principal</button>}<button type="button" className="link-button danger-link" disabled={busy} onClick={() => removePhoto(p)}>Eliminar</button></div></article>)}</div></div>}</>}
+      {step === 6 && <div className="field"><label>Descripción adicional</label><textarea rows={10} value={dress.descripcion ?? ""} onChange={(e) => set("descripcion", e.target.value)} placeholder="Cuenta libremente la historia, detalles, accesorios incluidos o cualquier dato adicional relevante." /></div>}
+      {step === 7 && <><div className={`field ${errors.photos ? "field-invalid" : ""}`}><label>Fotografías (mínimo 1)<span className="required-mark"> *</span></label><input type="file" accept="image/*" multiple onChange={(e) => upload(e.target.files)} />{errors.photos && <p className="field-error">{errors.photos}</p>}<p className="muted">Recomendamos agregar frente, espalda, etiqueta, detalles y cualquier daño: una publicación visualmente completa inspira más confianza y suele venderse más rápido.</p></div>{photos.length > 0 && <div className="photo-editor"><div className="photo-editor-preview"><Image width={900} height={1200} src={dressImageUrl((photos.find((p) => p.id === previewPhotoId) ?? photos[0]).storage_path, (photos.find((p) => p.id === previewPhotoId) ?? photos[0]).signed_url)} alt="Vista previa de la fotografía seleccionada" /></div><div className="photo-list">{photos.map((p, i) => <article key={p.id} className={p.id === previewPhotoId ? "photo-editor-selected" : ""}><button type="button" className="photo-thumb-button" onClick={() => setPreviewPhotoId(p.id)} aria-label={`Ver fotografía ${i + 1} en grande`}><Image width={180} height={240} src={dressImageUrl(p.storage_path, p.signed_url)} alt={`Fotografía ${i + 1}`} /></button><strong>Foto {i + 1}{p.is_primary ? " · principal" : ""}</strong><div className="photo-editor-actions">{!p.is_primary && <button type="button" className="link-button" disabled={busy} onClick={() => makePrimary(p.id)}>Hacer principal</button>}<button type="button" className="link-button danger-link" disabled={busy} onClick={() => removePhoto(p)}>Eliminar</button></div></article>)}</div></div>}</>}
 
-      {step === 9 && <div className="publish-declarations">
+      {step === 8 && <div className="publish-declarations">
         <div className={pendingByStep.length ? "review-summary review-summary-pending" : "review-summary review-summary-complete"}>
           <h3>{pendingByStep.length ? "Antes de enviar, completa lo siguiente:" : "Publicación completa"}</h3>
           {pendingByStep.length ? pendingByStep.map((group) => <div className="review-summary-step" key={group.index}><button type="button" onClick={() => setStep(group.index)}>{group.index + 1}. {group.name}</button><ul>{group.items.map((issue) => <li key={issue.key}>{issue.label}: {issue.message}</li>)}</ul></div>) : <p>Ya completaste los datos obligatorios. Tu vestido se publicará en cuanto confirmes las declaraciones.</p>}
@@ -516,7 +519,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       <div className="wizard-actions">
         <button className="btn btn-secondary" disabled={step === 0 || busy} onClick={() => { setStep((s) => s - 1); setErrors({}); setMessage(""); }}>Anterior</button>
         <button className="btn btn-secondary" disabled={busy} onClick={() => void save()}>Guardar</button>
-        {step < 9 ? (
+        {step < 8 ? (
           <button className="btn btn-primary" disabled={busy} onClick={nextStep}>Siguiente</button>
         ) : (
           <button className="btn btn-primary" disabled={busy || pending.length > 0} onClick={submit} title={pending.length ? "Completa todos los requisitos obligatorios antes de publicar." : undefined}>
