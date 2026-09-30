@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import OrderEvidenceUploader from "@/components/OrderEvidenceUploader";
@@ -8,6 +8,7 @@ import { LEGAL_BUNDLE_SHA256, TERMS_VERSION } from "@/lib/site";
 import { humanActionError } from "@/lib/actionErrors";
 import { paymentTimeRemaining } from "@/lib/orderDisplay";
 import { claimResolution } from "@/lib/claimResolution";
+import { canReportPackage, reportDeadline } from "@/lib/orderReportWindow";
 
 const CLAIM_REASONS = [["not_received", "La guía dice entregado, pero no recibí el paquete"], ["false_or_materially_incorrect", "Información falsa o materialmente incorrecta"], ["damaged_undisclosed", "Daño relevante no informado"]] as const;
 
@@ -21,6 +22,25 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
   const [returnCarrier, setReturnCarrier] = useState(activeClaim?.return_carrier ?? "");
   const [shippingAmount, setShippingAmount] = useState(order.shipping_quote_set_at ? String(order.shipping_mxn ?? 0) : "");
   const [shippingCarrier, setShippingCarrier] = useState(order.shipping_carrier_declared ?? "");
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportTime, setReportTime] = useState(() => Date.now());
+  const deadlineMs = reportDeadline(order);
+  const canReport = canReportPackage(order, userId, reportTime);
+
+  useEffect(() => {
+    const refresh = () => setReportTime(Date.now());
+    refresh();
+    const delay = deadlineMs === null ? null : Math.max(0, deadlineMs - Date.now() + 1);
+    const timer = delay === null ? undefined : window.setTimeout(refresh, Math.min(delay, 2_147_483_647));
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [deadlineMs, order.status]);
+
   const [reasonCode, setReasonCode] = useState("");
   const [description, setDescription] = useState("");
   const [sellerResponse, setSellerResponse] = useState(activeClaim?.seller_response ?? "");
@@ -72,6 +92,7 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
     if (!res.ok) alert(json.error || "No fue posible registrar el envío"); else { if (json.warning) alert(json.warning); router.refresh(); }
   }
   async function claim() {
+    if (!canReportPackage(order, userId)) { setReportTime(Date.now()); return; }
     if (reasonCode && description.trim().length >= 20) await rpc("open_order_claim", { p_order_id: order.id, p_reason_code: reasonCode, p_description: description.trim() });
   }
   async function respondToClaim() {
@@ -94,7 +115,6 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
     if (!res.ok) { setFailedAction("cancellation"); setActionError(humanActionError(json.error, "No pudimos completar la cancelación. No se hizo ningún cargo nuevo y el vestido sigue publicado.")); } else router.refresh();
   }
 
-  const deadline = order.dispute_deadline_at || order.inspection_deadline_at || order.claim_deadline_at;
   const resolution = claimResolution(activeClaim);
   return <div className="actions-stack">
     {actionError && <div className="alert-error"><strong>{failedAction === "cancellation" ? "No se pudo cancelar la venta." : failedAction === "return" ? "No se pudo registrar la devolución." : "No se pudo iniciar el pago."}</strong><p>{actionError}</p></div>}
@@ -109,7 +129,16 @@ export default function OrderActions({ order, userId, evidence = [] }: { order: 
 
     {order.buyer_id === userId && order.status === "shipped" && <div className="panel"><h3>Cuando recibas el paquete</h3><ol><li>Muestra identificación oficial y firma únicamente a la paquetería.</li><li>Fotografía todos los lados, etiqueta, golpes o aberturas antes de abrir.</li><li>Graba un video continuo desde el paquete cerrado hasta revisar el vestido.</li><li>Fotografía vestido, etiquetas, accesorios y cualquier diferencia.</li><li>Conserva el empaque durante las 48 horas de protección.</li><li>No laves, alteres, repares ni uses el vestido antes de concluir la revisión.</li></ol><p className="muted">No tienes que subir estos archivos salvo que abras una reclamación.</p><label className="check"><input type="checkbox" checked={buyerEvidenceRetained} onChange={(e) => setBuyerEvidenceRetained(e.target.checked)} /><span>Confirmo que documenté y conservé la recepción y apertura del paquete.</span></label><button className="btn btn-primary" disabled={busy || !buyerEvidenceRetained} onClick={() => rpc("confirm_order_delivered", { p_order_id: order.id })}>Confirmar recepción</button></div>}
 
-    {order.buyer_id === userId && ["inspection", "delivered"].includes(order.status) && <div className="panel claim-open-panel"><h3>¿Hay un problema con tu pedido?</h3><p>Solo abre una reclamación si no recibiste el paquete, el vestido no coincide materialmente con la publicación o tiene un daño relevante que no fue informado. No procede por talla, ajuste o cambio de opinión.</p>{deadline && <div className="protection-deadline"><span>Plazo para reportar</span><strong>{new Date(deadline).toLocaleString("es-MX")}</strong></div>}<div className="claim-process"><span><strong>1</strong> Explica qué ocurrió</span><span><strong>2</strong> La vendedora responde</span><span><strong>3</strong> SECOND VOW revisa</span></div><div className="field"><label>¿Qué ocurrió?</label><select value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}><option value="">Selecciona una opción</option>{CLAIM_REASONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div><div className="field"><label>Cuéntanos los hechos con claridad</label><textarea rows={5} minLength={20} maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Qué esperabas recibir, qué recibiste y cuándo lo notaste" /><small>Mínimo 20 caracteres. Podrás agregar fotos o video después, si los tienes.</small></div><div className="alert-info"><strong>¿Qué ocurre al enviarla?</strong><p>El saldo de la vendedora se congela, ella recibe una notificación y puede responder dentro de tres días. Abrir la reclamación no autoriza automáticamente una devolución o reembolso.</p></div><button className="btn btn-secondary" disabled={busy || !reasonCode || description.trim().length < 20} onClick={claim}>Enviar reclamación para revisión</button></div>}
+    {canReport && <div className="panel claim-open-panel" id="reportar-paquete">
+      <button type="button" className="btn btn-secondary" aria-expanded={reportOpen} aria-controls="package-report-form" disabled={busy} onClick={() => setReportOpen((open) => !open)}>Reportar paquete</button>
+      <p className="muted">Disponible hasta {new Date(deadlineMs!).toLocaleString("es-MX")}. Consulta las <Link href="/legal/terminos" target="_blank" rel="noopener noreferrer">condiciones del reporte</Link>.</p>
+      {reportOpen && <div id="package-report-form">
+        <h3>Reportar un problema con el paquete</h3>
+        <div className="field"><label htmlFor="package-report-reason">¿Qué ocurrió?</label><select id="package-report-reason" value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}><option value="">Selecciona una opción</option>{CLAIM_REASONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
+        <div className="field"><label htmlFor="package-report-description">Describe lo ocurrido</label><textarea id="package-report-description" rows={5} minLength={20} maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Qué esperabas recibir, qué recibiste y cuándo lo notaste" /><small>Mínimo 20 caracteres. Podrás agregar fotos o video después.</small></div>
+        <button type="button" className="btn btn-primary" disabled={busy || !reasonCode || description.trim().length < 20} onClick={claim}>Enviar reporte</button>
+      </div>}
+    </div>}
 
     {order.buyer_id === userId && activeClaim && order.status === "claim_open" && <div className="panel"><h3>Tu reclamación está en revisión</h3><p>La vendedora puede responder hasta {activeClaim.seller_response_due_at ? new Date(activeClaim.seller_response_due_at).toLocaleString("es-MX") : "la fecha indicada"}. Te notificaremos cuando responda y cuando exista una decisión.</p><h4>¿Tienes fotos o video?</h4><p>Adjuntarlos es opcional, pero puede ayudar a acreditar lo sucedido. Conserva también los archivos originales.</p><OrderEvidenceUploader orderId={order.id} userId={userId} stage="buyer_dress_received" existing={evidence.filter((x: any) => x.evidence_type === "buyer_dress_received")} /></div>}
 
