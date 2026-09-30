@@ -6,7 +6,7 @@ import OrderActions from "@/components/OrderActions";
 import OrderNextActionCard from "@/components/OrderNextActionCard";
 import { ORDER_STATUS } from "@/lib/orderDisplay";
 import { safeDisplayName } from "@/lib/displayName";
-import AdminOrderControls from "@/components/AdminOrderControls";
+import SellerBalanceStatus from "@/components/SellerBalanceStatus";
 import AdminOrderRecord from "@/components/AdminOrderRecord";
 import RatingForm from "@/components/RatingForm";
 import PaymentReconciler from "@/components/PaymentReconciler";
@@ -54,7 +54,7 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
     supabase.from("profiles").select("id,full_name").in("id", [order.buyer_id, order.seller_id]),
     supabase.from("tracking_events").select("status_milestone,raw_status,occurred_at").in("shipment_id", shipmentIds.length ? shipmentIds : ["00000000-0000-0000-0000-000000000000"]).order("occurred_at", { ascending: false }).limit(8),
     profile?.role==="admin"?supabase.from("payments").select("*").eq("order_id",order.id):Promise.resolve({data:[]} as any),
-    profile?.role==="admin"?supabase.from("seller_payouts").select("*").eq("order_id",order.id):Promise.resolve({data:[]} as any),
+    (profile?.role==="admin" || order.seller_id===user.id)?supabase.from("seller_payouts").select("*").eq("order_id",order.id):Promise.resolve({data:[]} as any),
     profile?.role==="admin"?supabase.from("payment_ledger").select("*").eq("order_id",order.id).order("created_at"):Promise.resolve({data:[]} as any),
     profile?.role==="admin"?supabase.from("order_events").select("*").eq("order_id",order.id).order("created_at",{ascending:false}):Promise.resolve({data:[]} as any),
     profile?.role==="admin"?supabase.from("admin_action_logs").select("*").eq("order_id",order.id).order("created_at",{ascending:false}):Promise.resolve({data:[]} as any),
@@ -85,6 +85,7 @@ export default async function OrderDetail({ params, searchParams }: { params: Pr
     <OrderActions order={order} userId={user.id} evidence={evidenceWithLinks} />
     {order.buyer_id===user.id&&order.status==="completed"&&<RatingForm orderId={order.id} revieweeId={order.seller_id} reviewerId={user.id}/>} 
     {(order.claims ?? []).length > 0 && <section className="panel"><h2>Reclamaciones</h2>{order.claims.map((claim: any) => <ClaimResolutionStatus claim={claim} key={claim.id} />)}</section>}
-    {profile?.role==="admin"&&<><AdminOrderRecord order={order} payments={payments??[]} payouts={payouts??[]} ledger={ledger??[]} events={events??[]} adminLogs={adminLogs??[]}/><details className="panel"><summary>Control del saldo</summary><AdminOrderControls orderId={order.id}/></details></>}
+    {(order.seller_id===user.id || profile?.role==="admin") && <SellerBalanceStatus order={order} payout={(payouts ?? [])[0]} />}
+    {profile?.role==="admin"&&<><AdminOrderRecord order={order} payments={payments??[]} payouts={payouts??[]} ledger={ledger??[]} events={events??[]} adminLogs={adminLogs??[]}/></>}
   </main>;
 }
