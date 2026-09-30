@@ -18,7 +18,7 @@ export default function AfterWeddingDressPage() {
     <header>
       <p className="eyebrow">Después del gran día</p>
       <h1>¿Qué hacer con tu vestido de novia después de la boda?</h1>
-      <p>Si lleva meses —o años— ocupando medio clóset como una reina jubilada, tienes varias opciones. Venderlo puede ayudarte a recuperar parte de lo que invertiste y permitir que otra mujer encuentre el vestido que estaba buscando.</p>
+      <p>Si lleva meses, o años, ocupando medio clóset como una reina jubilada, tienes varias opciones. Venderlo puede ayudarte a recuperar parte de lo que invertiste y permitir que otra mujer encuentre el vestido que estaba buscando.</p>
     </header>
     <section><h2>1. Revisa su estado antes de guardarlo o venderlo</h2><p>Observa el dobladillo, forro, encaje, cierre, botones y aplicaciones. Anota manchas, jalones, reparaciones y ajustes. Una descripción honesta genera confianza y evita problemas durante la venta.</p></section>
     <section><h2>2. Conserva fotografías del día de la boda</h2><p>Las fotos profesionales ayudan a mostrar cómo cae el vestido puesto. Complétalas con imágenes actuales, de frente, espalda, etiqueta, detalles y cualquier imperfección. La compradora necesita ver el vestido real, no imaginarlo con poderes psíquicos.</p></section>

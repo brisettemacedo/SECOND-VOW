@@ -33,7 +33,7 @@ export default function AdminOrderRecord({ order, payments, payouts, ledger, eve
       <ul>{events.map((event) => <li key={event.id}>{date(event.created_at)} · {EVENT_LABELS[event.event_type] || String(event.event_type).replaceAll("_", " ")}</li>)}{adminLogs.map((log) => <li key={log.id}>{date(log.created_at)} · {String(log.action).replaceAll("_", " ")}{log.reason ? `: ${log.reason}` : ""}</li>)}</ul>
     </details>
     <details><summary>Referencias para soporte</summary>
-      <p>Pago Stripe: {order.stripe_payment_intent_id || "—"}<br />Checkout: {order.stripe_checkout_session_id || "—"}<br />Cargo: {order.stripe_charge_id || "—"}<br />Términos aceptados: {order.checkout_terms_version || "—"}</p>
+      <p>Pago Stripe: {order.stripe_payment_intent_id || "Sin registro"}<br />Checkout: {order.stripe_checkout_session_id || "Sin registro"}<br />Cargo: {order.stripe_charge_id || "Sin registro"}<br />Términos aceptados: {order.checkout_terms_version || "Sin registro"}</p>
     </details>
   </section>;
 }

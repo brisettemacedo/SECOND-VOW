@@ -117,8 +117,8 @@ export default function AdminDashboard(p: { pendingItems?: any[]; paymentExcepti
             return <tr key={d.id}>
               <td><Link href={`/admin/publicaciones/${d.id}`}>{d.model || d.id.slice(0, 8)}</Link></td>
               <td>{d.brand_name || "Sin marca"}</td>
-              <td>{missing.length ? missing.join(", ") : "—"}</td>
-              <td>{d.updated_at ? new Date(d.updated_at).toLocaleDateString("es-MX") : "—"}</td>
+              <td>{missing.length ? missing.join(", ") : "Sin registro"}</td>
+              <td>{d.updated_at ? new Date(d.updated_at).toLocaleDateString("es-MX") : "Sin registro"}</td>
             </tr>;
           })}
         </tbody></table></div>
