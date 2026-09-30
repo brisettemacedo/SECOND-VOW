@@ -59,7 +59,7 @@ export default async function MyDresses({ searchParams }: { searchParams: Promis
     {query.published === "1" && <div className="alert-success">Tu vestido ya está publicado en el marketplace.</div>}
     <div className="title-row"><h1>Mis vestidos</h1><Link className="btn btn-primary" href="/publicar">Publicar vestido</Link></div>
     {loadError && <div className="alert-error"><strong>No pudimos cargar tus publicaciones.</strong><p>{loadError}</p></div>}
-    <div className="cards-list">
+    <div className="my-dresses-grid">
       {!loadError && signedDresses.map((d: any) => {
         // Editable/eliminable mientras no haya una oferta aceptada (pedido activo)
         // sobre este vestido, y no esté ya reservado/vendido.
@@ -70,7 +70,7 @@ export default async function MyDresses({ searchParams }: { searchParams: Promis
         const photo=[...(d.dress_photos??[])].sort((a:any,b:any)=>(b.is_primary?1:0)-(a.is_primary?1:0)||a.position-b.position)[0];
         const missing=d.status==="draft"?missingDressRequirements(d):[];
         return <article className="panel my-dress-card" key={d.id}>
-          {photo&&<Image className="my-dress-photo" width={360} height={480} src={dressImageUrl(photo.storage_path, photo.signed_url)} alt={`${brand} ${model}`} />}
+          <div className="my-dress-media">{photo ? <Image className="my-dress-photo" fill sizes="(max-width: 640px) 50vw, 300px" src={dressImageUrl(photo.storage_path, photo.signed_url)} alt={`${brand} ${model}`} /> : <div className="my-dress-no-photo">Fotografía pendiente</div>}</div>
           <div className="my-dress-card-body">
           <h2>{brand}{model ? ` ${model}` : ""}</h2>
           <p><span className="badge">{labels[d.status] ?? d.status}</span></p>
@@ -83,10 +83,10 @@ export default async function MyDresses({ searchParams }: { searchParams: Promis
           {hasActivePayment&&<div className="alert-info">Hay un pago en proceso. La edición y eliminación se habilitarán si ese intento se cancela o vence.</div>}
           {(feedbackByDress[d.id]??[]).map((notice:any)=><div className="alert-info" key={notice.id}><strong>Sugerencia de SECOND VOW</strong><p>{notice.body}</p></div>)}
           {d.status === "reserved" && <div className="alert-info">Hay un pago en proceso sobre este vestido. No puede editarse hasta que se complete o se cancele.</div>}
-          <div className="actions">
-            {editable && <Link href={`/publicar/${d.id}`} className="btn btn-primary">{d.status === "draft" ? "Continuar publicación" : d.status === "changes_requested" ? "Corregir publicación" : "Editar publicación"}</Link>}
+          <div className="actions my-dress-actions">
+            {editable && <Link href={`/publicar/${d.id}`} className="btn btn-primary">{d.status === "draft" ? "Completar borrador" : d.status === "changes_requested" ? "Corregir publicación" : "Editar publicación"}</Link>}
             {editable && <DeleteDraftButton dressId={d.id} />}
-            <Link href={`/vestidos/${d.id}`} className="btn btn-secondary">Ver</Link>
+            <Link href={`/vestidos/${d.id}`} className="btn btn-secondary">{d.status === "draft" ? "Vista previa del borrador" : d.status === "approved" ? "Ver en el catálogo" : "Ver detalles del vestido"}</Link>
           </div>
           </div>
         </article>;
