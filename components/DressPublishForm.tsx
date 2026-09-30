@@ -81,7 +81,13 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     promotionalImages: Boolean(initialDeclaration?.promotional_image_license_declared),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const autosaveReady = useRef(false);
+  const draftId = useRef<string | undefined>(initialDress?.id);
+  const saveInFlight = useRef(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">(initialDress?.id ? "saved" : "idle");
+  const snapshot = JSON.stringify([fieldsByStep.flat().map((key) => [key, dress[key] ?? null]), dress.pending_brand_name ?? null, selectedCharacteristics.slice().sort()]);
+  const savedSnapshot = useRef(initialDress?.id ? snapshot : "");
+  const failedSnapshot = useRef("");
+  const hasEnteredData = Boolean(brandQuery.trim() || selectedCharacteristics.length || fieldsByStep.flat().some((key) => !["sistema_talla"].includes(key) && dress[key] !== null && dress[key] !== undefined && dress[key] !== "" && dress[key] !== false));
   const savedCharacteristics = useRef((initialDress?.dress_characteristics?.map((x: any) => x.characteristic_id) ?? []).slice().sort().join(","));
 
   const exactBrand = brands.find((b) => b.name.localeCompare(brandQuery.trim(), undefined, { sensitivity: "base" }) === 0);
@@ -95,7 +101,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     };
     const results: (ValidationIssue | null)[] = [];
 
-    if (stepIndex === 0 && !dress.brand_id && !dress.brand_suggestion_id) results.push({ step: 0, key: "brand", label: "Marca", message: "Selecciona una marca, usa Sin marca o escribe una nueva. No necesitas esperar autorización." });
+    if (stepIndex === 0 && !dress.brand_id && !dress.brand_suggestion_id && !dress.pending_brand_name) results.push({ step: 0, key: "brand", label: "Marca", message: "Selecciona una marca, usa Sin marca o escribe una nueva. No necesitas esperar autorización." });
     if (stepIndex === 0 && dress.year_approx !== null && dress.year_approx !== undefined && String(dress.year_approx).trim() !== "") {
       const year = Number(dress.year_approx);
       if (!Number.isInteger(year) || year < 1950 || year > 2100) results.push({ step: 0, key: "year_approx", label: "Año aproximado", message: "Ingresa un año entre 1950 y 2100." });
@@ -176,17 +182,19 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     });
   }
 
-  async function ensureDraft() {
-    if (dress.id) return dress.id;
-    const { data, error } = await supabase.from("dresses").insert({ seller_id: userId, status: "draft", sistema_talla: "MX", envio_nacional: true }).select("id").single();
+  async function ensureDraft(payload: Record<string, any> = {}) {
+    if (draftId.current) return draftId.current;
+    if (issuesForStep(0).length) throw new Error("Completa el primer paso antes de guardar.");
+    const { data, error } = await supabase.from("dresses").insert({ ...payload, seller_id: userId, status: "draft", sistema_talla: dress.sistema_talla || "MX", envio_nacional: true }).select("id").single();
     if (error) throw error;
+    draftId.current = data.id;
     setDress((d) => ({ ...d, id: data.id }));
     return data.id;
   }
 
   function chooseBrand(b: Brand) {
     setBrandQuery(b.name);
-    setDress((d) => ({ ...d, brand_id: b.id, brand_suggestion_id: null }));
+    setDress((d) => ({ ...d, brand_id: b.id, brand_suggestion_id: null, pending_brand_name: null }));
     clearError("brand");
   }
 
@@ -199,28 +207,15 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     setMessage("Seleccionaste Sin marca. Puedes continuar con el siguiente paso.");
   }
 
-  async function suggestBrand() {
+  function suggestBrand() {
     const name = brandQuery.trim();
     if (name.length < 2) {
       setErrors((e) => ({ ...e, brand: "Escribe el nombre de la marca." }));
       return;
     }
-    setBusy(true);
-    try {
-      const id = await ensureDraft();
-      const { data, error } = await supabase.from("brand_suggestions").insert({ suggested_name: name, seller_id: userId, dress_id: id }).select("id,suggested_name,status").single();
-      if (error) throw error;
-      const { error: dressError } = await supabase.from("dresses").update({ brand_id: null, brand_suggestion_id: data.id }).eq("id", id);
-      if (dressError) throw dressError;
-      setDress((d) => ({ ...d, brand_id: null, brand_suggestion_id: data.id, brand_suggestions: data }));
-      clearError("brand");
-      setMessage("Marca agregada. No necesitas esperar autorización: puedes continuar ahora.");
-      setMessage("Marca agregada. Completa los datos del vestido para continuar.");
-    } catch (e: any) {
-      setMessage(e.message);
-    } finally {
-      setBusy(false);
-    }
+    setDress((d) => ({ ...d, brand_id: null, brand_suggestion_id: null, pending_brand_name: name, brand_suggestions: { suggested_name: name } }));
+    clearError("brand");
+    setMessage("Marca seleccionada. Completa el primer paso y pulsa Siguiente para guardar tu borrador.");
   }
 
   function friendlyError(error: any) {
@@ -231,16 +226,26 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
   }
 
   async function save(options: { silent?: boolean } = {}) {
+    if (saveInFlight.current) throw new Error("El guardado sigue en proceso.");
+    saveInFlight.current = true;
     setBusy(true);
+    setSaveState("saving");
     setMessage("");
     try {
-      const id = await ensureDraft();
       const payload: any = {};
       for (const f of fieldsByStep.flat()) {
         if (f in dress) {
           const v = dress[f];
           payload[f] = numeric.has(f) ? (v === "" || v == null ? null : Number(v)) : v;
         }
+      }
+      const id = await ensureDraft(payload);
+      if (dress.pending_brand_name) {
+        const { data: suggestion, error: suggestionError } = await supabase.from("brand_suggestions").insert({ suggested_name: dress.pending_brand_name, seller_id: userId, dress_id: id }).select("id,suggested_name,status").single();
+        if (suggestionError) throw suggestionError;
+        payload.brand_id = null;
+        payload.brand_suggestion_id = suggestion.id;
+        setDress((d) => ({ ...d, brand_id: null, brand_suggestion_id: suggestion.id, pending_brand_name: null, brand_suggestions: suggestion }));
       }
       const { error } = await supabase.from("dresses").update(payload).eq("id", id);
       if (error) throw error;
@@ -254,26 +259,47 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
         }
         savedCharacteristics.current = currentCharacteristics;
       }
-      if (!options.silent) setMessage("Cambios guardados.");
+      savedSnapshot.current = snapshot;
+      failedSnapshot.current = "";
+      setSaveState("saved");
+      if (!options.silent) setMessage("Borrador guardado automáticamente.");
       return id;
     } catch (e: any) {
+      failedSnapshot.current = snapshot;
+      setSaveState("error");
       setMessage(friendlyError(e));
       throw e;
     } finally {
+      saveInFlight.current = false;
       setBusy(false);
     }
   }
 
   useEffect(() => {
-    if (!autosaveReady.current) { autosaveReady.current = true; return; }
-    // También autoguarda publicaciones ya visibles. La base de datos impide
-    // modificarla si existe un checkout realmente en proceso.
-    if (["sold", "reserved"].includes(dress.status || "")) return;
-    const timer = window.setTimeout(() => { void save().catch(() => undefined); }, 800);
+    // New drafts are created only by completing the first step.
+    if (!draftId.current || busy || snapshot === savedSnapshot.current || snapshot === failedSnapshot.current || ["sold", "reserved"].includes(dress.status || "")) return;
+    const timer = window.setTimeout(() => { void save({ silent: true }).catch(() => undefined); }, 800);
     return () => window.clearTimeout(timer);
-    // Reutiliza save(), la misma lógica del botón manual.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dress, selectedCharacteristics]);
+  }, [dress, selectedCharacteristics, snapshot, busy]);
+
+  useEffect(() => {
+    const unsaved = !draftId.current ? hasEnteredData : snapshot !== savedSnapshot.current;
+    if (!unsaved) return;
+    const warning = !draftId.current
+      ? "NO SE VA A GUARDAR tu publicación porque no terminaste el primer paso. Completa los campos obligatorios y pulsa Siguiente. ¿Quieres salir y perder lo que escribiste?"
+      : "Hay cambios que todavía no se han guardado. ¿Quieres salir y perder esos cambios?";
+    const beforeUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    const leaveByLink = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const link = (event.target as Element)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!link || link.target === "_blank" || link.hasAttribute("download") || link.getAttribute("href")?.startsWith("#")) return;
+      if (!window.confirm(warning)) { event.preventDefault(); event.stopPropagation(); }
+    };
+    window.addEventListener("beforeunload", beforeUnload);
+    document.addEventListener("click", leaveByLink, true);
+    return () => { window.removeEventListener("beforeunload", beforeUnload); document.removeEventListener("click", leaveByLink, true); };
+  }, [hasEnteredData, snapshot, saveState, dress.id]);
 
   async function upload(files: FileList | null) {
     if (!files?.length) return;
@@ -478,13 +504,13 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       {step === 0 && <>
         <div className={`field brand-search ${errors.brand ? "field-invalid" : ""}`}>
           <label>Marca<span className="required-mark"> *</span></label>
-          <input value={brandQuery} onChange={(e) => { setBrandQuery(e.target.value); setDress((d) => ({ ...d, brand_id: null, brand_suggestion_id: null })); clearError("brand"); }} placeholder="Empieza a escribir una marca…" aria-invalid={Boolean(errors.brand)} />
+          <input value={brandQuery} onChange={(e) => { setBrandQuery(e.target.value); setDress((d) => ({ ...d, brand_id: null, brand_suggestion_id: null, pending_brand_name: null })); clearError("brand"); }} placeholder="Empieza a escribir una marca…" aria-invalid={Boolean(errors.brand)} />
           <p className="muted">¿No aparece? Escríbela y continúa. SECOND VOW la revisará después; no necesitas esperar autorización.</p>
           <p className="brand-list-label">Selecciona una opción de la lista:</p>
           <div className="brand-suggestions" role="group" aria-label="Opciones de marca">{matches.map((b) => <button type="button" key={b.id} aria-pressed={dress.brand_id === b.id} className={dress.brand_id === b.id ? "brand-selected" : ""} onClick={() => chooseBrand(b)}><span className="brand-choice-marker" aria-hidden="true">{dress.brand_id === b.id ? "✓" : ""}</span><span>{b.name}</span><span className="brand-choice-action">{dress.brand_id === b.id ? "Seleccionada" : "Elegir"}</span></button>)}</div>
-          {noBrand && <button type="button" className="link-button" disabled={busy} onClick={chooseNoBrand}>No conozco la marca / Sin marca</button>}
-          {brandQuery.trim() && !exactBrand && !dress.brand_suggestion_id && <div className="brand-new"><p>No encontramos una coincidencia exacta.</p><strong>Nombre de la marca</strong><div>{brandQuery}</div><button type="button" className="btn btn-secondary" disabled={busy} onClick={suggestBrand}>Usar esta marca y continuar</button></div>}
-          {dress.brand_suggestion_id && <p className="muted">Marca: <strong>{dress.brand_suggestions?.suggested_name || brandQuery}</strong>. La revisaremos después; puedes continuar y publicar sin esperar.</p>}
+          {noBrand && <button type="button" className={`btn no-brand-option ${dress.brand_id === noBrand.id ? "no-brand-selected" : ""}`} aria-pressed={dress.brand_id === noBrand.id} disabled={busy} onClick={chooseNoBrand}><span className="brand-choice-marker" aria-hidden="true">{dress.brand_id === noBrand.id ? "✓" : ""}</span><span>Sin marca / No conozco la marca</span><span className="brand-choice-action">{dress.brand_id === noBrand.id ? "Seleccionada" : "Elegir"}</span></button>}
+          {brandQuery.trim() && !exactBrand && !dress.brand_suggestion_id && !dress.pending_brand_name && <div className="brand-new"><p>No encontramos una coincidencia exacta.</p><strong>Nombre de la marca</strong><div>{brandQuery}</div><button type="button" className="btn btn-secondary" disabled={busy} onClick={suggestBrand}>Usar esta marca y continuar</button></div>}
+          {(dress.brand_suggestion_id || dress.pending_brand_name) && <p className="muted">Marca: <strong>{dress.brand_suggestions?.suggested_name || brandQuery}</strong>. La revisaremos después; puedes continuar y publicar sin esperar.</p>}
           {errors.brand && <p className="field-error">{errors.brand}</p>}
         </div>
         {input("model", "Modelo")}{input("collection", "Colección")}{input("year_approx", "Año aproximado", "number")}
@@ -520,7 +546,8 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
       {message && <div className={/(guardad|subid|enviad|actualizad|eliminad)/i.test(message) ? "alert-success" : "alert-error"}>{message}</div>}
       <div className="wizard-actions">
         <button className="btn btn-secondary" disabled={step === 0 || busy} onClick={() => { setStep((s) => s - 1); setErrors({}); setMessage(""); }}>Anterior</button>
-        <button className="btn btn-secondary" disabled={busy} onClick={() => void save()}>Guardar</button>
+        <p className={`autosave-status ${saveState === "error" ? "autosave-error" : ""}`} role="status" aria-live="polite">{!dress.id ? "Completa el primer paso y pulsa Siguiente para guardar tu borrador." : saveState === "saving" ? "Guardando cambios…" : saveState === "error" ? "No se guardaron los últimos cambios." : snapshot !== savedSnapshot.current ? "Cambios pendientes de guardar…" : "Borrador guardado · guardado automático activo"}</p>
+        {saveState === "error" && <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void save().catch(() => undefined)}>Reintentar guardado</button>}
         {step < stepNames.length - 1 ? (
           <button className="btn btn-primary" disabled={busy} onClick={nextStep}>Siguiente</button>
         ) : (

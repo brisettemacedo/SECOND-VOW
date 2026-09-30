@@ -47,7 +47,7 @@ export async function loadDressCatalogData(supabase: SupabaseClient): Promise<Dr
   return {
     sizes,
     sizingSystems,
-    silhouettes,
+    silhouettes: ["linea-a", "ball-gown", "recto-columna", "fit-and-flare", "trompeta", "sirena", "separados", "jumpsuit"].flatMap((code) => { const option = silhouettes.find((item) => item.value === code); return option ? [option] : []; }),
     necklines,
     backs,
     sleeves,

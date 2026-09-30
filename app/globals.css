@@ -478,3 +478,20 @@ body .step-missing-count { font-size: 11px !important; }
   .my-dress-card-body h2{font-size:17px}
   .my-dress-actions .btn{font-size:12px;padding:10px 6px}
 }
+
+/* Refined shape gallery and automatic draft saving. */
+.wizard .no-brand-option{display:flex;width:100%;align-items:center;gap:10px;margin-top:12px;padding:14px;border:1px solid var(--color-text-primary);border-radius:6px;background:var(--color-surface,#fff);color:var(--color-text-primary);text-align:left;cursor:pointer}
+.wizard .no-brand-option:hover,.wizard .no-brand-selected{background:var(--color-background,#f5f3ee);box-shadow:inset 0 0 0 1px currentColor}
+.wizard .shape-picker-silueta{grid-column:1/-1}
+.wizard .shape-options{gap:12px 16px;padding:8px 0 18px}
+.wizard .shape-picker-silueta .shape-options{grid-template-columns:repeat(4,minmax(0,1fr))}
+.wizard .shape-options button{border-color:transparent;border-radius:8px;background:transparent;padding:18px 8px 14px;gap:12px;font-size:13px;min-height:144px}
+.wizard .shape-options button svg{width:62px;height:100px;color:#9b9b95;stroke-width:1.25}
+.wizard .shape-options button:hover{background:#f6f5f1;border-color:#e5e2da}
+.wizard .shape-options button.shape-selected{background:#f1f1e7;border-color:var(--color-text-primary);font-weight:600}
+.wizard .shape-options button.shape-selected svg{color:var(--color-text-primary)}
+.wizard .shape-check{top:10px;right:12px}
+.wizard .shape-reference{font-size:12px}
+.wizard .autosave-status{flex:1;min-width:180px;font-size:12px;color:var(--color-text-muted);margin:0;line-height:1.5}
+.wizard .autosave-error{color:#a52a2a}
+@media(max-width:640px){.wizard .shape-picker-silueta .shape-options{grid-template-columns:repeat(3,minmax(0,1fr))}.wizard .shape-options{gap:8px}.wizard .shape-options button{padding:14px 4px;font-size:12px}.wizard .autosave-status{order:4;flex-basis:100%}.wizard .no-brand-option{flex-wrap:wrap;font-size:13px}}

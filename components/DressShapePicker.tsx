@@ -4,18 +4,14 @@ type ShapeKind = "silueta" | "escote" | "espalda";
 type Props = { name: ShapeKind; label: string; options: { value: string; label: string }[]; value: string; error?: string; onChange: (value: string) => void };
 
 const silhouettes: Record<string, string> = {
-  "linea-a": "M37 18L43 28H57L63 18L69 26L60 53L79 112H21L40 53L31 26Z",
-  "sirena": "M37 18L43 28H57L63 18L68 27L60 52Q69 71 57 88L78 112H22L43 88Q31 71 40 52L32 27Z",
-  "fit-and-flare": "M37 18L43 28H57L63 18L68 27L60 52L64 72L80 112H20L36 72L40 52L32 27Z",
-  "princesa": "M37 18L43 28H57L63 18L68 27L60 50Q77 65 88 112H12Q23 65 40 50L32 27Z M40 50H60",
-  "ball-gown": "M37 18L43 28H57L63 18L68 27L60 50Q86 66 92 112H8Q14 66 40 50L32 27Z M40 50H60",
-  "recto-columna": "M37 18L43 28H57L63 18L68 27L60 51L63 112H37L40 51L32 27Z",
-  "imperio": "M37 18L43 28H57L63 18L68 27L62 39L78 112H22L38 39L32 27Z M38 39H62",
-  "evase": "M37 18L43 28H57L63 18L68 27L60 50L72 112H28L40 50L32 27Z",
-  "mini": "M37 18L43 28H57L63 18L68 27L60 51L70 77H30L40 51L32 27Z",
-  "midi": "M37 18L43 28H57L63 18L68 27L60 51L74 96H26L40 51L32 27Z",
-  "jumpsuit": "M37 18L43 28H57L63 18L68 27L60 51L65 112H52L50 67L48 112H35L40 51L32 27Z",
-  "separados": "M37 18L43 28H57L63 18L68 27L60 47H40L32 27Z M40 55H60L79 112H21Z"
+  "linea-a": "M40 18C33 12 30 17 34 26C36 33 39 41 39 48C35 68 28 89 22 112Q50 117 78 112C72 89 65 68 61 48C61 41 64 33 66 26C70 17 67 12 60 18Q50 27 40 18Z",
+  "ball-gown": "M40 18C33 12 30 17 34 26C37 34 39 42 39 48C19 60 17 83 16 112Q50 117 84 112C83 83 81 60 61 48C61 42 63 34 66 26C70 17 67 12 60 18Q50 27 40 18Z",
+  "recto-columna": "M40 18C33 12 30 17 34 26C36 33 39 42 39 48C33 62 36 83 36 113Q50 116 64 113C64 83 67 62 61 48C61 42 64 33 66 26C70 17 67 12 60 18Q50 27 40 18Z",
+  "fit-and-flare": "M40 18C33 12 30 17 34 26C36 33 39 42 39 48C33 58 35 66 34 72C31 85 21 102 18 113Q50 118 82 113C79 102 69 85 66 72C65 66 67 58 61 48C61 42 64 33 66 26C70 17 67 12 60 18Q50 27 40 18Z",
+  "trompeta": "M40 18C33 12 30 17 34 26C36 33 39 42 39 48C34 58 37 71 37 81C34 94 27 104 23 113Q50 117 77 113C73 104 66 94 63 81C63 71 66 58 61 48C61 42 64 33 66 26C70 17 67 12 60 18Q50 27 40 18Z",
+  "sirena": "M40 18C33 12 30 17 34 26C36 33 39 42 39 48C32 61 39 77 41 96C35 103 29 109 26 113Q50 117 74 113C71 109 65 103 59 96C61 77 68 61 61 48C61 42 64 33 66 26C70 17 67 12 60 18Q50 27 40 18Z",
+  "separados": "M40 18C33 12 30 17 34 26C36 33 39 39 39 44Q50 47 61 44C61 39 64 33 66 26C70 17 67 12 60 18Q50 27 40 18Z M39 53Q50 55 61 53L65 113Q50 116 35 113Z",
+  "jumpsuit": "M40 18C33 12 30 17 34 26C36 33 39 42 39 48C33 60 37 82 31 113H46L50 67L54 113H69C63 82 67 60 61 48C61 42 64 33 66 26C70 17 67 12 60 18Q50 27 40 18Z"
 };
 const necklines: Record<string, string> = {
   "strapless-recto": "M25 44H75",
@@ -42,7 +38,7 @@ const backs: Record<string, string> = {
 };
 function Outline({ kind, value }: { kind: ShapeKind; value: string }) {
   const path = (kind === "silueta" ? silhouettes : kind === "escote" ? necklines : backs)[value];
-  return <svg viewBox="0 0 100 125" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  return <svg viewBox="0 0 100 125" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
     {!path ? <text x="50" y="77" textAnchor="middle" fill="currentColor" stroke="none" fontSize="38">?</text> : <>
       {kind !== "silueta" && <path d="M30 22L17 30L23 48L29 43L37 91H63L71 43L77 48L83 30L70 22" opacity=".35" />}
       <path d={path} />
@@ -52,9 +48,9 @@ function Outline({ kind, value }: { kind: ShapeKind; value: string }) {
 }
 export default function DressShapePicker({ name, label, options, value, error, onChange }: Props) {
   const selected = options.find((option) => option.value === value);
-  return <fieldset className={`shape-picker ${error ? "field-invalid" : ""}`} aria-describedby={error ? `${name}-error` : undefined}>
+  return <fieldset className={`shape-picker shape-picker-${name} ${error ? "field-invalid" : ""}`} aria-describedby={error ? `${name}-error` : undefined}>
     <legend>{label}<span className="required-mark"> *</span></legend>
-    <details>
+    <details open={name === "silueta" ? true : undefined}>
       <summary>{selected ? selected.label : "Selecciona una forma"}<span>Ver ilustraciones y elegir</span></summary>
       <p className="muted shape-reference">Delineados de referencia para ayudarte a identificar la forma.</p>
       <div className="shape-options">{options.map((option) => <button type="button" key={option.value} aria-pressed={value === option.value} className={value === option.value ? "shape-selected" : ""} onClick={() => onChange(option.value)}>
