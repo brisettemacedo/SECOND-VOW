@@ -1,3 +1,4 @@
+import { LEGAL_BUNDLE_SHA256, TERMS_VERSION } from "@/lib/site";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/server/adminSupabase";
@@ -17,14 +18,12 @@ export async function POST(req: Request) {
   const carrier = typeof body.carrier === "string" ? body.carrier.trim().slice(0, 80) : "";
   const trackingNumber = typeof body.trackingNumber === "string" ? body.trackingNumber.trim().slice(0, 120) : "";
   const courierCode = typeof body.courierCode === "string" ? body.courierCode.trim().slice(0, 80) : undefined;
-  const insured = body.insured === true;
-  const signature = body.signature === true;
   const idDelivery = body.idDelivery === true;
-  const evidenceRetained = body.evidenceRetained === true;
+  const termsAccepted = body.termsAccepted === true;
   if (!orderId || !carrier || !trackingNumber) return NextResponse.json({ error: "Faltan datos del envío" }, { status: 400 });
-  if (!evidenceRetained) return NextResponse.json({ error: "Confirma que conservaste la evidencia de la operación" }, { status: 400 });
+  if (!idDelivery || !termsAccepted || body.termsVersion !== TERMS_VERSION || body.legalBundleHash !== LEGAL_BUNDLE_SHA256) return NextResponse.json({ error: "Confirma la entrega contra identificación y lee los Términos vigentes de la venta" }, { status: 400 });
 
-  const { error: shipError } = await supabase.rpc("mark_order_shipped", { p_order_id: orderId, p_carrier: carrier, p_tracking_number: trackingNumber, p_insured: insured, p_signature: signature, p_id_delivery: idDelivery, p_evidence_retained: evidenceRetained });
+  const { error: shipError } = await supabase.rpc("mark_order_shipped_v2", { p_order_id: orderId, p_carrier: carrier, p_tracking_number: trackingNumber, p_id_delivery: idDelivery, p_terms_accepted: termsAccepted, p_terms_version: TERMS_VERSION, p_legal_bundle_hash: LEGAL_BUNDLE_SHA256 });
   if (shipError) return NextResponse.json({ error: shipError.message }, { status: 400 });
   const admin = createAdminClient();
   const [{ data: shipment, error }, { data: order }] = await Promise.all([

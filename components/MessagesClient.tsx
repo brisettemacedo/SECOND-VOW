@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { TERMS_VERSION, LEGAL_BUNDLE_SHA256 } from "@/lib/site";
 import { useEffect,useMemo,useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -34,6 +35,7 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
  const [offerAmount,setOfferAmount]=useState("");
  const [offerShipping,setOfferShipping]=useState("");
  const [offerNote,setOfferNote]=useState("");
+ const [offerTerms,setOfferTerms]=useState(false);
  const [postalCode,setPostalCode]=useState(activeConv?.buyer_postal_code??"");
  const [destination,setDestination]=useState({type:activeConv?.shipping_destination_type??"home",name:activeConv?.recipient_full_name??"",phone:activeConv?.recipient_phone??"",street1:activeConv?.shipping_street1??"",street2:activeConv?.shipping_street2??"",neighborhood:activeConv?.shipping_neighborhood??"",city:activeConv?.shipping_city??"",state:activeConv?.shipping_state??"",branch:activeConv?.shipping_branch_name??""});
  const [busy,setBusy]=useState(false); const [detailsLoading,setDetailsLoading]=useState(false); const [error,setError]=useState("");
@@ -67,12 +69,13 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
    const shipping=Number(offerShipping||0);
    if(!amount||amount<=0)return;
    if(offerShipping!==""&&shipping<0)return;
+   if(!offerTerms){setError("Lee y acepta los Términos de la venta antes de enviar la oferta");return;}
    if(offerNote.trim()&&hasDisallowedContactContent(offerNote)){setError(OFF_PLATFORM_MESSAGE);return}
    setBusy(true);setError("");
-   const {error}=await supabase.rpc("create_offer",{p_dress_id:activeConv.dress_id,p_amount_mxn:amount,p_shipping_mxn:shipping,p_conversation_id:activeConv.id,p_note:offerNote.trim()||null});
+   const {error}=await supabase.rpc("create_offer_v2",{p_terms_version:TERMS_VERSION,p_legal_bundle_hash:LEGAL_BUNDLE_SHA256,p_terms_accepted:offerTerms,p_dress_id:activeConv.dress_id,p_amount_mxn:amount,p_shipping_mxn:shipping,p_conversation_id:activeConv.id,p_note:offerNote.trim()||null});
    setBusy(false);
    if(error)setError(error.message);
-   else{void dispatchEmails();setOfferOpen(false);setOfferAmount("");setOfferShipping("");setOfferNote("");await load(activeConv.id);refreshConversation()}
+   else{void dispatchEmails();setOfferOpen(false);setOfferAmount("");setOfferShipping("");setOfferNote("");setOfferTerms(false);await load(activeConv.id);refreshConversation()}
  }
  async function saveDestination(){
    if(!activeConv||!/^[0-9]{5}$/.test(postalCode)||destination.name.trim().length<5||destination.phone.replace(/\D/g,"").length<10||!destination.street1.trim()||!destination.city.trim()||!destination.state.trim()||(destination.type==="carrier_branch"&&!destination.branch.trim())){setError("Completa el nombre de quien recibirá, teléfono y destino de envío.");return}
@@ -196,7 +199,7 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
 
     {purchaseHelpOpen&&<div className="sv-modal-backdrop" role="presentation" onMouseDown={()=>setPurchaseHelpOpen(false)}><div className="sv-modal" role="dialog" aria-modal="true" aria-labelledby="purchase-title" onMouseDown={event=>event.stopPropagation()}><button className="sv-modal-close" type="button" aria-label="Cerrar" onClick={()=>setPurchaseHelpOpen(false)}>×</button><h2 id="purchase-title">Comprar este vestido</h2><p>{activeConv.shipping_destination_set_at?"Pide a la vendedora que te envíe la oferta final con el costo de envío.":"Primero comparte tu destino para que la vendedora pueda cotizar el envío."}</p><button type="button" className="btn btn-primary" onClick={()=>{setPurchaseHelpOpen(false);if(activeConv.shipping_destination_set_at){setBody("Hola, quiero comprar el vestido, ¿me envías la oferta final con el envío cotizado?")}else{document.getElementById("shipping-destination")?.scrollIntoView({behavior:"smooth",block:"start"})}}}>{activeConv.shipping_destination_set_at?"Pedir oferta final":"Compartir destino"}</button></div></div>}
 
-    {offerOpen&&<div className="sv-modal-backdrop" role="presentation" onMouseDown={()=>setOfferOpen(false)}><div className="sv-modal" role="dialog" aria-modal="true" aria-labelledby="offer-title" onMouseDown={event=>event.stopPropagation()}><button className="sv-modal-close" type="button" aria-label="Cerrar" onClick={()=>setOfferOpen(false)}>×</button><h2 id="offer-title">Enviar oferta final</h2><p>Precio publicado: <strong>{money(activeConv.dresses?.precio_venta_mxn)}</strong></p><label><span>Precio acordado del vestido</span><div className="modal-money-input"><span>$</span><input autoFocus type="number" min="1" max={activeConv.dresses?.precio_venta_mxn} value={offerAmount} onChange={e=>setOfferAmount(e.target.value)} placeholder="0"/></div></label><div className="modal-suggestions">{[.85,.9,1].map(rate=>{const suggestion=Math.round(Number(activeConv.dresses?.precio_venta_mxn||0)*rate);return <button type="button" key={rate} onClick={()=>setOfferAmount(String(suggestion))}>{money(suggestion)}</button>})}</div><label><span>Envío cotizado</span><div className="modal-money-input"><span>$</span><input type="number" min="0" value={offerShipping} onChange={e=>setOfferShipping(e.target.value)} placeholder="0"/></div></label>{offerAmount&&<p className="offer-total">Total para la compradora: <strong>{money(Number(offerAmount||0)+Number(offerShipping||0))}</strong></p>}<label><span>Mensaje opcional</span><input value={offerNote} maxLength={500} onChange={e=>setOfferNote(e.target.value)} placeholder="Ej. Incluye envío asegurado"/></label><button type="button" className="btn btn-primary" disabled={busy||!offerAmount} onClick={createOffer}>Enviar oferta final</button></div></div>}
+    {offerOpen&&<div className="sv-modal-backdrop" role="presentation" onMouseDown={()=>setOfferOpen(false)}><div className="sv-modal" role="dialog" aria-modal="true" aria-labelledby="offer-title" onMouseDown={event=>event.stopPropagation()}><button className="sv-modal-close" type="button" aria-label="Cerrar" onClick={()=>setOfferOpen(false)}>×</button><h2 id="offer-title">Enviar oferta final</h2><p>Precio publicado: <strong>{money(activeConv.dresses?.precio_venta_mxn)}</strong></p><label><span>Precio acordado del vestido</span><div className="modal-money-input"><span>$</span><input autoFocus type="number" min="1" max={activeConv.dresses?.precio_venta_mxn} value={offerAmount} onChange={e=>setOfferAmount(e.target.value)} placeholder="0"/></div></label><div className="modal-suggestions">{[.85,.9,1].map(rate=>{const suggestion=Math.round(Number(activeConv.dresses?.precio_venta_mxn||0)*rate);return <button type="button" key={rate} onClick={()=>setOfferAmount(String(suggestion))}>{money(suggestion)}</button>})}</div><label><span>Envío cotizado</span><div className="modal-money-input"><span>$</span><input type="number" min="0" value={offerShipping} onChange={e=>setOfferShipping(e.target.value)} placeholder="0"/></div></label>{offerAmount&&<p className="offer-total">Total para la compradora: <strong>{money(Number(offerAmount||0)+Number(offerShipping||0))}</strong></p>}<label><span>Mensaje opcional</span><input value={offerNote} maxLength={500} onChange={e=>setOfferNote(e.target.value)} placeholder="Ej. Incluye envío asegurado"/></label><label className="check"><input type="checkbox" checked={offerTerms} onChange={e=>setOfferTerms(e.target.checked)}/><span>He leído y acepto los <Link href="/legal/terminos" target="_blank" rel="noopener noreferrer">Términos y Condiciones de la venta</Link>, incluido el cargo del 4% por falta de envío, descontado de mi siguiente venta concluida</span></label><button type="button" className="btn btn-primary" disabled={busy||!offerAmount||!offerTerms} onClick={createOffer}>Enviar oferta final</button></div></div>}
   </>:<p>Selecciona una conversación.</p>}</section>
  </div>
 }

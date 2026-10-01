@@ -7,7 +7,7 @@ export default async function PaymentsAccountPage() {
   const [{ data: paymentAccount }, { data: orders }, { data: debts }] = await Promise.all([
     supabase.from("seller_payment_accounts").select("provider,onboarding_status,charges_enabled,payouts_enabled,bank_account_linked,bank_name,bank_last4").eq("user_id", user.id).maybeSingle(),
     supabase.from("orders").select("id,status,seller_net_mxn,seller_net_after_processor_mxn,dresses(model),seller_payouts(status,amount_mxn,gross_amount_mxn,debt_offset_mxn,transfer_amount_mxn,requested_at,paid_out_at)").eq("seller_id", user.id).order("created_at", { ascending: false }).limit(50),
-    supabase.from("seller_debts").select("id,order_id,breach_charge_mxn,return_shipping_mxn,original_amount_mxn,recovered_amount_mxn,status,created_at").in("status", ["open", "partially_recovered"]).order("created_at", { ascending: false }).limit(50),
+    supabase.from("seller_debts").select("id,order_id,breach_charge_mxn,return_shipping_mxn,original_amount_mxn,recovered_amount_mxn,status,created_at").eq("seller_id", user.id).in("status", ["open", "partially_recovered"]).order("created_at", { ascending: false }).limit(50),
   ]);
 
   return <main className="page narrow">

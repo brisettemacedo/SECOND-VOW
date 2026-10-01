@@ -7,9 +7,10 @@ export default function PayoutsClient({ orders, debts, bankLinked }: { orders: a
   const router = useRouter();
   const [busy, setBusy] = useState("");
 
+  const statuses: Record<string,string>={held:"Retenido",releasable:"Disponible para retiro",requested:"Retiro solicitado",processing:"Retiro en proceso",paid_out:"Retirado",paused:"En revisión",failed:"Pendiente de reintento",reversed:"Reembolsado"};
   const payouts=orders.flatMap(order=>(order.seller_payouts??[]).map((p:any)=>({...p,order})));
   const pending=payouts.filter((p:any)=>["held","releasable"].includes(p.status));
-  const total=pending.reduce((sum:number,p:any)=>sum+Number(p.gross_amount_mxn??p.amount_mxn??0),0);
+  const total=pending.reduce((sum:number,p:any)=>sum+Number(p.transfer_amount_mxn??p.amount_mxn??0),0);
   const debtTotal=debts.reduce((sum:number,debt:any)=>sum+Math.max(0,Number(debt.original_amount_mxn??0)-Number(debt.recovered_amount_mxn??0)),0);
   const releasable=pending.filter((p:any)=>p.status==="releasable");
   async function requestAll() {
@@ -21,10 +22,10 @@ export default function PayoutsClient({ orders, debts, bankLinked }: { orders: a
     setBusy(""); router.refresh();
   }
   return <section className="panel"><span className="muted">Saldo pendiente por cobrar</span><h2>${total.toLocaleString("es-MX")} MXN</h2>
-    <p className="muted">Este saldo es el 82% del total cobrado (vestido + envío). De aquí pagarás la guía acordada con la compradora.</p>
+    <p className="muted">El saldo ya considera la comisión y los descuentos aplicados, de aquí pagarás la guía acordada con la compradora</p>
     {debtTotal>0&&<div className="alert-info"><strong>Adeudo documentado: ${debtTotal.toLocaleString("es-MX")} MXN</strong><p>Se compensará únicamente con saldos futuros antes de transferirlos. SECOND VOW no hará un débito automático a tu tarjeta ni a tu cuenta bancaria.</p></div>}
-    {bankLinked&&releasable.length>0&&<button className="btn btn-primary" disabled={busy==="all"} onClick={requestAll}>{busy?"Procesando…":`Retirar $${releasable.reduce((s:number,p:any)=>s+Number(p.amount_mxn||0),0).toLocaleString("es-MX")}`}</button>}
+    {bankLinked&&releasable.length>0&&<button className="btn btn-primary" disabled={busy==="all"} onClick={requestAll}>{busy?"Procesando…":`Retirar $${releasable.reduce((s:number,p:any)=>s+Number(p.transfer_amount_mxn??p.amount_mxn??0),0).toLocaleString("es-MX")}`}</button>}
     {!total&&<p>No hay saldos pendientes.</p>}
-    {!!payouts.length&&<details><summary>Ver desglose</summary>{payouts.map((p:any)=><p key={`${p.order.id}-${p.status}`}>{p.order.dresses?.model||"Vestido"}: saldo ${Number(p.gross_amount_mxn??p.amount_mxn??0).toLocaleString("es-MX")}{Number(p.debt_offset_mxn)>0?` · compensación $${Number(p.debt_offset_mxn).toLocaleString("es-MX")} · transferencia $${Number(p.transfer_amount_mxn??0).toLocaleString("es-MX")}`:""} · {p.status}</p>)}</details>}
+    {!!payouts.length&&<details><summary>Ver desglose</summary>{payouts.map((p:any)=><p key={`${p.order.id}-${p.status}`}>{p.order.dresses?.model||"Vestido"}: saldo ${Number(p.gross_amount_mxn??p.amount_mxn??0).toLocaleString("es-MX")}{Number(p.debt_offset_mxn)>0?` · compensación $${Number(p.debt_offset_mxn).toLocaleString("es-MX")} · transferencia $${Number(p.transfer_amount_mxn??0).toLocaleString("es-MX")}`:""} · {statuses[p.status] || "En revisión"}</p>)}</details>}
   </section>;
 }

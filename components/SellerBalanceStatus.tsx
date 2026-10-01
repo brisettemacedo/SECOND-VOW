@@ -7,9 +7,9 @@ export default function SellerBalanceStatus({ order, payout }: { order: any; pay
     ? parsedDate.toLocaleString("es-MX", { timeZone: "America/Mexico_City", dateStyle: "long", timeStyle: "short" })
     : null;
   let message = "Tu saldo estará disponible para retiro cuando termine el plazo de revisión de 48 horas después de la entrega, si no hay reportes pendientes.";
-  if (["cancelled", "refunded"].includes(order.status)) {
+  if (["cancelled", "refunded"].includes(order.status) || payout.status === "reversed") {
     message = "Este pedido no tiene saldo disponible para retiro.";
-  } else if (["paid", "transferred"].includes(payout.status)) {
+  } else if (["paid", "paid_out", "transferred"].includes(payout.status)) {
     message = "El retiro de este saldo ya se completó.";
   } else if (["requested", "processing"].includes(payout.status)) {
     message = "Tu retiro está en proceso.";

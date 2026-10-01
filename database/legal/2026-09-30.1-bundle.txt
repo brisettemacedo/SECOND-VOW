@@ -1,0 +1,221 @@
+TERMS_VERSION=2026-09-30.1
+app/legal/terminos/page.tsx
+import Link from "next/link";
+import { CONTACT_EMAIL, LEGAL_NAME, TERMS_VERSION } from "@/lib/site";
+
+export default function Terms() {
+  return <main className="legal-page">
+    <h1>Términos y Condiciones</h1>
+    <p className="legal-meta">Última actualización: 30 de septiembre de 2026, versión {TERMS_VERSION}</p>
+    <p>Estos Términos regulan el acceso y uso de SECOND VOW, operado por <strong>{LEGAL_NAME}</strong>. Contacto: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Al crear una cuenta o utilizar funciones reservadas aceptas estas reglas y la versión registrada para cada operación.</p>
+
+    <h2>1. Naturaleza del servicio</h2>
+    <p>SECOND VOW es un marketplace tecnológico especializado en vestidos de novia usados y en vestidos nuevos que no fueron utilizados por su propietaria. SECOND VOW no adquiere la propiedad ni se convierte en vendedor del artículo. La compraventa se celebra entre compradora y vendedora; SECOND VOW presta servicios de publicación, comunicación, moderación, pago, reputación, seguimiento y gestión de incidencias. SECOND VOW responde por sus propias obligaciones como proveedor de la plataforma, sin excluir derechos irrenunciables previstos en la legislación mexicana.</p>
+
+    <h2>2. Capacidad y cuenta</h2>
+    <p>Las usuarias deben ser mayores de edad y contar con capacidad legal para contratar. La información proporcionada debe ser veraz y mantenerse actualizada. SECOND VOW está destinado exclusivamente a ventas ocasionales del vestido propio por falta de uso, cambio de planes, celebración concluida u otra causa semejante. Se prohíbe usarlo para inventario comercial, reventa habitual o actividad profesional. SECOND VOW podrá solicitar aclaraciones, limitar publicaciones o cerrar cuentas cuando detecte habitualidad. La declaración de una usuaria no impide la aplicación de la legislación que corresponda por la realidad de sus actividades.</p>
+
+    <h2>3. Obligaciones de la vendedora</h2>
+    <p>Al enviar un vestido a revisión, la vendedora declara que es propietaria o está autorizada para venderlo; que es auténtico y de procedencia lícita; que las fotografías corresponden al artículo; y que informó con veracidad marca, medidas, modificaciones, condición, daños, accesorios y demás características relevantes. Debe conservar evidencia razonable del vestido, empaque y entrega a paquetería.</p>
+    <p>La vendedora concede a SECOND VOW una licencia no exclusiva y temporal para alojar, adaptar técnicamente, mostrar y promocionar las fotografías y textos de la publicación mientras sea necesario para operar la plataforma y documentar una transacción o controversia.</p>
+    <p>La vendedora deberá cooperar en cualquier aclaración sobre propiedad, autenticidad, procedencia o derechos sobre las fotografías. Responderá frente a la compradora y terceros por información falsa, artículos ilícitos o infracciones que le sean atribuibles, y mantendrá a SECOND VOW indemne respecto de reclamaciones originadas por su conducta, sin excluir responsabilidad propia de la plataforma ni derechos irrenunciables.</p>
+
+    <h2>4. Autenticidad, marcas y contenido prohibido</h2>
+    <p>Las marcas pertenecen a sus titulares y su mención no implica afiliación. Se prohíben artículos ilícitos, robados o falsificados; fotografías sin autorización; descripciones engañosas; ocultamiento de daños; suplantación; acoso; spam; fraude; manipulación de precios y uso de la plataforma para evadir deliberadamente comisiones o mecanismos de seguridad. SECOND VOW puede pedir evidencia, retirar publicaciones y colaborar con autoridades.</p>
+
+    <h2>5. Ofertas, pedido y disponibilidad</h2>
+    <p>La compradora puede conversar y preguntar por el precio, pero solo la vendedora emite la oferta formal. La oferta incluye el precio definitivo del vestido y un costo de envío fijo calculado con el código postal de la compradora. No hay contraofertas. La compradora puede aceptarla o rechazarla; la vendedora puede cancelarla mientras siga pendiente.</p>
+    <p>La oferta vence en 48 horas. Al aceptarla se genera un pedido con hasta 48 horas para pagar. Puede reintentar Stripe dentro de ese plazo; cada sesión de Checkout dura aproximadamente 60 minutos. Ni aceptar ni abrir Checkout oculta la publicación. La primera compradora cuyo pago sea confirmado obtiene el vestido; los demás pedidos se cancelan y cualquier segundo cargo excepcional se revisa y reembolsa.</p>
+    <p>Antes de la oferta, la compradora comparte de forma privada en la conversación su nombre completo y el domicilio o sucursal de paquetería donde recibirá. La vendedora utiliza ese destino para calcular el envío asegurado. Al aceptar la oferta, el destino queda vinculado al pedido y ya no puede modificarse unilateralmente.</p>
+
+    <h2>6. Precio y comisión</h2>
+    <p>Publicar es gratuito. En una venta concluida, SECOND VOW retiene <strong>18% del total de la oferta: vestido más envío</strong>. Esa comisión incluye el procesamiento ordinario del pago, sin desglosarlo como un cargo adicional, el cargo por falta de envío previsto en la sección 11 corresponde a una operación cancelada y se descuenta de una venta futura. La vendedora recibe el 82% del total y de ese saldo paga la guía.</p>
+    <p>SECOND VOW está destinada a ventas ocasionales de vestidos y accesorios de propiedad personal, usados o nuevos que no hayan sido utilizados. La realización de una venta aislada no implica que SECOND VOW considere automáticamente a la vendedora como comerciante, proveedora o persona que realiza una actividad empresarial. Cada usuaria será responsable de determinar las consecuencias fiscales que, en su caso, correspondan a su situación particular.</p>
+    <p>SECOND VOW emitirá, cuando legalmente corresponda, el comprobante fiscal relativo a la comisión o a los servicios que cobre directamente. Solo solicitará RFC u otros datos fiscales, informará operaciones, efectuará retenciones o emitirá constancias cuando exista una obligación legal aplicable a la operación o a la situación de la usuaria. La declaración de una venta como ocasional no prevalecerá si la frecuencia, volumen, inventario, adquisición para reventa u otras circunstancias demuestran razonablemente una actividad comercial o profesional; en ese caso SECOND VOW podrá restringir la cuenta. Esta cláusula no constituye asesoría fiscal individual.</p>
+
+    <h2>7. Pagos, saldo y retiros</h2>
+    <p>Los pagos se procesan mediante Stripe u otro proveedor habilitado. SECOND VOW no conserva números completos de tarjeta ni credenciales bancarias completas. El saldo de la vendedora permanece retenido durante el envío y la ventana de reclamación. Si no existe reclamación activa y termina el periodo de protección, el saldo puede liberarse para retiro a la cuenta bancaria vinculada.</p>
+    <p>Un pago recibido después de vencer o liberarse una reserva no autoriza automáticamente el envío: se coloca en revisión para confirmar disponibilidad o tramitar reembolso. SECOND VOW puede pausar saldos ante fraude, devolución, reclamación, contracargo, orden de autoridad o error de procesamiento.</p>
+
+    <h2>8. Envío</h2>
+    <p>SECOND VOW no ofrece pruebas ni entregas presenciales. La vendedora contrata una paquetería reconocida con rastreo y seguro, registra empresa y guía dentro de cinco días naturales desde el pago y embala adecuadamente el vestido. Todo envío deberá contar con rastreo, seguro, firma y entrega contra identificación oficial. La vendedora deberá contratar un servicio que permita acreditar la recepción por la compradora o por la persona autorizada en el destino del pedido. Si el pago está en revisión, no debe enviar.</p>
+    <p>Ambas partes deberán documentar razonablemente la operación. La vendedora conservará fotografías del estado del vestido, su empaquetado, paquete cerrado y entrega a paquetería; el video es especialmente recomendable. La compradora conservará fotografías del paquete cerrado y video continuo de su apertura y revisión. La ausencia de evidencia no determina automáticamente una controversia, pero podrá considerarse al evaluar hechos que no puedan acreditarse por otros medios.</p>
+    <h2>8.1 Fotografías y promoción</h2><p>La vendedora concede la licencia necesaria para mostrar las fotografías en la publicación y operar el marketplace. El uso adicional en redes sociales o publicidad requiere una autorización opcional y separada al publicar; puede retirarse para usos futuros, sin afectar materiales difundidos lícitamente ni evidencia que deba conservarse.</p>
+
+    <h2>9. Recepción y reclamaciones</h2>
+    <p>SECOND VOW puede conocer la entrega mediante un evento <em>delivered</em> recibido del proveedor de rastreo o mediante la confirmación manual de la compradora. Dispone de <strong>48 horas desde que SECOND VOW recibe y registra la primera confirmación válida de entrega</strong> para reportar que el paquete no fue recibido, información falsa o materialmente incorrecta, incluido daño relevante no informado. La fecha histórica del transportista se conserva como evidencia, pero no reduce retroactivamente la ventana. Sin reclamación oportuna opera la aceptación automática interna.</p>
+    <p><strong>No procede una devolución porque el vestido no quede, no favorezca, la talla elegida sea inadecuada, exista cambio de opinión o se encuentre otra opción.</strong></p>
+    <p>SECOND VOW puede solicitar fotografías, video, medidas, etiquetas, empaque, comunicaciones y seguimiento. El plazo operativo de la plataforma no limita derechos que legalmente resulten irrenunciables.</p>
+    <p>SECOND VOW resolverá considerando toda la evidencia disponible. Si la paquetería reporta entrega y la compradora manifiesta oportunamente que no recibió el paquete, el saldo permanecerá bloqueado mientras se revisan el rastreo, la firma, el nombre de quien recibió y la constancia de entrega disponible. La evidencia incompleta puede dificultar acreditar el estado, embalaje, recepción o apertura. Un video continuo y contemporáneo tendrá mayor valor probatorio interno que uno editado, interrumpido o grabado posteriormente. La constancia de paquetería acredita la entrega, pero no necesariamente el estado interior. La entrega contra identificación no elimina el derecho a reclamar falta de recepción, información falsa o daño relevante no informado.</p>
+
+    <h2>10. Devoluciones y reembolsos</h2>
+    <p>Una devolución solo puede autorizarse por información falsa o materialmente incorrecta, incluido daño relevante no informado, o por otro incumplimiento objetivo cubierto por la ley. Si la responsabilidad se atribuye a la vendedora, ella deberá contratar, pagar y compartir una guía prepagada; la compradora no adelantará ese gasto. La compradora utilizará la guía, entregará el vestido a paquetería dentro del plazo comunicado y conservará el artículo sustancialmente en el estado recibido. En otros supuestos, la decisión indicará quién asume el retorno.</p>
+    <p>SECOND VOW abrirá un expediente, notificará a la vendedora, conservará el saldo y evaluará la publicación congelada, mensajes, guía, seguimiento y evidencia disponible. La compradora puede aportar evidencia si la tiene; su carga no es condición para abrir la reclamación. La vendedora tendrá tres días naturales para responder y también podrá aportar evidencia. La decisión se emitirá después de recibir la respuesta o vencer el plazo, indicará el supuesto analizado, la responsabilidad atribuida y su motivo. Las partes podrán solicitar revisión dentro de los tres días naturales siguientes; mientras exista una revisión abierta no se ejecutará el reembolso administrativo.</p>
+    <p>Cuando una resolución motivada confirme que la devolución o el reembolso deriva de información falsa, daño no declarado u otro incumplimiento atribuible a la vendedora distinto de la falta de envío regulada en la sección 11, ésta no recibirá el producto de la venta, deberá cubrir directamente la guía prepagada de retorno y, cuando la versión de términos aceptada para esa operación lo contemple, deberá cubrir un <strong>cargo por incumplimiento atribuible equivalente al 18% del importe efectivamente reembolsado, incluido el envío</strong>. Este cargo sustituye la comisión ordinaria de esa misma operación y nunca se cobrará dos veces.</p>
+    <p>El adeudo documentado podrá compensarse con saldos futuros de la vendedora y podrá mantener sus retiros o nuevas operaciones en revisión hasta quedar cubierto. SECOND VOW no realizará un débito automático a una tarjeta o cuenta bancaria sin una autorización válida. No se genera este cargo cuando la reclamación se rechaza; el motivo es talla, ajuste o cambio de opinión; la compradora proporcionó un domicilio erróneo o alteró el artículo; el daño corresponde exclusivamente a la paquetería y la vendedora cumplió el protocolo de seguro, rastreo, firma e identificación; existió cancelación mutua antes del envío sin incumplimiento; o el hecho es atribuible a SECOND VOW o al procesador de pagos.</p>
+
+    <h2>11. Cancelaciones, falta de envío y contracargos</h2>
+    <p>No se ofrece cancelación manual de una venta por la vendedora, si no registra una guía rastreable dentro de los cinco días naturales siguientes a la confirmación del pago, se cancela automáticamente la operación, se bloquea el envío tardío y se solicita el reembolso completo a la compradora, el vestido vuelve a publicarse cuando el reembolso queda confirmado.</p>
+    <p>Cuando el reembolso por falta de envío quede confirmado, se registrará a cargo de la vendedora un <strong>cargo administrativo del 4% del importe efectivamente reembolsado, incluido el envío</strong>, destinado a cubrir los costos administrativos y de procesamiento asociados a la cancelación, este porcentaje es una tarifa de la plataforma y no una afirmación sobre la tarifa del procesador.</p>
+    <p>El cargo se descontará automáticamente del saldo de la siguiente venta que concluya después de registrarse el adeudo, además de la comisión ordinaria y de otros descuentos aplicables, si ese saldo no alcanza, el remanente se compensará con ventas posteriores, no se hará un débito a la tarjeta ni a la cuenta bancaria de la vendedora.</p>
+    <p>El 4% por falta de envío no se acumula con el cargo del 18% por incumplimiento de esa misma operación, se aplica únicamente a las ofertas emitidas después de que la vendedora acepte esta versión de los Términos, las operaciones anteriores conservan las condiciones que les correspondan.</p>
+    <p>Si la vendedora no registra una guía dentro de cinco días naturales, el sistema bloquea el envío tardío, coloca la operación en reembolso pendiente y mantiene el saldo bloqueado hasta que Stripe confirme el reembolso. Si Stripe Radar abre una revisión, emite una alerta temprana de fraude o la compradora desconoce el cargo, SECOND VOW bloquea envío y retiro y muestra a la vendedora “NO ENVÍES”. Una alerta es una medida preventiva y no constituye por sí sola una declaración de fraude. La aceptación automática de 48 horas no impide un contracargo bancario posterior.</p>
+
+    <h2>12. Moderación, seguridad y pagos externos</h2>
+    <p>SECOND VOW puede aprobar, pedir cambios, rechazar, archivar o retirar publicaciones y limitar cuentas ante reportes fundados, falsificación, fraude o riesgos de seguridad. Podrá registrar incidencias confirmadas de compradoras o vendedoras, graduarlas según gravedad y reincidencia y revertirlas si una revisión cambia la decisión. Ninguna medida se basará exclusivamente en que una usuaria haya presentado de buena fe una reclamación. La moderación no constituye certificación absoluta de autenticidad o calidad. Los pagos y acuerdos efectuados fuera de SECOND VOW carecen de la trazabilidad y protección operativa de la plataforma.</p>
+    <p>Los mensajes, notas de ofertas y comentarios pueden someterse a controles automáticos y revisión humana para detectar datos de contacto, enlaces, pagos externos, spam, fraude o invitaciones a evadir la plataforma. Consulta las <Link href="/legal/comunidad">Normas de la comunidad</Link>.</p>
+
+    <h2>13. Propiedad intelectual y avisos</h2>
+    <p>El nombre, interfaz, software y contenidos propios de SECOND VOW están protegidos. Una persona titular puede reportar material presuntamente infractor al correo de contacto, identificando sus datos, el derecho invocado, la publicación, la ubicación del contenido y evidencia razonable de titularidad. SECOND VOW acusará recibo, podrá ocultar preventivamente el contenido, notificará a la usuaria que lo publicó y evaluará cualquier respuesta. Podrá retirar definitivamente el contenido cuando exista evidencia suficiente, reiteración, orden de autoridad o falta de respuesta. Las declaraciones deliberadamente falsas podrán ocasionar suspensión y responsabilidad de quien las formula.</p>
+
+    <h2>14. Datos personales</h2>
+    <p>El tratamiento de datos se rige por el Aviso de Privacidad vigente. La aceptación de estos Términos no sustituye consentimientos específicos legalmente necesarios.</p>
+
+    <h2>15. Cambios, ley y autoridades</h2>
+    <p>La fecha y versión vigentes aparecen al inicio. SECOND VOW puede actualizarlos y comunicarlos mediante la página, correo o aviso visible dentro de la cuenta. La mera publicación podrá informar cambios no materiales; los cambios que afecten sustancialmente una operación futura requerirán una nueva aceptación cuando legalmente corresponda. Cada compra conserva la versión y evidencia de aceptación aplicables al momento de pagar.</p>
+    <p>Estos Términos se interpretan conforme a las leyes de México. Para controversias que legalmente puedan someterse a convenio, las partes se someten a los tribunales competentes de Guadalajara, Jalisco. Permanecen a salvo la competencia de PROFECO, las autoridades de protección de datos, los derechos irrenunciables y cualquier fuero que legalmente corresponda a una consumidora.</p>
+  </main>;
+}
+
+app/legal/aviso-privacidad/page.tsx
+import Link from "next/link";
+import { LEGAL_ADDRESS, LEGAL_NAME, PRIVACY_EMAIL, PRIVACY_VERSION } from "@/lib/site";
+
+export default function Privacy() {
+  return <main className="legal-page">
+    <h1>Aviso de Privacidad Integral</h1>
+    <p className="legal-meta">Versión {PRIVACY_VERSION}</p>
+    <p><strong>{LEGAL_NAME}</strong>, con domicilio en <strong>{LEGAL_ADDRESS}</strong>, es responsable del tratamiento de datos personales recabados mediante SECOND VOW. Contacto de privacidad: <a href={`mailto:${PRIVACY_EMAIL}`}>{PRIVACY_EMAIL}</a>.</p>
+
+    <h2>1. Datos tratados</h2>
+    <p>Podemos tratar nombre, correo, teléfono y datos de cuenta; perfil y reputación; publicaciones, fotografías, medidas y descripciones; mensajes, ofertas y favoritos; nombre de la persona receptora, domicilio o sucursal de entrega; pedidos, pagos, comisiones, retiros, facturación, reclamaciones y evidencia; datos de soporte; dirección IP, dispositivo, navegador, registros de acceso, cookies y señales de prevención de fraude.</p>
+    <p>La información completa de tarjetas, cuentas bancarias y documentos requeridos para el alta financiera es recopilada directamente por Stripe. SECOND VOW conserva únicamente identificadores técnicos, estado de onboarding, resultado de verificación, banco y últimos cuatro dígitos cuando estén disponibles. SECOND VOW no solicita nuevas copias de INE o pasaporte dentro de su propio almacenamiento.</p>
+    <p>La identificación oficial mostrada al momento de recibir se valida por la paquetería. SECOND VOW no solicita ni conserva una copia de esa identificación; podrá conservar únicamente la referencia de entrega, nombre reportado de quien recibió, firma o constancia que proporcione el transportista.</p>
+
+    <h2>2. Finalidades primarias</h2>
+    <p>Crear y administrar cuentas; autenticar usuarias; publicar y moderar vestidos; operar mensajes, ofertas, pedidos, pagos, envíos, saldos y retiros; mostrar reputación limitada; prevenir fraude, falsificación, abuso y evasión de comisiones; atender soporte, reclamaciones, devoluciones y derechos ARCO; conservar evidencia; proteger derechos; cumplir obligaciones contractuales, fiscales, contables y requerimientos de autoridad.</p><p>Con autorización opcional y separada, podremos usar fotografías de una publicación en redes sociales y campañas publicitarias de SECOND VOW. Negarte no impide publicar ni vender. Puedes retirar la autorización para usos futuros mediante nuestros canales de contacto.</p>
+
+    <h2>3. Finalidades secundarias</h2>
+    <p>Con el consentimiento o fundamento aplicable podremos elaborar analítica, mejorar el servicio y enviar promociones. Puedes oponerte a estas finalidades sin perder funciones esenciales.</p>
+
+    <h2>4. Encargados, proveedores y transferencias</h2>
+    <p>Podemos utilizar proveedores como Supabase para infraestructura, autenticación y almacenamiento; Stripe para pagos, verificación financiera y dispersión; Ship24 y paqueterías para seguimiento; Vercel para alojamiento; y proveedores de seguridad, soporte, correo o analítica. Cada uno recibe solo los datos necesarios para su función y puede operar infraestructura fuera de México con las salvaguardas aplicables.</p>
+    <p>Podremos comunicar datos a compradora, vendedora y proveedores cuando sea necesario para ejecutar la operación solicitada; cumplir obligaciones legales; atender autoridades; prevenir fraude; o ejercer y defender derechos. El destino y nombre de recepción se comparten únicamente con la vendedora correspondiente después de que la compradora decide proporcionarlos para recibir una oferta y ejecutar la venta. Cuando una transferencia requiera consentimiento, se solicitará conforme a la ley.</p>
+
+    <h2>5. Conservación</h2>
+    <p>La cuenta y datos operativos se conservan mientras exista la relación y posteriormente durante los plazos legales, fiscales, contractuales o de prescripción aplicables. Mensajes, pedidos y evidencia podrán bloquearse mientras sean necesarios para controversias o prevención de fraude. Los documentos manuales de identidad recibidos antes de esta versión se eliminan al resolver la revisión; los pendientes abandonados se eliminan después de 30 días. Los plazos pueden ampliarse cuando exista reclamación, contracargo, investigación o requerimiento de autoridad.</p>
+
+    <h2>6. Seguridad y vulneraciones</h2>
+    <p>Aplicamos controles de acceso, registros, separación de credenciales, cifrado en tránsito, almacenamiento privado y minimización. Ningún sistema conectado a internet es infalible. Cuando una vulneración afecte significativamente derechos patrimoniales o morales, se notificará a las personas afectadas conforme a la legislación aplicable, indicando naturaleza, datos comprometidos, recomendaciones, acciones correctivas y medio de contacto.</p>
+
+    <h2>7. Derechos ARCO, revocación y limitación</h2>
+    <p>Puedes solicitar Acceso, Rectificación, Cancelación u Oposición; revocar consentimiento o limitar uso y divulgación. La solicitud debe identificar a la titular, señalar un medio de respuesta, describir el derecho y los datos involucrados y, cuando proceda, acreditar identidad o representación. Se responderá dentro de los plazos legales.</p>
+    <p>Presenta tu solicitud en <Link href="/cuenta/privacidad">Cuenta → Privacidad y derechos ARCO</Link> o mediante <a href={`mailto:${PRIVACY_EMAIL}`}>{PRIVACY_EMAIL}</a>.</p>
+
+    <h2>8. Cookies</h2>
+    <p>Utilizamos cookies necesarias para sesión, seguridad y funcionamiento. Las tecnologías analíticas o promocionales, si se incorporan, se sujetarán a la <Link href="/legal/cookies">Política de Cookies</Link> y al consentimiento requerido.</p>
+
+    <h2>9. Cambios y autoridad</h2>
+    <p>Los cambios materiales se publicarán con nueva fecha y, cuando corresponda, se comunicarán por correo o dentro de la plataforma. Si consideras vulnerados tus derechos, puedes acudir ante la autoridad federal competente en protección de datos personales en posesión de particulares.</p>
+  </main>;
+}
+
+app/legal/aviso-privacidad-simplificado/page.tsx
+import Link from "next/link";import {LEGAL_ADDRESS,LEGAL_NAME,PRIVACY_EMAIL} from "@/lib/site";
+export default function ShortPrivacy(){return <main className="legal-page"><h1>Aviso de Privacidad Simplificado</h1><p><strong>{LEGAL_NAME}</strong>, con domicilio en <strong>{LEGAL_ADDRESS}</strong>, tratará los datos que proporciones para administrar tu cuenta, operar publicaciones y transacciones, brindar soporte, gestionar pagos y retiros, prevenir fraude, moderar contenido y, si lo solicitas, verificar tu identidad. También podremos usar información de uso para mejorar la plataforma y, con el consentimiento correspondiente, comunicaciones promocionales.</p><p>Puedes limitar finalidades no esenciales, ejercer derechos ARCO o revocar consentimiento mediante <a href={`mailto:${PRIVACY_EMAIL}`}>{PRIVACY_EMAIL}</a> o desde tu cuenta. Consulta el <Link href="/legal/aviso-privacidad">Aviso de Privacidad Integral</Link> para conocer datos tratados, transferencias, conservación y procedimientos.</p></main>}
+
+app/legal/cookies/page.tsx
+import {COOKIES_VERSION} from "@/lib/site";export default function Cookies(){return <main className="legal-page"><h1>Política de Cookies</h1><p className="legal-meta">Versión {COOKIES_VERSION}</p><p>SECOND VOW utiliza cookies y tecnologías similares para que el sitio funcione, mantenga sesiones, proteja cuentas y recuerde determinadas preferencias.</p><h2>Cookies necesarias</h2><p>Son indispensables para autenticación, seguridad, balanceo, prevención de abuso y funciones solicitadas por la usuaria. No se desactivan desde el gestor de preferencias cuando su ausencia impediría prestar el servicio.</p><h2>Cookies de preferencias y analítica</h2><p>Podremos utilizar tecnologías para recordar preferencias o conocer de forma agregada cómo se usa la plataforma. Cuando la legislación requiera consentimiento previo para su uso, no se activarán hasta obtenerlo.</p><h2>Terceros</h2><p>Servicios de infraestructura, autenticación, pagos o analítica pueden establecer tecnologías propias cuando sean necesarias para prestar sus servicios. Su tratamiento se rige también por sus condiciones y avisos aplicables.</p><h2>Cómo controlarlas</h2><p>Puedes borrar o bloquear cookies desde la configuración de tu navegador. Deshabilitar cookies necesarias puede impedir iniciar sesión o utilizar funciones esenciales.</p></main>}
+
+app/legal/comunidad/page.tsx
+import Link from "next/link";
+import { CONTACT_EMAIL } from "@/lib/site";
+import { OFF_PLATFORM_MESSAGE } from "@/lib/contentModeration";
+
+export default function CommunityRules() {
+  return <main className="legal-page">
+    <p className="eyebrow">Seguridad y convivencia</p>
+    <h1>Normas de la comunidad</h1>
+    <p>Estas reglas protegen a compradoras y vendedoras, conservan la evidencia de cada operación y ayudan a que SECOND VOW siga siendo un espacio seguro.</p>
+
+    <h2>1. Mantén la operación dentro de SECOND VOW</h2>
+    <p>No publiques ni solicites teléfonos, correos, usuarios de redes sociales, enlaces externos, datos bancarios, CLABE o instrucciones de pago por fuera. Tampoco invites a continuar la conversación, negociar, pagar, entregar o enviar el vestido fuera de la plataforma.</p>
+    <p>Los datos necesarios para cotizar y completar el envío deben registrarse exclusivamente en el formulario privado de destino. No los escribas en el chat, una oferta o una calificación.</p>
+    <div className="alert-error moderation-copy" role="note">{OFF_PLATFORM_MESSAGE}</div>
+
+    <h2>2. Contenido que no está permitido</h2>
+    <ul>
+      <li>Spam, mensajes repetitivos, publicidad o promoción de otros negocios y plataformas.</li>
+      <li>Fraude, suplantación de identidad, phishing, enlaces maliciosos o evidencia manipulada.</li>
+      <li>Descripciones engañosas, ocultamiento de daños, falsificaciones o precios manipulados.</li>
+      <li>Acoso, amenazas, insultos, discriminación o contenido sexual explícito.</li>
+      <li>Presión para reunirse, pagar, enviar o cerrar un trato fuera de SECOND VOW.</li>
+    </ul>
+
+    <h2>3. Lo que sí puedes conversar</h2>
+    <p>Puedes preguntar por medidas, condición, modificaciones, accesorios, detalles visibles, disponibilidad, precio y envío. La compradora puede proponer un precio en el chat y la vendedora debe emitir la oferta final dentro de SECOND VOW.</p>
+
+    <h2>4. Moderación y consecuencias</h2>
+    <p>Usamos controles automáticos y revisión humana para prevenir conductas de riesgo. Un mensaje puede no enviarse si parece contener información prohibida. Según la gravedad o reincidencia, SECOND VOW puede advertir, limitar mensajes, ocultar contenido, cancelar operaciones, suspender o cerrar una cuenta. Las decisiones pueden revisarse cuando exista contexto o evidencia adicional.</p>
+
+    <h2>5. Reportes</h2>
+    <p>Si recibes una solicitud para salir de la plataforma, no compartas datos ni realices pagos. Conserva la conversación y repórtala desde SECOND VOW o escribe a <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Consulta también los <Link href="/legal/terminos">Términos y Condiciones</Link>.</p>
+  </main>;
+}
+
+app/legal/devoluciones/page.tsx
+import { CONTACT_EMAIL, TERMS_VERSION } from "@/lib/site";
+
+export default function ReturnsPolicy() {
+  return <main className="legal-page">
+    <h1>Política de reclamaciones y devoluciones</h1>
+    <p className="legal-meta">Versión {TERMS_VERSION}</p>
+    <h2>Causas cubiertas</h2>
+    <p>La compradora puede reclamar cuando el seguimiento indique entrega pero no haya recibido el paquete, o cuando la publicación contenga <strong>información falsa o materialmente incorrecta</strong>, incluido un <strong>daño relevante no informado</strong>, y esa diferencia afecte sustancialmente la identidad, autenticidad, condición, medidas objetivas, modificaciones o componentes anunciados del vestido.</p>
+    <h2>Supuestos no cubiertos</h2>
+    <p>No procede porque el vestido no quede, no favorezca, la talla elegida resulte inadecuada, exista cambio de opinión, se encuentre otra opción o haya diferencias meramente subjetivas que no contradigan materialmente la publicación.</p>
+    <h2>Plazo</h2>
+    <p>La compradora dispone de 48 horas contadas desde que SECOND VOW recibe y registra por primera vez una confirmación válida de entrega, ya sea mediante el proveedor de seguimiento o mediante confirmación manual de la compradora. La fecha histórica de la paquetería se conserva como evidencia, pero no reduce retroactivamente el plazo. Si no se abre reclamación dentro de esas 48 horas, opera la aceptación automática interna.</p>
+    <h2>Paquete reportado como entregado pero no recibido</h2>
+    <p>Si la paquetería reporta entrega y la compradora manifiesta oportunamente que no recibió el paquete, SECOND VOW bloqueará el saldo mientras revisa el rastreo y, cuando esté disponible, la firma, el nombre del receptor y la constancia de entrega. El evento de rastreo no resuelve por sí solo la controversia.</p>
+    <h2>Prueba, réplica y decisión</h2>
+    <p>La compradora debe describir concretamente lo ocurrido y puede aportar fotografías, video u otra evidencia si la tiene. La carga de archivos no es obligatoria para abrir el expediente, aunque su ausencia puede dificultar acreditar hechos que no consten por otros medios. SECOND VOW puede contrastar lo aportado con la copia inalterable de la publicación, mensajes, empaque, guía, seguimiento y constancia de entrega. La apertura de una reclamación no implica su aprobación automática.</p>
+    <p>SECOND VOW notificará a la vendedora, quien tendrá tres días naturales para responder y podrá aportar evidencia. El saldo permanecerá congelado. Una vez recibida la respuesta o vencido el plazo, la resolución identificará el supuesto aplicado, vendedora, compradora, paquetería, plataforma, responsabilidad compartida o falta de acreditación, y explicará su motivo. Cualquiera de las partes podrá solicitar revisión dentro de los tres días naturales siguientes. Una revisión abierta bloquea el reembolso administrativo hasta emitirse una decisión final.</p>
+    <h2>Devolución autorizada</h2>
+    <p>Solo cuando exista un vestido recibido y SECOND VOW autorice la devolución podrá iniciarse el retorno. Si la decisión atribuye el incumplimiento a la vendedora, ella deberá contratar, pagar y compartir una guía prepagada dentro del plazo comunicado; la compradora no deberá adelantar ese gasto. La compradora usará esa guía y confirmará la entrega a paquetería. En otros supuestos, la decisión indicará quién asume el costo. El seguimiento puede acreditar la recepción aunque la vendedora no la confirme manualmente. El vestido debe conservar el estado recibido, salvo el defecto reclamado.</p>
+    <h2>Costos</h2>
+    <p>Si la decisión motivada confirma un incumplimiento atribuible a la vendedora, la compradora recibirá el reembolso aprobado al medio de pago original, la vendedora no recibirá el producto de la venta y deberá cubrir directamente la guía prepagada de retorno. Cuando la versión aceptada para la operación lo contemple, podrá registrarse además un cargo por incumplimiento equivalente al 18% del monto efectivamente reembolsado, vestido y envío incluidos. Este cargo sustituye la comisión ordinaria de la misma operación y no se duplica.</p>
+    <p>El adeudo se compensa únicamente con saldos futuros y no autoriza débitos automáticos a tarjetas o bancos. No aplica si la reclamación se rechaza, responde a talla o cambio de opinión, deriva de un domicilio erróneo o alteración atribuible a la compradora, corresponde exclusivamente a la paquetería tras un envío correctamente asegurado y documentado, proviene de una cancelación mutua sin incumplimiento o es causada por SECOND VOW o el procesador. Escríbenos a <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+    <h2>Paquetería y seguro primero</h2>
+    <p>Cuando el hecho corresponda a pérdida o daño en tránsito, SECOND VOW podrá exigir que se inicie primero la reclamación del seguro de envío. El saldo seguirá retenido mientras se obtiene la respuesta de la paquetería. Esta gestión no reduce derechos irrenunciables ni impide una decisión distinta si la evidencia demuestra embalaje insuficiente, información falsa u otro incumplimiento de la vendedora.</p>
+  </main>;
+}
+
+app/legal/envios/page.tsx
+import { TERMS_VERSION } from "@/lib/site";
+
+export default function ShippingPolicy() {
+  return <main className="legal-page">
+    <h1>Política de envíos y seguimiento</h1>
+    <p className="legal-meta">Versión {TERMS_VERSION}</p>
+    <h2>Destino para cotización</h2>
+    <p>La compradora comparte privadamente en la conversación su nombre completo y el domicilio o sucursal de paquetería donde recibirá. La vendedora utiliza esa información exclusivamente para cotizar y ejecutar el envío. Al aceptar la oferta, el destino queda vinculado al pedido.</p>
+    <h2>Plazo de la vendedora</h2>
+    <p>La vendedora cuenta con cinco días naturales desde la confirmación del pago para registrar una guía rastreable. Vencido el plazo, el sistema bloquea el registro tardío, cambia la operación a reembolso pendiente y mantiene el saldo bloqueado.</p>
+    <h2>Guía y paquetería</h2>
+    <p>Todo envío deberá contar con rastreo, seguro, firma y entrega contra identificación oficial. La vendedora deberá contratar un servicio que permita acreditar la recepción por la compradora o por la persona autorizada en el destino del pedido. La guía debe corresponder a una paquetería reconocida, dirigirse exclusivamente al destino del pedido y mostrar eventos reales. SECOND VOW no conserva copia de la identificación mostrada a la paquetería.</p>
+    <h2>Evidencia de la vendedora</h2>
+    <p>Antes de registrar la guía, la vendedora debe conservar evidencia del estado del vestido, del paquete cerrado y del comprobante de recepción de la paquetería. No necesita cargarla en ese momento; SECOND VOW podrá solicitarla si existe una controversia. También se recomienda grabar video continuo del vestido y su empaquetado. Debe conservar los originales hasta que concluya la operación.</p>
+    <h2>Envío de regreso</h2>
+    <p>Cuando una decisión motivada autorice la devolución por un incumplimiento atribuible a la vendedora, ésta deberá contratar, pagar y compartir una guía prepagada. La compradora utilizará esa guía y confirmará la entrega del paquete a la paquetería. En los demás supuestos, la resolución indicará quién asume el retorno.</p>
+    <h2>Recepción y evidencia</h2>
+    <p>La compradora debe fotografiar todos los lados del paquete, etiqueta y cualquier alteración antes de abrirlo; grabar video continuo desde el paquete cerrado hasta revisar el vestido; fotografiar inmediatamente vestido, etiquetas, accesorios y diferencias; conservar el empaque durante 48 horas; y no lavar, alterar, reparar ni usar el vestido durante la revisión.</p>
+    <p>SECOND VOW registra la entrega cuando recibe un evento <em>delivered</em> del proveedor de rastreo o cuando la compradora confirma manualmente la recepción. El primer registro válido inicia la ventana de 48 horas y conserva separadamente la fecha histórica informada por la paquetería.</p>
+    <p>Un estado <em>delivered</em> acredita el evento reportado por la paquetería, pero no prueba por sí solo quién recibió ni el estado interior del vestido. Si la compradora reporta oportunamente que no recibió el paquete, el saldo se bloquea mientras SECOND VOW revisa el rastreo y, cuando esté disponible, la firma, el nombre del receptor y la constancia de entrega.</p>
+    <h2>Daño o pérdida en tránsito</h2>
+    <p>Si la evidencia apunta a pérdida o daño atribuible exclusivamente a la paquetería, deberá activarse primero el seguro contratado por la vendedora y conservarse el saldo mientras se documenta su respuesta. Haber contratado seguro, rastreo, firma y entrega contra identificación ayuda a determinar responsabilidad, pero no elimina derechos irrenunciables ni sustituye la revisión del embalaje y del estado declarado.</p>
+    <h2>Pago en revisión</h2>
+    <p>Si el pago es desconocido, disputado o marcado como riesgoso, la vendedora recibe la instrucción “NO ENVÍES” y el backend bloquea la guía y el retiro. Enviar contra ese bloqueo queda fuera del protocolo de protección.</p>
+  </main>;
+}
+
