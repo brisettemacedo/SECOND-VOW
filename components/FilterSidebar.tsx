@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { DressCatalogData } from "@/lib/dressCatalogData";
 
+import { DressShapeOutline } from "@/components/DressShapePicker";
+
 type BrandOption = { id: string; name: string };
 
 function CheckboxGroup({
@@ -38,6 +40,31 @@ function CheckboxGroup({
       </div>
     </fieldset>
   );
+}
+
+
+function VisualShapeGroup({ title, paramKey, options, draftParams, onToggle }: {
+  title: string;
+  paramKey: "silueta" | "escote" | "espalda";
+  options: { value: string; label: string }[];
+  draftParams: URLSearchParams;
+  onToggle: (key: string, value: string) => void;
+}) {
+  const active = new Set((draftParams.get(paramKey) ?? "").split(",").filter(Boolean));
+  return <fieldset className="filter-group filter-shape-group">
+    <legend>{title}</legend>
+    <p className="muted filter-shape-hint">Puedes elegir una o varias opciones</p>
+    <div className="shape-options filter-shape-options">
+      {options.map((option) => <button type="button" key={option.value}
+        aria-pressed={active.has(option.value)}
+        className={active.has(option.value) ? "shape-selected" : ""}
+        onClick={() => onToggle(paramKey, option.value)}>
+        <DressShapeOutline kind={paramKey} value={option.value} />
+        <span>{option.label}</span>
+        {active.has(option.value) && <span className="shape-check" aria-hidden="true">✓</span>}
+      </button>)}
+    </div>
+  </fieldset>;
 }
 
 export default function FilterSidebar({ brands, catalogs }: { brands: BrandOption[]; catalogs: DressCatalogData }) {
@@ -194,9 +221,9 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
               </div>
 
               <CheckboxGroup title="Talla" paramKey="talla" options={catalogs.sizes} draftParams={draftParams} onToggle={toggleMulti} />
-              <CheckboxGroup title="Silueta" paramKey="silueta" options={catalogs.silhouettes} draftParams={draftParams} onToggle={toggleMulti} />
-              <CheckboxGroup title="Escote" paramKey="escote" options={catalogs.necklines} draftParams={draftParams} onToggle={toggleMulti} />
-              <CheckboxGroup title="Espalda" paramKey="espalda" options={catalogs.backs} draftParams={draftParams} onToggle={toggleMulti} />
+              <VisualShapeGroup title="Silueta" paramKey="silueta" options={catalogs.silhouettes} draftParams={draftParams} onToggle={toggleMulti} />
+              <VisualShapeGroup title="Escote" paramKey="escote" options={catalogs.necklines} draftParams={draftParams} onToggle={toggleMulti} />
+              <VisualShapeGroup title="Espalda" paramKey="espalda" options={catalogs.backs} draftParams={draftParams} onToggle={toggleMulti} />
               <CheckboxGroup title="Mangas" paramKey="manga" options={catalogs.sleeves} draftParams={draftParams} onToggle={toggleMulti} />
               <CheckboxGroup title="Tela" paramKey="tela" options={catalogs.fabrics} draftParams={draftParams} onToggle={toggleMulti} />
               <CheckboxGroup title="Color" paramKey="color" options={catalogs.colors} draftParams={draftParams} onToggle={toggleMulti} />

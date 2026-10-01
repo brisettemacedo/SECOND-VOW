@@ -495,3 +495,15 @@ body .step-missing-count { font-size: 11px !important; }
 .wizard .autosave-status{flex:1;min-width:180px;font-size:12px;color:var(--color-text-muted);margin:0;line-height:1.5}
 .wizard .autosave-error{color:#a52a2a}
 @media(max-width:640px){.wizard .shape-picker-silueta .shape-options{grid-template-columns:repeat(3,minmax(0,1fr))}.wizard .shape-options{gap:8px}.wizard .shape-options button{padding:14px 4px;font-size:12px}.wizard .autosave-status{order:4;flex-basis:100%}.wizard .no-brand-option{flex-wrap:wrap;font-size:13px}}
+
+/* Shared seller illustrations in buyer catalog filters */
+.filter-shape-group{grid-column:1/-1}
+.filter-shape-hint{font-size:12px;margin:0 0 12px}
+.filter-shape-options{grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.filter-shape-options button{min-height:142px;padding:16px 6px 12px;gap:10px;border-color:transparent;background:transparent;font-size:13px}
+.filter-shape-options button svg{width:62px;height:100px;color:#9b9b95}
+.filter-shape-options button:hover{background:#f6f5f1;border-color:#e5e2da}
+.filter-shape-options button.shape-selected{background:#f1f1e7;border-color:var(--color-text-primary);font-weight:600}
+.filter-shape-options button.shape-selected svg{color:var(--color-text-primary)}
+.filter-shape-options button:focus-visible{outline:2px solid var(--color-text-primary);outline-offset:3px}
+@media(max-width:760px){.filter-shape-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.filter-shape-options button{font-size:12px;padding:12px 4px}}

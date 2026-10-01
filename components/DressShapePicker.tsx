@@ -36,7 +36,7 @@ const backs: Record<string, string> = {
   "ilusion": "M30 22Q50 37 70 22 M27 58Q50 73 73 58",
   "v": "M30 22L50 80L70 22"
 };
-function Outline({ kind, value }: { kind: ShapeKind; value: string }) {
+export function DressShapeOutline({ kind, value }: { kind: ShapeKind; value: string }) {
   const path = (kind === "silueta" ? silhouettes : kind === "escote" ? necklines : backs)[value];
   return <svg viewBox="0 0 100 125" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
     {!path ? <text x="50" y="77" textAnchor="middle" fill="currentColor" stroke="none" fontSize="38">?</text> : <>
@@ -54,7 +54,7 @@ export default function DressShapePicker({ name, label, options, value, error, o
       <summary>{selected ? selected.label : "Selecciona una forma"}<span>Ver ilustraciones y elegir</span></summary>
       <p className="muted shape-reference">Delineados de referencia para ayudarte a identificar la forma.</p>
       <div className="shape-options">{options.map((option) => <button type="button" key={option.value} aria-pressed={value === option.value} className={value === option.value ? "shape-selected" : ""} onClick={() => onChange(option.value)}>
-        <Outline kind={name} value={option.value} /><span>{option.label}</span>{value === option.value && <span className="shape-check" aria-hidden="true">✓</span>}
+        <DressShapeOutline kind={name} value={option.value} /><span>{option.label}</span>{value === option.value && <span className="shape-check" aria-hidden="true">✓</span>}
       </button>)}</div>
     </details>
     {error && <p id={`${name}-error`} className="field-error">{error}</p>}
