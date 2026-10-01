@@ -45,7 +45,7 @@ const recommendedKeys: { key: string; label: string }[] = [
   { key: "cola", label: "Cola" },
 ];
 
-function firstIncompleteStep(dress?: Dress, declaration?: any) {
+function firstIncompleteStep(dress?: Dress) {
   if (!dress?.id) return 0;
   if ((!dress.brand_id && !dress.brand_suggestion_id) || !dress.talla_etiqueta || !dress.silueta || !dress.escote || !dress.espalda || !dress.manga) return 0;
   if (!dress.condicion) return 1;
@@ -61,7 +61,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     : initialDress?.brand_suggestions?.suggested_name || "";
   const initialDeclaration = Array.isArray(initialDress?.dress_declarations) ? initialDress?.dress_declarations?.[0] : initialDress?.dress_declarations;
 
-  const [step, setStep] = useState(() => firstIncompleteStep(initialDress, initialDeclaration));
+  const [step, setStep] = useState(() => firstIncompleteStep(initialDress));
   const [dress, setDress] = useState<Dress>(() => {
     if (!initialDress) return { seller_id: userId, status: "draft", sistema_talla: "MX", envio_nacional: true };
     const descriptions = [...new Set([initialDress.descripcion, initialDress.descripcion_danos, initialDress.ajustes_detalle].map((value) => String(value ?? "").trim()).filter(Boolean))];
