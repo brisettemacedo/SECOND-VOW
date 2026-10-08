@@ -15,6 +15,7 @@ export async function sendPendingNotificationEmails(limit = 40, kinds?: string[]
   let query = admin.from("notifications")
     .select("id,user_id,order_id,dress_id,kind,title,body,metadata,email_attempts")
     .in("email_status", ["pending", "failed"])
+    .gte("created_at", new Date(Date.now() - 14 * 86400000).toISOString())
     .lt("email_attempts", 5)
     .or(`email_next_attempt_at.is.null,email_next_attempt_at.lte.${new Date().toISOString()}`)
     .order("created_at", { ascending: true }).limit(limit);
@@ -23,6 +24,14 @@ export async function sendPendingNotificationEmails(limit = 40, kinds?: string[]
   if (error) throw error;
   let sent = 0; let failed = 0;
   for (const row of rows ?? []) {
+    if (["draft_publication_help", "weekly_draft_reminder"].includes(row.kind)) {
+      const { data: draft, error: draftError } = await admin.from("dresses").select("status,removed_by_seller_at").eq("id", row.dress_id).eq("seller_id", row.user_id).maybeSingle();
+      if (draftError) throw draftError;
+      if (!draft || draft.removed_by_seller_at || !["draft", "changes_requested"].includes(draft.status)) {
+        await admin.from("notifications").update({ email_status: "not_required", email_last_error: "El borrador ya no requiere recordatorio" }).eq("id", row.id);
+        continue;
+      }
+    }
     const attempts = Number(row.email_attempts ?? 0) + 1;
     const { data: account } = await admin.auth.admin.getUserById(row.user_id);
     const to = account.user?.email;

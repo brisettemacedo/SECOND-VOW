@@ -1,6 +1,16 @@
 {
   "crons": [
-    { "path": "/api/cron/finalize", "schedule": "0 7 * * *" },
-    { "path": "/api/cron/expire-payments", "schedule": "0 19 * * *" }
+    {
+      "path": "/api/cron/finalize",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/expire-payments",
+      "schedule": "0 19 * * *"
+    },
+    {
+      "path": "/api/cron/draft-reminders",
+      "schedule": "15 * * * *"
+    }
   ]
 }
