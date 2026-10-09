@@ -13,7 +13,7 @@ export async function sendPendingNotificationEmails(limit = 40, kinds?: string[]
   if (!apiKey || !from) return { sent: 0, failed: 0, skipped: true };
   const admin = createAdminClient();
   let query = admin.from("notifications")
-    .select("id,user_id,order_id,dress_id,kind,title,body,metadata,email_attempts")
+    .select("id,user_id,order_id,dress_id,kind,title,body,metadata,email_attempts,created_at")
     .in("email_status", ["pending", "failed"])
     .gte("created_at", new Date(Date.now() - 14 * 86400000).toISOString())
     .lt("email_attempts", 5)
@@ -24,6 +24,24 @@ export async function sendPendingNotificationEmails(limit = 40, kinds?: string[]
   if (error) throw error;
   let sent = 0; let failed = 0;
   for (const row of rows ?? []) {
+    const isDraftReminder = ["draft_publication_help", "weekly_draft_reminder"].includes(row.kind);
+    if (!isDraftReminder && Date.parse(row.created_at) < Date.now() - 24 * 3600000) {
+      const { error: skipError } = await admin.from("notifications").update({ email_status: "not_required", email_last_error: "Aviso operativo caducado, no se envía fuera de plazo" }).eq("id", row.id);
+      if (skipError) throw skipError;
+      continue;
+    }
+    if (row.kind === "offer_received") {
+      const offerId = row.metadata?.offer_id;
+      const { data: offer, error: offerError } = offerId
+        ? await admin.from("offers").select("status,expires_at").eq("id", offerId).maybeSingle()
+        : { data: null, error: null };
+      if (offerError) throw offerError;
+      if (!offer || offer.status !== "pending" || Date.parse(offer.expires_at) <= Date.now()) {
+        const { error: skipError } = await admin.from("notifications").update({ email_status: "not_required", email_last_error: "La oferta ya no está pendiente o vigente" }).eq("id", row.id);
+        if (skipError) throw skipError;
+        continue;
+      }
+    }
     if (["draft_publication_help", "weekly_draft_reminder"].includes(row.kind)) {
       const { data: draft, error: draftError } = await admin.from("dresses").select("status,removed_by_seller_at").eq("id", row.dress_id).eq("seller_id", row.user_id).maybeSingle();
       if (draftError) throw draftError;
@@ -40,7 +58,6 @@ export async function sendPendingNotificationEmails(limit = 40, kinds?: string[]
       continue;
     }
     const href = `${SITE_URL}${notificationHref(row)}`;
-    const isDraftReminder = ["draft_publication_help", "weekly_draft_reminder"].includes(row.kind);
     const buttonLabel = isDraftReminder ? "Continuar mi publicación" : notificationPresentation(row).action;
     const emailSubject = typeof row.metadata?.email_subject === "string" ? row.metadata.email_subject : row.title;
     const emailBody = typeof row.metadata?.email_body === "string" ? row.metadata.email_body : row.body;

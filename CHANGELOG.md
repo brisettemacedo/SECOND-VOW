@@ -1,3 +1,9 @@
+# Correos operativos vigentes, 2026-10-09
+
+- Descarta correos operativos pendientes con más de 24 horas de antigüedad, conserva la cadencia de recordatorios de borradores.
+- Verifica que una oferta siga pendiente y sin vencer antes de enviar su aviso.
+- Desactiva siete correos operativos antiguos pendientes sin borrar el historial de notificaciones.
+
 # Stripe Connect: actualización de cuentas de vendedoras, 2026-10-08
 
 - Consulta capacidades Accounts v2 y conserva interoperabilidad v1 para datos bancarios y cuentas antiguas.
