@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/server/adminSupabase";
 import { stripeRequest } from "@/lib/server/stripe";
 import { consumeRateLimit } from "@/lib/server/rateLimit";
 import { isSameOriginRequest } from "@/lib/server/requestSecurity";
+import { syncStripeConnectAccount } from "@/lib/server/syncStripeConnect";
 
 export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
@@ -13,9 +14,18 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   if (!await consumeRateLimit(user.id, "payout", 5, 3600)) return NextResponse.json({ error: "Demasiados intentos. Intenta más tarde." }, { status: 429 });
   const { orderId } = await req.json();
+  const admin = createAdminClient();
+  const { data: account, error: accountError } = await admin.from("seller_payment_accounts").select("provider_account_id").eq("user_id", user.id).maybeSingle();
+  if (accountError) return NextResponse.json({ error: "No fue posible consultar tu cuenta bancaria" }, { status: 503 });
+  if (account?.provider_account_id) {
+    try { await syncStripeConnectAccount(account.provider_account_id, user.id); }
+    catch (error) {
+      console.error("Stripe Connect payout sync failed", error);
+      return NextResponse.json({ error: "No fue posible verificar tu cuenta bancaria, intenta más tarde" }, { status: 503 });
+    }
+  }
   const { data: payoutId, error } = await supabase.rpc("request_seller_payout", { p_order_id: orderId });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  const admin = createAdminClient();
   const { data: p } = await admin.from("seller_payouts").select("id,amount_mxn,gross_amount_mxn,debt_offset_mxn,transfer_amount_mxn,connected_account_id,transfer_id,payout_id").eq("id", payoutId).single();
   const { data: o } = await admin.from("orders").select("stripe_charge_id").eq("id", orderId).single();
   if (!p) return NextResponse.json({ error: "Saldo inexistente" }, { status: 404 });

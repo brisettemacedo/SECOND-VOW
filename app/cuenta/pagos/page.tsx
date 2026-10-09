@@ -2,8 +2,16 @@ import { requireUser } from "@/lib/auth";
 import PayoutsClient from "@/components/PayoutsClient";
 import ConnectStripeButton from "@/components/ConnectStripeButton";
 
+import { syncStripeConnectAccount } from "@/lib/server/syncStripeConnect";
+
 export default async function PaymentsAccountPage() {
   const { supabase, user } = await requireUser();
+  let syncFailed = false;
+  const { data: linkedAccount } = await supabase.from("seller_payment_accounts").select("provider_account_id").eq("user_id", user.id).maybeSingle();
+  if (linkedAccount?.provider_account_id) {
+    try { await syncStripeConnectAccount(linkedAccount.provider_account_id, user.id); }
+    catch (error) { syncFailed = true; console.error("Stripe Connect account sync failed", error); }
+  }
   const [{ data: paymentAccount }, { data: orders }, { data: debts }] = await Promise.all([
     supabase.from("seller_payment_accounts").select("provider,onboarding_status,charges_enabled,payouts_enabled,bank_account_linked,bank_name,bank_last4").eq("user_id", user.id).maybeSingle(),
     supabase.from("orders").select("id,status,seller_net_mxn,seller_net_after_processor_mxn,dresses(model),seller_payouts(status,amount_mxn,gross_amount_mxn,debt_offset_mxn,transfer_amount_mxn,requested_at,paid_out_at)").eq("seller_id", user.id).order("created_at", { ascending: false }).limit(50),
@@ -12,11 +20,13 @@ export default async function PaymentsAccountPage() {
 
   return <main className="page narrow">
     <h1>Pagos y retiros</h1>
+    {syncFailed && <div className="alert-info">No pudimos actualizar tu cuenta bancaria, vuelve a intentarlo en unos minutos.</div>}
     <section className="panel">
       <h2>Cuenta bancaria</h2>
       {paymentAccount?.bank_account_linked ? <>
         <p>Cuenta vinculada: {paymentAccount.bank_name ?? "Banco"} ···· {paymentAccount.bank_last4 ?? ""}</p>
-        <p><span className="badge">{paymentAccount.payouts_enabled ? "Lista para retiros" : paymentAccount.onboarding_status}</span></p>
+        <p><span className="badge">{paymentAccount.payouts_enabled ? "Lista para retiros" : (paymentAccount.onboarding_status === "restricted" ? "Verificación pendiente" : "Registro pendiente")}</span></p>
+        {!paymentAccount.payouts_enabled && <ConnectStripeButton />}
       </> : <>
         <p>Todavía no hay una cuenta bancaria vinculada.</p>
         <p className="muted">Stripe recopila de forma segura los datos bancarios y de verificación. SECOND VOW no almacena tu CLABE completa.</p><ConnectStripeButton />

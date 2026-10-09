@@ -79,3 +79,12 @@ Si Supabase ya tiene 0001–0017 aplicadas, ejecuta **solamente** `supabase/migr
 En Vercel agrega `NEXT_PUBLIC_SITE_URL` con la URL estable de producción y completa las variables legales indicadas en `.env.example`. En Supabase Authentication > URL Configuration, configura la misma URL estable como Site URL y agrega `https://TU-DOMINIO/**` como Redirect URL.
 
 **Antes del lanzamiento comercial** sustituye `NEXT_PUBLIC_LEGAL_NAME` y `NEXT_PUBLIC_LEGAL_ADDRESS` por los datos exactos del responsable. No inventes esos datos.
+
+
+## Sincronización de Stripe Connect (2026-10-08)
+
+Las cuentas nuevas se registran con Accounts v2. El retorno, la página de pagos y cada solicitud de retiro consultan las capacidades v2 y los datos bancarios mediante la interoperabilidad v1 admitida por Stripe. Se requiere cuenta bancaria, datos enviados y capacidades de transferencias y retiros activas antes de marcar una cuenta completa.
+
+El endpoint `/api/stripe/webhook` admite eventos de cuenta v2 (thin events) y mantiene los eventos de pagos v1. En Stripe, configurar un destino de eventos de cuentas conectadas para `v2.core.account[configuration.recipient].capability_status_updated`, `v2.core.account[configuration.recipient].updated`, `v2.core.account[requirements].updated`, `v2.core.account[identity].updated` y `v2.core.account.closed`. Guardar el secreto de firma de ese destino como `STRIPE_CONNECT_WEBHOOK_SECRET` en Vercel, sin sustituir `STRIPE_WEBHOOK_SECRET` del destino de pagos. Mantener `account.updated` y `account.external_account.created/updated/deleted` en el destino de eventos v1 de cuentas conectadas.
+
+La actualización al visitar Pagos y retiros funciona independientemente del destino de eventos. La configuración y entrega real de eventos de Stripe deben verificarse desde su cuenta, las pruebas unitarias no acreditan esa entrega. Ejecutar `node --test tests/stripe-connect.test.cjs` para comprobar estados de cuenta, restricciones y bloqueo de retiros.

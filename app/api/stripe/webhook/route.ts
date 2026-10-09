@@ -4,6 +4,8 @@ import { stripeGet, verifyStripeSignature } from "@/lib/server/stripe";
 import { sendPendingNotificationEmails } from "@/lib/server/notificationEmail";
 import { orderIdFromSession, reconcilePaidCheckoutSession } from "@/lib/server/reconcileStripeCheckout";
 
+import { syncStripeConnectAccount } from "@/lib/server/syncStripeConnect";
+
 export const dynamic = "force-dynamic";
 
 async function paymentIntentFromObject(object: any) {
@@ -17,16 +19,20 @@ async function paymentIntentFromObject(object: any) {
 
 export async function POST(req: Request) {
   const raw = await req.text();
-  if (!verifyStripeSignature(raw, req.headers.get("stripe-signature"))) {
+  if (!verifyStripeSignature(raw, req.headers.get("stripe-signature")) &&
+      !verifyStripeSignature(raw, req.headers.get("stripe-signature"), process.env.STRIPE_CONNECT_WEBHOOK_SECRET || "")) {
     return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
   }
 
   let event: any;
   try { event = JSON.parse(raw); } catch { return NextResponse.json({ error: "JSON inválido" }, { status: 400 }); }
+  if (typeof event?.id !== "string" || typeof event?.type !== "string") return NextResponse.json({ error: "Evento inválido" }, { status: 400 });
   const admin = createAdminClient();
-  const { data: prior } = await admin.from("payment_webhook_events").select("processed_at").eq("provider", "stripe").eq("event_id", event.id).maybeSingle();
+  const { data: prior, error: priorError } = await admin.from("payment_webhook_events").select("processed_at").eq("provider", "stripe").eq("event_id", event.id).maybeSingle();
+  if (priorError) return NextResponse.json({ error: "No fue posible consultar el evento" }, { status: 503 });
   if (prior?.processed_at) return NextResponse.json({ received: true, duplicate: true });
-  await admin.from("payment_webhook_events").upsert({ provider: "stripe", event_id: event.id, event_type: event.type, payload: event });
+  const { error: eventError } = await admin.from("payment_webhook_events").upsert({ provider: "stripe", event_id: event.id, event_type: event.type, payload: event });
+  if (eventError) return NextResponse.json({ error: "No fue posible registrar el evento" }, { status: 503 });
 
   try {
     const object = event.data?.object;
@@ -80,20 +86,12 @@ export async function POST(req: Request) {
       }
     } else if (event.type === "transfer.reversed") {
       await admin.from("seller_payouts").update({ status: "reversed", updated_at: new Date().toISOString() }).eq("transfer_id", object.id);
-    } else if (event.type === "account.updated") {
-      await admin.from("seller_payment_accounts").update({
-        onboarding_status: object.details_submitted && object.payouts_enabled ? "complete" : object.details_submitted ? "restricted" : "pending",
-        charges_enabled: !!object.charges_enabled,
-        payouts_enabled: !!object.payouts_enabled,
-        details_submitted: !!object.details_submitted,
-        requirements_due: object?.requirements?.currently_due ?? [],
-        verified_at: object.details_submitted && object.payouts_enabled ? new Date().toISOString() : null,
-        updated_at: new Date().toISOString(),
-      }).eq("provider_account_id", object.id);
-      const { data: paymentAccount } = await admin.from("seller_payment_accounts").select("user_id").eq("provider_account_id", object.id).maybeSingle();
-      if (paymentAccount?.user_id) {
-        await admin.from("profiles").update({ identity_verified: !!(object.details_submitted && object.payouts_enabled) }).eq("id", paymentAccount.user_id);
-      }
+    } else if (event.type === "account.updated" || event.type === "account.external_account.created" || event.type === "account.external_account.updated" || event.type === "account.external_account.deleted" || event.type.startsWith("v2.core.account")) {
+      const accountId = event.type.startsWith("v2.core.account")
+        ? event.related_object?.id
+        : event.type === "account.updated" ? object?.id : event.account;
+      if (!accountId) throw new Error("Evento de cuenta sin referencia de Stripe");
+      await syncStripeConnectAccount(accountId);
     }
     await admin.from("payment_webhook_events").update({ processed_at: new Date().toISOString(), processing_error: null }).eq("provider", "stripe").eq("event_id", event.id);
   } catch (error: any) {

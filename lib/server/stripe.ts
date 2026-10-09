@@ -53,8 +53,17 @@ export async function stripeV2Post(path: string, body: Record<string, unknown>, 
   return json;
 }
 
-export function verifyStripeSignature(rawBody: string, signature: string | null) {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+export async function stripeV2Get(path: string) {
+  const res = await fetch(`${V2_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${secret()}`, "Stripe-Version": V2_VERSION },
+    cache: "no-store",
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(stripeError(json, res.status));
+  return json;
+}
+
+export function verifyStripeSignature(rawBody: string, signature: string | null, webhookSecret = process.env.STRIPE_WEBHOOK_SECRET) {
   if (!webhookSecret || !signature) return false;
   const entries = signature.split(",").map((part) => part.split("=", 2) as [string, string]);
   const timestamp = entries.find(([key]) => key === "t")?.[1];

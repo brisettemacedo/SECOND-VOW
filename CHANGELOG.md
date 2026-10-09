@@ -1,3 +1,11 @@
+# Stripe Connect: actualización de cuentas de vendedoras, 2026-10-08
+
+- Consulta capacidades Accounts v2 y conserva interoperabilidad v1 para datos bancarios y cuentas antiguas.
+- Unifica sincronización al regresar del registro, visitar pagos, recibir eventos y solicitar retiro.
+- Admite eventos thin de cuentas v2 con secreto de firma separado, refresca datos bancarios y propaga fallas para reintento.
+- Mantiene bloqueados retiros de cuentas sin banco, pendientes, restringidas o cerradas.
+- Agrega siete pruebas de estados de cuentas a CI.
+
 # v1.8.2 — 2026-08-26
 - Corrige el bloqueo de aceptación legal de la compradora antes de Stripe.
 - Corrige la cancelación de la vendedora en pedidos pendientes de pago.
