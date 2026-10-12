@@ -507,3 +507,29 @@ body .step-missing-count { font-size: 11px !important; }
 .filter-shape-options button.shape-selected svg{color:var(--color-text-primary)}
 .filter-shape-options button:focus-visible{outline:2px solid var(--color-text-primary);outline-offset:3px}
 @media(max-width:760px){.filter-shape-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.filter-shape-options button{font-size:12px;padding:12px 4px}}
+
+/* Mobile publishing: keep navigation, progress and actions within the viewport. */
+.wizard > *, .wizard .grid-2 > *, .wizard .field { min-width: 0; }
+@media (max-width: 640px) {
+  .site-header { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 14px 16px; }
+  .site-header .brand { white-space: nowrap; }
+  .site-header nav { min-width: 0; gap: 4px 14px; justify-content: flex-start; }
+  .site-header nav > a, .site-header nav > form, .site-header .notification-trigger { min-height: 36px; display: inline-flex; align-items: center; }
+  .page:has(.wizard) { padding: 22px 14px 32px; }
+  .wizard { gap: 16px; }
+  .wizard .panel { padding: 18px 16px; }
+  .wizard .stepper { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; overflow: visible; }
+  .wizard .stepper button { min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.4; padding: 10px; }
+  .wizard h1 { font-size: 28px !important; line-height: 1.15; }
+  .wizard h2 { font-size: 22px !important; line-height: 1.25; }
+  .wizard .draft-resume-banner, .wizard .alert-error, .wizard .alert-success, .wizard .muted { overflow-wrap: anywhere; line-height: 1.5; }
+  .wizard input[type="file"] { min-width: 0; max-width: 100%; font-size: 16px; }
+  .wizard .wizard-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 12px; }
+  .wizard-actions > .btn { min-width: 0; white-space: normal; overflow-wrap: anywhere; padding: 12px 10px; min-height: 46px; }
+  .wizard-actions > .btn-primary { order: 2; }
+  .wizard-actions > .btn-secondary { order: 1; }
+  .wizard-actions > .autosave-status { order: 4; grid-column: 1 / -1; min-width: 0; margin-top: 2px; padding-top: 12px; border-top: 1px solid var(--color-border); overflow-wrap: anywhere; }
+  .wizard-actions > .autosave-status + .btn-secondary { order: 3; grid-column: 1 / -1; }
+  .cookie-settings-link { position: static; display: block; width: fit-content; max-width: calc(100% - 32px); margin: 16px auto; padding: 12px; min-height: 44px; line-height: 1.5; }
+  .cookie-banner { max-height: calc(100dvh - 32px); overflow-y: auto; bottom: max(16px, env(safe-area-inset-bottom)); }
+}

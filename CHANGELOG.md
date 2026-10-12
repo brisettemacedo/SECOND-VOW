@@ -1,3 +1,10 @@
+# Ajustes de publicación en celular, 2026-10-12
+
+- Menú móvil en filas, marca sin corte y pasos del formulario en dos columnas.
+- Botones de navegación en dos columnas y aviso de guardado en una fila independiente.
+- Enlace de preferencias de cookies al final de la página en celular para evitar superposición.
+- Anchos mínimos flexibles, títulos y espacios adaptados a pantallas pequeñas.
+
 # Correos operativos vigentes, 2026-10-09
 
 - Descarta correos operativos pendientes con más de 24 horas de antigüedad, conserva la cadencia de recordatorios de borradores.
