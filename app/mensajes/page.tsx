@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { safeDisplayName } from "@/lib/displayName";
 import { createAdminClient } from "@/lib/server/adminSupabase";
 import Link from "next/link";
+import { CHAT_ORDER_EVENT_LABELS } from "@/lib/orderLifecycle";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,11 @@ export default async function MessagesPage({searchParams}:{searchParams?:Promise
     activeConversation ? supabase.from("orders").select("id,public_code,dress_id,buyer_id,seller_id,status,subtotal_mxn,shipping_mxn,total_mxn,shipping_quote_set_at,shipping_carrier_declared,carrier,tracking_number,payment_deadline_at,created_at,paid_at,shipped_at,delivered_at").eq("dress_id",activeConversation.dress_id).eq("buyer_id",activeConversation.buyer_id).eq("seller_id",activeConversation.seller_id).order("created_at") : Promise.resolve({data:[]} as any),
     participantIds.length ? supabase.from("profiles").select("id,full_name").in("id",participantIds) : Promise.resolve({data:[]} as any),
   ]);
+  const orderIds=(orders??[]).map((o:any)=>o.id);
+  const [{data:lifecycleEvents},{data:refunds}]=orderIds.length?await Promise.all([
+    supabase.from("order_events").select("id,order_id,event_type,created_at").in("order_id",orderIds).in("event_type",Object.keys(CHAT_ORDER_EVENT_LABELS)).order("created_at"),
+    supabase.from("refunds").select("id,order_id,status,amount_mxn,created_at,completed_at").in("order_id",orderIds).order("created_at")
+  ]):[{data:[]},{data:[]}];
   const profileMap=Object.fromEntries((profiles??[]).map((x:any)=>[x.id,safeDisplayName(x.full_name)]));
   const initial=(conversations as any[]).map((c:any)=>({
     ...c,
@@ -38,7 +44,7 @@ export default async function MessagesPage({searchParams}:{searchParams?:Promise
     seller_name:profileMap[c.seller_id]||"Vendedora",
     messages:c.id===activeConversation?.id?[...(latestMessages??[])].reverse():[],
     offers:c.id===activeConversation?.id?(offers??[]):[],
-    orders:c.id===activeConversation?.id?(orders??[]):[],
+    orders:c.id===activeConversation?.id?(orders??[]).map((o:any)=>({...o,order_events:(lifecycleEvents??[]).filter((e:any)=>e.order_id===o.id),refunds:(refunds??[]).filter((r:any)=>r.order_id===o.id)})):[],
   }));
   const total=count??conversations.length;
   const totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));

@@ -1,0 +1,19 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
+export default function AdminReturnReceipt({ orderId }: { orderId: string }) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+  async function confirmReceipt() {
+    setBusy(true); setError("");
+    const { error: failure } = await createClient().rpc("admin_confirm_return_received", { p_order_id: orderId, p_reason: reason.trim() });
+    setBusy(false);
+    if (failure) setError(failure.message);
+    else { void fetch("/api/notifications/dispatch", { method: "POST" }).catch(() => undefined); router.refresh(); }
+  }
+  return <section className="panel"><h2>Verificación administrativa del retorno</h2><p>Usa esta confirmación cuando tengas prueba de entrega o negativa injustificada de la vendedora, no sustituye la revisión de la reclamación ni ejecuta un reembolso.</p><label className="field"><span>Prueba revisada y motivo de la confirmación</span><textarea value={reason} onChange={e=>setReason(e.target.value)} rows={4} maxLength={2000}/></label>{error&&<p role="alert" className="alert-error">{error}</p>}<button className="btn btn-secondary" disabled={busy||reason.trim().length<20} onClick={confirmReceipt}>Registrar confirmación administrativa</button></section>;
+}

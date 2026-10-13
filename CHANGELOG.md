@@ -1,3 +1,14 @@
+# Claridad de venta, estados y devoluciones, 2026-10-13
+
+- Mensajes sugeridos y acciones comerciales corresponden al estado del pedido, no se ofrece cotizar después del pago o reembolso.
+- Chat incorpora reclamaciones, retornos y reembolsos registrados, con importe y confirmación reales.
+- Pedido muestra reembolso a compradora separado del saldo de vendedora, saldo cero y comisión ordinaria cero al reembolsarse completamente, cargos atribuibles separados cuando existan.
+- Estado del envío sustituye la instrucción genérica de cinco días en pedidos ya terminados.
+- Revisión de plazos programada cada hora, avisos existentes enviados también al ejecutar acciones del pedido.
+- Términos actualizados con motivos concretos de devolución y reserva de derechos legales, versión 2026-10-13.1 con manifiesto de fuentes.
+- Migración 20261013234148 y términos propuestos 2026-10-13.2 preparados, NO aplicados: flete de regreso por cobrar, confirmación administrativa del retorno y nuevos avisos bilaterales. La revisión automática de aprobación bloqueó su ejecución en producción.
+- Siete pruebas nuevas de estados, importes y renderizado del resumen económico.
+
 # Ajustes de publicación en celular, 2026-10-12
 
 - Menú móvil en filas, marca sin corte y pasos del formulario en dos columnas.

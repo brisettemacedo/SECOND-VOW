@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { validateUploadMedia } from "@/lib/mediaValidation";
 
-const LABELS: Record<string,string> = {seller_pre_ship:"Vestido antes de empacar",seller_packed:"Paquete cerrado",seller_shipping_receipt:"Comprobante de envío",buyer_package_received:"Paquete al recibirlo",buyer_unboxing:"Apertura del paquete",buyer_dress_received:"Evidencia de la reclamación",seller_claim_response:"Evidencia de la respuesta",seller_return_label:"Guía prepagada (PDF o imagen)",buyer_return_packed:"Vestido y paquete de devolución",seller_return_received:"Devolución recibida",other:"Otra evidencia"};
+const LABELS: Record<string,string> = {seller_pre_ship:"Vestido antes de empacar",seller_packed:"Paquete cerrado",seller_shipping_receipt:"Comprobante de envío",buyer_package_received:"Paquete al recibirlo",buyer_unboxing:"Apertura del paquete",buyer_dress_received:"Evidencia de la reclamación",seller_claim_response:"Evidencia de la respuesta",seller_return_label:"Guía de devolución y condiciones de pago (PDF o imagen)",buyer_return_packed:"Vestido y paquete de devolución",seller_return_received:"Devolución recibida",other:"Otra evidencia"};
 
 export default function OrderEvidenceUploader({orderId,userId,stage,existing=[],showFiles=false,readOnly=false}:{orderId:string;userId:string;stage:string;existing?:any[];showFiles?:boolean;readOnly?:boolean}) {
   const supabase=useMemo(()=>createClient(),[]); const router=useRouter();
