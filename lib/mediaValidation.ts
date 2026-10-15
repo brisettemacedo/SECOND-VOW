@@ -1,3 +1,14 @@
+/** Validate listing photos before browser decoding or network requests. */
+export function dressPhotoFormatError(file: Pick<File, "name" | "type">): string | null {
+  if (/\.(dng|raw|cr2|cr3|nef|arw|raf|orf|rw2)$/i.test(file.name) || /dng|raw/i.test(file.type)) {
+    return "Es una foto RAW/DNG, exporta una copia en JPG o PNG y vuelve a seleccionarla, cambiar solamente la extensión no la convierte.";
+  }
+  if (!new Set(["image/jpeg", "image/png", "image/webp"]).has(file.type)) {
+    return "Selecciona una copia en JPG, PNG o WebP, otros formatos como HEIC deben exportarse primero a JPG.";
+  }
+  return null;
+}
+
 export async function validateUploadMedia(file: File, options: { allowPdf?: boolean; maxVideoSeconds?: number } = {}) {
   if (file.type === "application/pdf" && options.allowPdf) return;
   if (file.type.startsWith("image/")) {
