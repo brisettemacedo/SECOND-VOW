@@ -5,6 +5,8 @@ import { createShip24Tracker } from "@/lib/server/ship24";
 import { consumeRateLimit } from "@/lib/server/rateLimit";
 import { isSameOriginRequest } from "@/lib/server/requestSecurity";
 
+import { sendPendingNotificationEmails } from "@/lib/server/notificationEmail";
+
 export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req)) return NextResponse.json({ error: "Origen no permitido" }, { status: 403 });
@@ -19,6 +21,7 @@ export async function POST(req: Request) {
   if (!orderId || !carrier || !trackingNumber) return NextResponse.json({ error: "Faltan datos de devolución" }, { status: 400 });
   const { error: returnError } = await supabase.rpc("register_return_shipment", { p_order_id: orderId, p_carrier: carrier, p_tracking_number: trackingNumber });
   if (returnError) return NextResponse.json({ error: returnError.message }, { status: 400 });
+  await sendPendingNotificationEmails(20).catch(() => undefined);
   const admin = createAdminClient();
   const { data: shipment } = await admin.from("shipments").select("id").eq("order_id", orderId).eq("direction", "return").single();
   if (!shipment) return NextResponse.json({ error: "No se encontró la devolución" }, { status: 500 });

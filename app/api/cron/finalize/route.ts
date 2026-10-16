@@ -30,6 +30,8 @@ export async function GET(req: Request) {
 
   const { data: expiredPayments, error: expireError } = await admin.rpc("backend_expire_abandoned_payments", { p_skip_order_ids: skipOrderIds });
   if (expireError) return NextResponse.json({ error: expireError.message }, { status: 500 });
+  const { error: reviewsError } = await admin.rpc("backend_finalize_claim_reviews");
+  if (reviewsError) return NextResponse.json({ error: reviewsError.message }, { status: 500 });
   const { data, error } = await admin.rpc("backend_finalize_expired_inspections");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const { data: pending } = await admin.from("orders").select("id,amount_charged_mxn,total_mxn,stripe_charge_id,stripe_dispute_status,shipping_block_reason").eq("status", "refund_pending").in("shipping_block_reason", ["shipping_deadline_expired", "seller_cancelled"]).is("shipped_at", null).limit(50);

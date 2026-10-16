@@ -1,4 +1,5 @@
--- PREPARED ONLY, production execution blocked by automatic approval review.
+-- SUPERSEDED, NOT APPLIED: historical proposal, do not apply independently.
+-- Current authorized implementation: supervised_return_resolution, 16 October 2026.
 begin;
 
 alter table public.claims add column if not exists return_shipping_payment_mode text not null default 'prepaid'

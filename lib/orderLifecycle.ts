@@ -33,7 +33,9 @@ export const CHAT_ORDER_EVENT_LABELS: Record<string, string> = {
   claim_appealed: "Revisión de la decisión solicitada",
   return_label_provided: "Guía de devolución compartida",
   return_shipped: "Devolución en tránsito",
-  return_received: "Devolución recibida, reembolso pendiente",
+  return_received: "Recepción del retorno registrada, dinero retenido en revisión",
+  return_instructions_ready: "Instrucciones de devolución disponibles",
+  return_reviewed: "SECOND VOW verificó el retorno y documentó la solución",
   refund_pending: "Reembolso pendiente de confirmación",
   order_completed: "Venta concretada, revisión concluida",
 };

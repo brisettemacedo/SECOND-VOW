@@ -1,7 +1,7 @@
 export const ORDER_STATUS: Record<string, string> = {
   awaiting_payment: "Pendiente de pago", payment_processing: "Procesando pago", payment_review: "Pago en revisión", chargeback_open: "Contracargo abierto",
   paid: "Pago confirmado", preparing_shipment: "Preparando envío", shipped: "Enviado", delivered: "Entregado", inspection: "Periodo de protección",
-  claim_open: "Reclamación abierta", return_authorized: "Devolución autorizada", return_shipped: "Devolución en tránsito", returned: "Devolución recibida",
+  claim_open: "Reclamación abierta", return_authorized: "Devolución autorizada", return_shipped: "Devolución en tránsito", returned: "Retorno en revisión administrativa",
   refund_pending: "Reembolso pendiente", completed: "Completado", cancelled: "Cancelado", refunded: "Reembolsado",
 };
 

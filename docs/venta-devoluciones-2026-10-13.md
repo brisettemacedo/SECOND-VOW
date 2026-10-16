@@ -1,5 +1,7 @@
 # SECOND VOW: venta y devoluciones, 13 de octubre de 2026
 
+> Documento histórico, el flujo autorizado y activado el 16 de octubre se describe en [venta-devoluciones-2026-10-16.md](venta-devoluciones-2026-10-16.md), prevalece esa actualización para el estado actual de implementación.
+
 ## Hallazgo en el pedido de prueba
 
 Pedido 26f5dca6-e884-49c3-851f-1680e4d3bdd2: pago de $1,100, vestido $1,000 y envío $100, comisión calculada $198, saldo previsto $902. Reembolso completo registrado por $1,100 el 9 de octubre, sin guía de ida ni reclamación en ese pedido, motivo shipping_deadline_expired. Los $902 no fueron otro reembolso. El resumen corregido muestra importe reembolsado a la compradora y saldo de esta venta para la vendedora de $0, con cargos separados solo cuando realmente existan.

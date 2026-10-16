@@ -17,7 +17,7 @@ function eventDate(value:string){return new Date(value).toLocaleString("es-MX",{
 function money(v:any){return `$${Number(v??0).toLocaleString("es-MX")} MXN`}
 const EVENT_ORDER:Record<string,number>={message:0,offer:1,offer_response:2,order:3,shipping:4,payment:5,shipment:6,delivery:7,lifecycle:8,refund:9};
 const STATUS:Record<string,string>={pending:"Pendiente",accepted:"Aceptada",declined:"Rechazada",rejected:"Rechazada",countered:"Reemplazada",expired:"Vencida",awaiting_payment:"Pendiente de pago",payment_processing:"Procesando pago",paid:"Pago confirmado",preparing_shipment:"Preparando envío",shipped:"Enviado",inspection:"Periodo de protección",completed:"Completado",cancelled:"Cancelado"};
-const ORDER_CHAT_OPEN_STATUSES=new Set(["claim_open","return_authorized","paid","preparing_shipment","shipped","inspection","delivered","approved_return","return_shipped","refund_pending"]);
+const ORDER_CHAT_OPEN_STATUSES=new Set(["claim_open","return_authorized","paid","preparing_shipment","shipped","inspection","delivered","approved_return","return_shipped","returned","refund_pending"]);
 
 export default function MessagesClient({initial,userId,initialActive}:{initial:Conv[];userId:string;initialActive?:string}){
  const supabase=useMemo(()=>createClient(),[]); const router=useRouter();
