@@ -23,10 +23,10 @@ export async function POST(req: Request) {
   if (returnError) return NextResponse.json({ error: returnError.message }, { status: 400 });
   await sendPendingNotificationEmails(20).catch(() => undefined);
   const admin = createAdminClient();
-  const { data: shipment } = await admin.from("shipments").select("id").eq("order_id", orderId).eq("direction", "return").single();
-  if (!shipment) return NextResponse.json({ error: "No se encontró la devolución" }, { status: 500 });
+  const { data: shipment } = await admin.from("shipments").select("id,tracking_number").eq("order_id", orderId).eq("direction", "return").single();
+  if (!shipment?.tracking_number) return NextResponse.json({ error: "No se encontró la devolución" }, { status: 500 });
   try {
-    const result = await createShip24Tracker({ trackingNumber, clientTrackerId: shipment.id, shipmentReference: `RETURN_${orderId}` });
+    const result = await createShip24Tracker({ trackingNumber: shipment.tracking_number, clientTrackerId: shipment.id, shipmentReference: `RETURN_${orderId}` });
     const trackerId = result?.data?.tracker?.trackerId ?? result?.tracker?.trackerId ?? result?.data?.trackerId ?? result?.trackerId;
     if (!trackerId) throw new Error("Ship24 no devolvió trackerId");
     await admin.from("shipments").update({ tracking_provider: "ship24", tracking_provider_id: trackerId, tracking_registered_at: new Date().toISOString(), tracking_error: null }).eq("id", shipment.id);

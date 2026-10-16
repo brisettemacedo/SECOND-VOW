@@ -29,7 +29,7 @@ En Reclamaciones: resolver con motivo, compartir destino e instrucciones, revisa
 
 ## Verificación
 
-- 30 pruebas automatizadas de aplicación, incluidas pruebas de la ruta de reembolso con Stripe simulado, sin pagos reales.
+- 32 pruebas automatizadas de aplicación, incluidas pruebas de la ruta de reembolso con Stripe simulado, sin pagos reales.
 - Prueba transaccional `tests/sql/supervised-return.sql`, con registros sintéticos y ROLLBACK: permisos, envío por cobrar, comprobante obligatorio, plazo de revisión, dinero retenido, avisos bilaterales, idempotencia y retención durante rechazo provisional.
 - La migración anterior de 13 de octubre fue una propuesta no aplicada, esta implementación la sustituye.
 - Términos y política actualizados al 16 de octubre de 2026, versión 2026-10-16.1, manifiesto de archivos y hash conservados para nuevas aceptaciones.
