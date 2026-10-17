@@ -49,8 +49,9 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   return <main className="catalog-page">
     <div className="catalog-heading-row">
       <div className="catalog-heading-copy"><p className="catalog-eyebrow">Encuentra tu vestido</p><h1>Vestidos de novia de segunda mano en México</h1><p className="catalog-intro">Vestidos publicados por sus dueñas.</p></div>
-      <Suspense fallback={<div className="filter-trigger-placeholder" />}><CatalogFilters /></Suspense>
+
     </div>
+    <Suspense fallback={<div className="filter-trigger-placeholder" />}><CatalogFilters /></Suspense>
     <Suspense fallback={<p className="muted">Cargando vestidos...</p>}><CatalogResults searchParams={query} /></Suspense>
     <section className="catalog-seo-copy" aria-labelledby="catalog-guide-title">
       <h2 id="catalog-guide-title">Encuentra un vestido de novia usado que se sienta hecho para ti</h2>

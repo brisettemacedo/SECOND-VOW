@@ -26,6 +26,13 @@ export type DressSearchParams = {
   talla?: string;
   precio_min?: string;
   precio_max?: string;
+  cola?: string;
+  detalles?: string;
+  sin_ajustes?: string;
+  altura_min?: string;
+  altura_max?: string;
+  ano_min?: string;
+  ano_max?: string;
   sort?: string; // "recientes" | "precio-asc" | "precio-desc" | "descuento"
   page?: string;
 };
@@ -44,9 +51,11 @@ export async function searchDresses(
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
+  const detalles = multi(params.detalles);
+  const columns = detalles ? `${CATALOG_COLUMNS}, dress_characteristics!inner(characteristic_id)` : CATALOG_COLUMNS;
   let query = supabase
     .from("dresses")
-    .select(CATALOG_COLUMNS, { count: "exact" })
+    .select(columns, { count: "exact" })
     .eq("status", "approved")
     .is("removed_by_seller_at", null);
 
@@ -71,13 +80,28 @@ export async function searchDresses(
   const condicion = multi(params.condicion);
   if (condicion) query = query.in("condicion", condicion);
 
+  const cola = multi(params.cola);
+  if (cola) query = query.in("cola", cola);
+  if (detalles) query = query.in("dress_characteristics.characteristic_id", detalles);
+  if (params.sin_ajustes === "1") query = query.eq("tuvo_ajustes", false);
+
+  for (const [key, column, minimum] of [
+    ["altura_min", "altura_persona_cm", true], ["altura_max", "altura_persona_cm", false],
+    ["ano_min", "year_approx", true], ["ano_max", "year_approx", false],
+    ["precio_min", "precio_venta_mxn", true], ["precio_max", "precio_venta_mxn", false],
+  ] as const) {
+    const value = params[key];
+    if (value?.trim() && Number.isFinite(Number(value)) && Number(value) >= 0) {
+      query = minimum ? query.gte(column, Number(value)) : query.lte(column, Number(value));
+    }
+  }
+
   if (params.brand) query = query.eq("brand_id", params.brand);
 
   const talla = multi(params.talla);
   if (talla) query = query.in("talla_etiqueta", talla);
 
-  if (params.precio_min) query = query.gte("precio_venta_mxn", Number(params.precio_min));
-  if (params.precio_max) query = query.lte("precio_venta_mxn", Number(params.precio_max));
+
 
 
   switch (params.sort) {
@@ -91,7 +115,7 @@ export async function searchDresses(
       query = query.order("created_at", { ascending: false });
   }
 
-  query = query.range(from, to);
+  query = query.order("id", { ascending: true }).range(from, to);
 
   const { data, error, count } = await query;
 

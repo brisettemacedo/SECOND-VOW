@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { DressCatalogData } from "@/lib/dressCatalogData";
 
@@ -68,6 +68,9 @@ function VisualShapeGroup({ title, paramKey, options, draftParams, onToggle }: {
 }
 
 export default function FilterSidebar({ brands, catalogs }: { brands: BrandOption[]; catalogs: DressCatalogData }) {
+  const modalRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [section, setSection] = useState("filter-brand-group");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -80,12 +83,16 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
 
   useEffect(() => {
     if (!open) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    modalRef.current?.focus();
+    document.getElementById(section)?.scrollIntoView({ block: "start" });
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
+      previousFocus?.focus();
     };
-  }, [open]);
+  }, [open, section]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -96,13 +103,31 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
   }, []);
 
   const activeCount = useMemo(() => {
-    const keys = ["brand", "talla", "precio_min", "precio_max", "silueta", "escote", "espalda", "manga", "tela", "color", "condicion"];
+    const keys = ["brand", "talla", "precio_min", "precio_max", "silueta", "escote", "espalda", "manga", "tela", "color", "condicion", "cola", "detalles", "sin_ajustes", "altura_min", "altura_max", "ano_min", "ano_max"];
     return keys.reduce((total, key) => {
       const value = searchParams.get(key);
       if (!value) return total;
       return total + (value.includes(",") ? value.split(",").filter(Boolean).length : 1);
     }, 0);
   }, [searchParams]);
+
+  function openFilters(id: string) {
+    setDraftParams(new URLSearchParams(searchParams.toString()));
+    setSection(id);
+    setOpen(true);
+  }
+
+  function trapFocus(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key !== "Tab") return;
+    const nodes = modalRef.current?.querySelectorAll<HTMLElement>('button, input, select, [tabindex="0"]');
+    if (!nodes?.length) return;
+    const first = nodes[0], last = nodes[nodes.length - 1];
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === modalRef.current)) {
+      event.preventDefault(); last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault(); first.focus();
+    }
+  }
 
   function toggleMulti(key: string, value: string) {
     setDraftParams((currentParams) => {
@@ -147,9 +172,15 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
   return (
     <>
       <div className="catalog-filter-bar">
-        <button type="button" className="btn btn-secondary filter-trigger" onClick={() => setOpen(true)}>
+        <button type="button" ref={triggerRef} className="btn btn-primary filter-trigger" aria-haspopup="dialog" aria-expanded={open} onClick={() => openFilters("filter-brand-group")}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--color-action-primary)"/><circle cx="15" cy="17" r="3" fill="var(--color-action-primary)"/></svg>
           Filtros{activeCount > 0 ? ` (${activeCount})` : ""}
         </button>
+        <div className="catalog-quick-filters" aria-label="Filtros rápidos">
+          {[ ["Talla", "filter-size-group", "talla"], ["Precio", "filter-price-group", "precio_min"], ["Marca", "filter-brand-group", "brand"] ].map(([label, id, key]) =>
+            <button key={id} type="button" className="filter-quick" data-active={Boolean(searchParams.get(key) || (key === "precio_min" && searchParams.get("precio_max")))} aria-haspopup="dialog" onClick={() => openFilters(id)}>{label}<span aria-hidden="true">⌄</span></button>
+          )}
+        </div>
         {activeCount > 0 && (
           <button type="button" className="filter-clear-link" onClick={clearAll}>
             Limpiar filtros
@@ -160,6 +191,9 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
       {open && (
         <div className="filter-modal-backdrop" role="presentation" onMouseDown={() => setOpen(false)}>
           <section
+            ref={modalRef}
+            tabIndex={-1}
+            onKeyDown={trapFocus}
             className="filter-modal"
             role="dialog"
             aria-modal="true"
@@ -178,7 +212,8 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
 
             <div className="filter-modal-body">
               <div className="filter-section-wide">
-                <div className="field">
+                <div className="field"><label htmlFor="filter-sort">Ordenar por</label><select id="filter-sort" value={draftParams.get("sort") ?? "recientes"} onChange={(event) => setSingle("sort", event.target.value)}><option value="recientes">Más recientes</option><option value="precio-asc">Menor precio</option><option value="precio-desc">Mayor precio</option></select></div>
+                <div className="field" id="filter-brand-group">
                   <label htmlFor="filter-brand">Marca</label>
                   <select
                     id="filter-brand"
@@ -192,7 +227,7 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
                   </select>
                 </div>
 
-                <div className="filter-price-grid">
+                <div className="filter-price-grid" id="filter-price-group">
                   <div className="field">
                     <label htmlFor="filter-price-min">Precio mínimo (MXN)</label>
                     <input
@@ -220,13 +255,20 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
                 </div>
               </div>
 
-              <CheckboxGroup title="Talla" paramKey="talla" options={catalogs.sizes} draftParams={draftParams} onToggle={toggleMulti} />
+              <div id="filter-size-group"><CheckboxGroup title="Talla" paramKey="talla" options={catalogs.sizes} draftParams={draftParams} onToggle={toggleMulti} /></div>
               <VisualShapeGroup title="Silueta" paramKey="silueta" options={catalogs.silhouettes} draftParams={draftParams} onToggle={toggleMulti} />
               <VisualShapeGroup title="Escote" paramKey="escote" options={catalogs.necklines} draftParams={draftParams} onToggle={toggleMulti} />
               <VisualShapeGroup title="Espalda" paramKey="espalda" options={catalogs.backs} draftParams={draftParams} onToggle={toggleMulti} />
               <CheckboxGroup title="Mangas" paramKey="manga" options={catalogs.sleeves} draftParams={draftParams} onToggle={toggleMulti} />
               <CheckboxGroup title="Tela" paramKey="tela" options={catalogs.fabrics} draftParams={draftParams} onToggle={toggleMulti} />
               <CheckboxGroup title="Color" paramKey="color" options={catalogs.colors} draftParams={draftParams} onToggle={toggleMulti} />
+              <CheckboxGroup title="Cola" paramKey="cola" options={catalogs.trains} draftParams={draftParams} onToggle={toggleMulti} />
+              <CheckboxGroup title="Características y detalles" paramKey="detalles" options={catalogs.characteristics.map((item) => ({ value: item.id, label: item.label }))} draftParams={draftParams} onToggle={toggleMulti} />
+              <fieldset className="filter-group"><legend>Ajustes</legend><label className="filter-check"><input type="checkbox" checked={draftParams.get("sin_ajustes") === "1"} onChange={(event) => setSingle("sin_ajustes", event.target.checked ? "1" : "")} />Sin ajustes declarados</label></fieldset>
+              <div className="filter-section-wide filter-extra-ranges">
+                {[{ title: "Estatura de quien lo usó (cm)", keys: ["altura_min", "altura_max"], min: 1, max: 250 }, { title: "Año aproximado del vestido", keys: ["ano_min", "ano_max"], min: 1950, max: 2100 }].map((range) => <fieldset className="filter-group" key={range.title}><legend>{range.title}</legend><div className="filter-price-grid">{range.keys.map((key, index) => <div className="field" key={key}><label htmlFor={`filter-${key}`}>{index === 0 ? "Desde" : "Hasta"}</label><input id={`filter-${key}`} type="number" inputMode="numeric" min={range.min} max={range.max} value={draftParams.get(key) ?? ""} onChange={(event) => setSingle(key, event.target.value)} /></div>)}</div></fieldset>)}
+                <p className="muted">Estos rangos muestran vestidos con ese dato declarado, confirma las medidas con la vendedora.</p>
+              </div>
               <CheckboxGroup title="Condición" paramKey="condicion" options={catalogs.conditions} draftParams={draftParams} onToggle={toggleMulti} />
             </div>
 
