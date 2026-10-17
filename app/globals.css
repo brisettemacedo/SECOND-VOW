@@ -559,3 +559,9 @@ body .step-missing-count { font-size: 11px !important; }
 .editor-listing-actions{display:flex;justify-content:flex-end;margin:0 0 18px;padding-bottom:18px;border-bottom:1px solid var(--color-border)}
 @media(max-width:850px){.messaging{height:auto;min-height:0;grid-template-rows:auto minmax(0,1fr)}.messaging aside{max-height:140px}.messaging .chat.panel{height:min(740px,76dvh);min-height:360px}.chat-closed-card{margin:12px 18px 18px}}
 @media(max-width:640px){.chat-closed-card{align-items:flex-start;flex-direction:column;gap:14px;padding:17px 18px}.chat-closed-card .btn{width:100%;text-align:center}.messaging .composer{grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:16px}.messaging .composer .btn{min-width:70px}.editor-listing-actions{justify-content:flex-start}}
+
+/* Supplied illustration includes the dialogue, preserve the complete composition. */
+.how-chat-scene-embedded{min-height:0}
+.how-chat-scene-embedded .how-chat-illustration{min-height:0;height:auto;object-fit:contain}
+.how-chat-transcript{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(max-width:760px){.how-chat-scene-embedded,.how-chat-scene-embedded .how-chat-illustration{min-height:0}.how-chat-transcript{position:static;display:grid;gap:10px;width:auto;height:auto;margin:0;padding:16px;overflow:visible;clip-path:none;white-space:normal;background:var(--color-background-primary)}.how-chat-transcript .chat-bubble{max-width:94%;box-shadow:none}.how-chat-transcript .chat-bubble.seller{justify-self:end}}

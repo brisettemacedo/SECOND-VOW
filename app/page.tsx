@@ -107,9 +107,9 @@ export default async function HomePage() {
         <h2 id="how-second-vow-works">Hablen con confianza. Acuerden con claridad.</h2>
         <p>La compradora pregunta; la vendedora responde con honestidad y prepara una oferta final con el envío ya cotizado.</p>
       </div>
-      <div className="how-chat-scene">
-        <Image src="/images/how-it-works-chat.webp" alt="Compradora y vendedora conversando a distancia sobre un vestido de novia" width={1400} height={700} sizes="(max-width: 760px) 100vw, 1200px" className="how-chat-illustration" />
-        <div className="how-chat-bubbles" aria-label="Ejemplo de conversación">
+      <div className="how-chat-scene how-chat-scene-embedded">
+        <Image src="/images/how-it-works-chat-color.webp" alt="Compradora y vendedora conversando a distancia sobre un vestido de novia" width={1774} height={887} sizes="(max-width: 760px) 100vw, 1200px" className="how-chat-illustration" />
+        <div className="how-chat-transcript" aria-label="Transcripción del ejemplo de conversación">
           <p className="chat-bubble buyer"><span>Compradora</span>¿Tiene algún detalle el vestido?</p>
           <p className="chat-bubble seller"><span>Vendedora</span>¡Hola! Solo una manchita que puede salir con una limpieza profunda.</p>
           <p className="chat-bubble buyer"><span>Compradora</span>¿Me lo dejarías en $10,000?</p>
