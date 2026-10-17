@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import DeleteDraftButton from "@/components/DeleteDraftButton";
 import DressShapePicker from "@/components/DressShapePicker";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -509,6 +510,7 @@ export default function DressPublishForm({ initialDress, brands, catalogs, userI
     <section className="panel">
       {initialDress?.id && pending.length > 0 && <div className="alert-info draft-resume-banner">Falta completar {pending.length} requisito{pending.length === 1 ? "" : "s"}. Sigue con {stepNames[step].toLowerCase()}.</div>}
       <h1>{initialDress?.id ? "Editar vestido" : "Publicar vestido"}</h1>
+      {dress.id && <div className="editor-listing-actions"><DeleteDraftButton dressId={dress.id} redirectTo="/mis-vestidos" disabled={busy} onDeletingChange={setBusy} /></div>}
       <h2>{stepNames[step]}</h2>
       <p className="required-note"><span className="required-mark">*</span> Campo obligatorio</p>
       {Object.keys(errors).length > 0 && (

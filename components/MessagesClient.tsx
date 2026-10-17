@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { TERMS_VERSION, LEGAL_BUNDLE_SHA256 } from "@/lib/site";
-import { useEffect,useMemo,useState } from "react";
+import { useEffect,useMemo,useRef,useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import OrderNextActionCard from "@/components/OrderNextActionCard";
@@ -21,6 +21,10 @@ const ORDER_CHAT_OPEN_STATUSES=new Set(["claim_open","return_authorized","paid",
 
 export default function MessagesClient({initial,userId,initialActive}:{initial:Conv[];userId:string;initialActive?:string}){
  const supabase=useMemo(()=>createClient(),[]); const router=useRouter();
+ const loadSequence=useRef(0);
+ const historyRef=useRef<HTMLDivElement>(null);
+ const nearLatest=useRef(true);
+ const lastHistoryConversation=useRef("");
  const convs=initial;
  const first=initial.find(c=>c.id===initialActive)?.id??initial[0]?.id??"";
  const [active,setActive]=useState(first);
@@ -44,13 +48,15 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
  async function refreshConversation(){router.refresh()}
  async function load(id:string){
    const next=convs.find(c=>c.id===id);if(!next)return;
-   setActive(id);setDetailsLoading(true);setError("");setBody("");setProposalAmount("");setProposalOpen(false);setPurchaseHelpOpen(false);setOfferOpen(false);
+   const sequence=++loadSequence.current;
+   nearLatest.current=true;setActive(id);setDetailsLoading(true);setError("");setBody("");setProposalAmount("");setProposalOpen(false);setPurchaseHelpOpen(false);setOfferOpen(false);
    setPostalCode(next.buyer_postal_code??"");setDestination({type:next.shipping_destination_type??"carrier_branch",name:next.recipient_full_name??"",phone:next.recipient_phone??"",street1:next.shipping_street1??"",street2:next.shipping_street2??"",neighborhood:next.shipping_neighborhood??"",city:next.shipping_city??"",state:next.shipping_state??"",branch:next.shipping_branch_name??""});
    const [messageResult,offerResult,orderResult]=await Promise.all([
      supabase.from("messages").select("id,sender_id,body,created_at,read_at").eq("conversation_id",id).order("created_at",{ascending:false}).limit(100),
      supabase.from("offers").select("*").eq("conversation_id",id).order("created_at"),
      supabase.from("orders").select("*").eq("dress_id",next.dress_id).eq("buyer_id",next.buyer_id).eq("seller_id",next.seller_id).order("created_at")
    ]);
+   if(sequence!==loadSequence.current)return;
    const loadError=messageResult.error||offerResult.error||orderResult.error;
    if(loadError)setError("No pudimos cargar toda la conversación, intenta nuevamente");
    const orderRows=orderResult.data??[];
@@ -59,9 +65,10 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
      supabase.from("order_events").select("id,order_id,event_type,created_at").in("order_id",orderIds).in("event_type",Object.keys(CHAT_ORDER_EVENT_LABELS)).order("created_at"),
      supabase.from("refunds").select("id,order_id,status,amount_mxn,created_at,completed_at").in("order_id",orderIds).order("created_at")
    ]):[{data:[],error:null},{data:[],error:null}];
+   if(sequence!==loadSequence.current)return;
    if(eventResult.error||refundResult.error)setError("No pudimos cargar todas las actualizaciones del pedido");
    setMessages([...(messageResult.data??[])].reverse());setOffers(offerResult.data??[]);setOrders(orderRows.map((o:any)=>({...o,order_events:(eventResult.data??[]).filter((e:any)=>e.order_id===o.id),refunds:(refundResult.data??[]).filter((r:any)=>r.order_id===o.id)})));setDetailsLoading(false);
-   await supabase.rpc("mark_conversation_read",{p_conversation_id:id});
+
  }
  async function send(){
    const text=body.trim();if(!text||!active)return;
@@ -121,6 +128,24 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
    if(!activity)return;
    activity.scrollIntoView({behavior:"smooth",block:"center"});
  }
+ useEffect(()=>{
+   if(!active||detailsLoading)return;
+   const node=historyRef.current;
+   if(node&&(lastHistoryConversation.current!==active||nearLatest.current))node.scrollTop=node.scrollHeight;
+   lastHistoryConversation.current=active;
+ },[active,detailsLoading,messages.length,offers.length,orders]);
+ useEffect(()=>{
+   if(!active||detailsLoading||!messages.some(m=>m.sender_id!==userId))return;
+   let cancelled=false;
+   const markRead=async()=>{
+     if(document.visibilityState!=="visible"||!document.hasFocus())return;
+     const {error}=await supabase.rpc("mark_conversation_read",{p_conversation_id:active});
+     if(!error&&!cancelled)window.dispatchEvent(new Event("second-vow:messages-read"));
+   };
+   void markRead();
+   window.addEventListener("focus",markRead);document.addEventListener("visibilitychange",markRead);
+   return()=>{cancelled=true;window.removeEventListener("focus",markRead);document.removeEventListener("visibilitychange",markRead)};
+ },[active,detailsLoading,messages,supabase,userId]);
  useEffect(()=>{if(!active)return;const ch=supabase.channel(`messages:${active}`).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:`conversation_id=eq.${active}`},(p:any)=>{const row=p.new as any;setMessages(m=>m.some(x=>x.id===row.id)?m:[...m,row])}).subscribe();return()=>{supabase.removeChannel(ch)}},[active,supabase]);
  useEffect(()=>{if(!activeConv)return;const channel=supabase.channel(`chat-orders:${active}`).on("postgres_changes",{event:"UPDATE",schema:"public",table:"orders",filter:`dress_id=eq.${activeConv.dress_id}`},(payload:any)=>{setOrders(rows=>rows.map(o=>o.id===payload.new.id?{...o,...payload.new}:o))}).subscribe();return()=>{supabase.removeChannel(channel)}},[active,activeConv,supabase]);
  const liveOrderIds=orders.map((o:any)=>o.id).join(",");
@@ -167,6 +192,7 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
         <Link className="btn btn-secondary" href={`/vestidos/${activeConv.dress_id}`} target="_blank" rel="noopener noreferrer">Ver vestido</Link>
       </div>
     </div>
+    <div className="chat-scroll-region" ref={historyRef} role="region" tabIndex={0} aria-label="Historial de la conversación" onScroll={(event)=>{const node=event.currentTarget;nearLatest.current=node.scrollHeight-node.scrollTop-node.clientHeight<96}}>
     {currentOrder&&<OrderNextActionCard order={currentOrder} userId={userId} compact />}
     {!isClosed&&beforePayment&&activeConv?.buyer_id===userId&&!activeConv.shipping_destination_set_at&&<details id="shipping-destination" className="chat-context" open><summary>Comparte tu destino para cotizar el envío</summary><div className="chat-context-body"><p className="muted">Solo la vendedora y SECOND VOW podrán verlo.</p><div className="grid-2"><label><span>Entrega en</span><select value={destination.type} onChange={e=>setDestination(v=>({...v,type:e.target.value as "home"|"carrier_branch"}))}><option value="home">Mi domicilio</option><option value="carrier_branch">Ocurre / sucursal</option></select></label><label><span>Nombre completo de quien recibirá</span><input value={destination.name} onChange={e=>setDestination(v=>({...v,name:e.target.value}))}/></label><label><span>Teléfono</span><input value={destination.phone} onChange={e=>setDestination(v=>({...v,phone:e.target.value}))}/></label><label><span>Calle y número o dirección de sucursal</span><input value={destination.street1} onChange={e=>setDestination(v=>({...v,street1:e.target.value}))}/></label><label><span>Interior o referencia</span><input value={destination.street2} onChange={e=>setDestination(v=>({...v,street2:e.target.value}))}/></label><label><span>Colonia</span><input value={destination.neighborhood} onChange={e=>setDestination(v=>({...v,neighborhood:e.target.value}))}/></label><label><span>Ciudad</span><input value={destination.city} onChange={e=>setDestination(v=>({...v,city:e.target.value}))}/></label><label><span>Estado</span><input value={destination.state} onChange={e=>setDestination(v=>({...v,state:e.target.value}))}/></label><label><span>Código postal</span><input inputMode="numeric" pattern="[0-9]{5}" maxLength={5} value={postalCode} onChange={e=>setPostalCode(e.target.value.replace(/\D/g,"").slice(0,5))}/></label>{destination.type==="carrier_branch"&&<label><span>Paquetería y nombre de sucursal</span><input value={destination.branch} onChange={e=>setDestination(v=>({...v,branch:e.target.value}))}/></label>}</div><button className="btn btn-primary" disabled={busy} onClick={saveDestination}>Guardar destino</button></div></details>}
     {!isClosed&&activeConv?.shipping_destination_set_at&&<details className="chat-context"><summary>Destino listo · C.P. {activeConv.buyer_postal_code}</summary><div className="chat-context-body"><p>{activeConv.shipping_destination_type==="carrier_branch"?`${activeConv.shipping_branch_name}: `:""}{activeConv.shipping_street1}, {activeConv.shipping_city}, {activeConv.shipping_state}, recibe: {activeConv.recipient_full_name}</p></div></details>}
@@ -202,6 +228,7 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
       if(item.kind==="shipment"){const o=item.data;return <div key={`shipment-${o.id}`} className="commerce-event order-event"><div className="commerce-event-label">Vestido enviado</div><small>{eventDate(item.at)}</small><strong>{o.carrier||o.shipping_carrier_declared||"Paquetería"}: {o.tracking_number||"guía registrada"}</strong><small>Guía registrada, consulta el seguimiento para confirmar la recepción por paquetería.</small><Link href={`/pedidos/${o.id}`}>Ver rastreo y evidencias</Link></div>}
       const o=item.data;return <div key={`ship-${o.id}`} className="commerce-event shipping-event"><div className="commerce-event-label">Envío cotizado</div><small>{eventDate(item.at)}</small><strong>{money(o.shipping_mxn)}</strong>{o.shipping_carrier_declared&&<span>{o.shipping_carrier_declared}</span>}<p>Total de la operación: {money(o.total_mxn)}</p><Link href={`/pedidos/${o.id}`}>Continuar en el pedido</Link></div> }):<p className="chat-empty">Aún no hay mensajes, escribe para iniciar la conversación</p>}</div>
     </>}
+    </div>
     {error&&<div className="alert-error moderation-copy" role="alert">{conversationText(error)}</div>}
 
     {canOffer&&hasActivePendingOffer&&<p className="chat-status-note">La oferta está pendiente, podrás enviar otra cuando la compradora responda o venza</p>}
@@ -211,7 +238,7 @@ export default function MessagesClient({initial,userId,initialActive}:{initial:C
       <button className="btn btn-secondary" onClick={askToResend}>Pedir que reenvíe la oferta</button>
     </div>}
 
-    {isClosed?<p className="chat-status-note" role="status">Venta terminada, este chat queda disponible como historial{currentOrder?.id&&<> <Link href={`/pedidos/${currentOrder.id}`}>Ver pedido</Link></>}</p>:<><div className="quick-replies" aria-label="Mensajes sugeridos">{quickReplies.map(reply=><button type="button" key={reply} onClick={()=>setBody(reply)}>{reply}</button>)}</div><div className="composer"><textarea value={body} onChange={e=>{setBody(e.target.value);if(error===OFF_PLATFORM_MESSAGE)setError("")}} maxLength={2000} placeholder="Escribe un mensaje"/><button className="btn btn-primary" onClick={send}>Enviar</button></div></>}
+    {isClosed?<div className="chat-closed-card" role="status"><div><strong>Conversación finalizada</strong><p>Puedes consultar aquí el historial de esta venta</p></div>{currentOrder?.id&&<Link className="btn btn-secondary" href={`/pedidos/${currentOrder.id}`}>Ver pedido</Link>}</div>:<><div className="quick-replies" aria-label="Mensajes sugeridos">{quickReplies.map(reply=><button type="button" key={reply} onClick={()=>setBody(reply)}>{reply}</button>)}</div><div className="composer"><textarea value={body} onChange={e=>{setBody(e.target.value);if(error===OFF_PLATFORM_MESSAGE)setError("")}} maxLength={2000} placeholder="Escribe un mensaje"/><button className="btn btn-primary" onClick={send}>Enviar</button></div></>}
 
     {proposalOpen&&<div className="sv-modal-backdrop" role="presentation" onMouseDown={()=>setProposalOpen(false)}><div className="sv-modal" role="dialog" aria-modal="true" aria-labelledby="proposal-title" onMouseDown={event=>event.stopPropagation()}><button className="sv-modal-close" type="button" aria-label="Cerrar" onClick={()=>setProposalOpen(false)}>×</button><h2 id="proposal-title">Proponer precio</h2><p>Precio publicado: <strong>{money(activeConv.dresses?.precio_venta_mxn)}</strong></p><label><span>Tu propuesta</span><div className="modal-money-input"><span>$</span><input autoFocus type="number" min="1" max={activeConv.dresses?.precio_venta_mxn} value={proposalAmount} onChange={e=>setProposalAmount(e.target.value)} placeholder="0"/></div></label><div className="modal-suggestions">{[.85,.9,.95].map(rate=>{const suggestion=Math.round(Number(activeConv.dresses?.precio_venta_mxn||0)*rate);return <button type="button" key={rate} onClick={()=>setProposalAmount(String(suggestion))}>{money(suggestion)}</button>})}</div><p className="muted">Se preparará un mensaje para la vendedora, ella enviará la oferta final con el envío cotizado</p><button type="button" className="btn btn-primary" disabled={!proposalAmount} onClick={proposePrice}>Agregar al mensaje</button></div></div>}
 

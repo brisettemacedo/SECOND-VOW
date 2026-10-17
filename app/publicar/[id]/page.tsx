@@ -18,7 +18,7 @@ export default async function EditDress({ params }: { params: Promise<{ id: stri
       .eq("seller_id", user.id)
       .maybeSingle(),
     supabase.from("brands").select("id,name").eq("is_active", true).order("name"),
-    supabase.from("orders").select("id").eq("dress_id",id).in("status",["payment_processing","payment_review"]).limit(1).maybeSingle(),
+    supabase.from("orders").select("id").eq("dress_id",id).not("status","in","(cancelled,refunded,completed)").limit(1).maybeSingle(),
     loadDressCatalogData(supabase),
   ]);
 
@@ -29,7 +29,7 @@ export default async function EditDress({ params }: { params: Promise<{ id: stri
     return <main className="page narrow"><h1>{dress.status === "sold" ? "Vestido vendido" : "Compra en curso"}</h1><p>{dress.status === "sold" ? "Esta venta terminó. La publicación se conserva tal como estaba al comprarla y ya no se puede editar." : "Hay una compra en curso. Podrás editar la publicación si se cancela."}</p><p>{order ? <Link className="btn btn-primary" href={`/pedidos/${order.id}`}>Ver pedido</Link> : <Link className="btn btn-secondary" href="/mis-vestidos">Mis vestidos</Link>}</p></main>;
   }
 
-  if (activePayment) return <main className="page narrow"><div className="alert-info"><strong>Esta publicación tiene un pago en proceso.</strong><p>No puede editarse mientras Stripe confirma, cancela o vence ese intento. El bloqueo se quitará automáticamente cuando termine.</p></div></main>;
+  if (activePayment) return <main className="page narrow"><div className="alert-info"><strong>Esta publicación tiene una venta abierta.</strong><p>No puede editarse ni eliminarse mientras la operación esté abierta, consulta el pedido para ver su estado.</p></div></main>;
 
   let suggestion = null;
   if (dress.brand_suggestion_id) {

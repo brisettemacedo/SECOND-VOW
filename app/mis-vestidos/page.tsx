@@ -47,7 +47,7 @@ export default async function MyDresses({ searchParams }: { searchParams: Promis
   const dressIds=signedDresses.map((d:any)=>d.id);
   const [{data:activeOffers},{data:activePayments},{data:feedback}]=await Promise.all([
     dressIds.length?supabase.from("offers").select("dress_id").in("dress_id",dressIds).eq("status","pending"):Promise.resolve({data:[]} as any),
-    dressIds.length?supabase.from("orders").select("dress_id").in("dress_id",dressIds).in("status",["payment_processing","payment_review"]):Promise.resolve({data:[]} as any),
+    dressIds.length?supabase.from("orders").select("dress_id").in("dress_id",dressIds).not("status","in","(cancelled,refunded,completed)"):Promise.resolve({data:[]} as any),
     supabase.from("notifications").select("id,body,metadata,created_at").eq("user_id",user.id).eq("kind","dress_improvement_suggested").is("read_at",null).order("created_at",{ascending:false}),
   ]);
   const offerCounts=(activeOffers??[]).reduce((acc:any,o:any)=>{acc[o.dress_id]=(acc[o.dress_id]||0)+1;return acc;},{});
@@ -80,7 +80,7 @@ export default async function MyDresses({ searchParams }: { searchParams: Promis
           {d.status === "approved" && <div className="alert-success">Tu vestido está publicado y visible en el marketplace.</div>}
           {!!offerCounts[d.id]&&<p><strong>{offerCounts[d.id]}</strong> oferta{offerCounts[d.id]===1?" activa":"s activas"}</p>}
           {!!missing.length&&<div className="alert-info"><strong>Para publicar falta:</strong> {missing.join(", ")}.</div>}
-          {hasActivePayment&&<div className="alert-info">Hay un pago en proceso. La edición y eliminación se habilitarán si ese intento se cancela o vence.</div>}
+          {hasActivePayment&&<div className="alert-info">Hay una venta abierta, la edición y eliminación permanecen bloqueadas mientras se resuelve la operación.</div>}
           {(feedbackByDress[d.id]??[]).map((notice:any)=><div className="alert-info" key={notice.id}><strong>Sugerencia de SECOND VOW</strong><p>{notice.body}</p></div>)}
           {d.status === "reserved" && <div className="alert-info">Hay un pago en proceso sobre este vestido. No puede editarse hasta que se complete o se cancele.</div>}
           <div className="actions my-dress-actions">
