@@ -69,8 +69,8 @@ function VisualShapeGroup({ title, paramKey, options, draftParams, onToggle }: {
 
 export default function FilterSidebar({ brands, catalogs }: { brands: BrandOption[]; catalogs: DressCatalogData }) {
   const modalRef = useRef<HTMLElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const [section, setSection] = useState("filter-brand-group");
+  const [section, setSection] = useState<"all" | "talla" | "precio" | "brand">("all");
+  const sectionTitle = { all: "Filtrar vestidos", talla: "Filtrar por talla", precio: "Filtrar por precio", brand: "Filtrar por marca" }[section];
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -85,7 +85,6 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
     if (!open) return;
     const previousFocus = document.activeElement as HTMLElement | null;
     modalRef.current?.focus();
-    document.getElementById(section)?.scrollIntoView({ block: "start" });
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -111,7 +110,7 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
     }, 0);
   }, [searchParams]);
 
-  function openFilters(id: string) {
+  function openFilters(id: typeof section) {
     setDraftParams(new URLSearchParams(searchParams.toString()));
     setSection(id);
     setOpen(true);
@@ -154,7 +153,14 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
   }
 
   function clearDraft() {
-    setDraftParams(new URLSearchParams());
+    setDraftParams((current) => {
+      if (section === "all") return new URLSearchParams();
+      const next = new URLSearchParams(current);
+      const keys = section === "precio" ? ["precio_min", "precio_max"] : [section];
+      keys.forEach((key) => next.delete(key));
+      next.delete("page");
+      return next;
+    });
   }
 
   function clearAll() {
@@ -172,13 +178,13 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
   return (
     <>
       <div className="catalog-filter-bar">
-        <button type="button" ref={triggerRef} className="btn btn-primary filter-trigger" aria-haspopup="dialog" aria-expanded={open} onClick={() => openFilters("filter-brand-group")}>
+        <button type="button" className="btn btn-primary filter-trigger" aria-haspopup="dialog" aria-expanded={open && section === "all"} onClick={() => openFilters("all")}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--color-action-primary)"/><circle cx="15" cy="17" r="3" fill="var(--color-action-primary)"/></svg>
           Filtros{activeCount > 0 ? ` (${activeCount})` : ""}
         </button>
         <div className="catalog-quick-filters" aria-label="Filtros rápidos">
-          {[ ["Talla", "filter-size-group", "talla"], ["Precio", "filter-price-group", "precio_min"], ["Marca", "filter-brand-group", "brand"] ].map(([label, id, key]) =>
-            <button key={id} type="button" className="filter-quick" data-active={Boolean(searchParams.get(key) || (key === "precio_min" && searchParams.get("precio_max")))} aria-haspopup="dialog" onClick={() => openFilters(id)}>{label}<span aria-hidden="true">⌄</span></button>
+          {([ ["Talla", "talla", "talla"], ["Precio", "precio", "precio_min"], ["Marca", "brand", "brand"] ] as const).map(([label, id, key]) =>
+            <button key={id} type="button" className="filter-quick" data-active={Boolean(searchParams.get(key) || (key === "precio_min" && searchParams.get("precio_max")))} aria-haspopup="dialog" aria-expanded={open && section === id} onClick={() => openFilters(id)}>{label}<span aria-hidden="true">⌄</span></button>
           )}
         </div>
         {activeCount > 0 && (
@@ -194,7 +200,7 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
             ref={modalRef}
             tabIndex={-1}
             onKeyDown={trapFocus}
-            className="filter-modal"
+            className={`filter-modal${section !== "all" ? " filter-modal-focused" : ""}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="filter-modal-title"
@@ -203,7 +209,7 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
             <header className="filter-modal-header">
               <div>
                 <p className="filter-kicker">Personaliza tu búsqueda</p>
-                <h2 id="filter-modal-title">Filtrar vestidos</h2>
+                <h2 id="filter-modal-title">{sectionTitle}</h2>
               </div>
               <button type="button" className="filter-close" aria-label="Cerrar filtros" onClick={() => setOpen(false)}>
                 ×
@@ -212,8 +218,8 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
 
             <div className="filter-modal-body">
               <div className="filter-section-wide">
-                <div className="field"><label htmlFor="filter-sort">Ordenar por</label><select id="filter-sort" value={draftParams.get("sort") ?? "recientes"} onChange={(event) => setSingle("sort", event.target.value)}><option value="recientes">Más recientes</option><option value="precio-asc">Menor precio</option><option value="precio-desc">Mayor precio</option></select></div>
-                <div className="field" id="filter-brand-group">
+                {section === "all" && <div className="field"><label htmlFor="filter-sort">Ordenar por</label><select id="filter-sort" value={draftParams.get("sort") ?? "recientes"} onChange={(event) => setSingle("sort", event.target.value)}><option value="recientes">Más recientes</option><option value="precio-asc">Menor precio</option><option value="precio-desc">Mayor precio</option></select></div>}
+                {(section === "all" || section === "brand") && <div className="field" id="filter-brand-group">
                   <label htmlFor="filter-brand">Marca</label>
                   <select
                     id="filter-brand"
@@ -225,9 +231,9 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
                       <option key={brand.id} value={brand.id}>{brand.name}</option>
                     ))}
                   </select>
-                </div>
+                </div>}
 
-                <div className="filter-price-grid" id="filter-price-group">
+                {(section === "all" || section === "precio") && <div className="filter-price-grid" id="filter-price-group">
                   <div className="field">
                     <label htmlFor="filter-price-min">Precio mínimo (MXN)</label>
                     <input
@@ -252,10 +258,11 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
                       placeholder="Ej. 30,000"
                     />
                   </div>
-                </div>
+                </div>}
               </div>
 
-              <div id="filter-size-group"><CheckboxGroup title="Talla" paramKey="talla" options={catalogs.sizes} draftParams={draftParams} onToggle={toggleMulti} /></div>
+              {(section === "all" || section === "talla") && <div id="filter-size-group"><CheckboxGroup title="Talla" paramKey="talla" options={catalogs.sizes} draftParams={draftParams} onToggle={toggleMulti} /></div>}
+              {section === "all" && <>
               <VisualShapeGroup title="Silueta" paramKey="silueta" options={catalogs.silhouettes} draftParams={draftParams} onToggle={toggleMulti} />
               <VisualShapeGroup title="Escote" paramKey="escote" options={catalogs.necklines} draftParams={draftParams} onToggle={toggleMulti} />
               <VisualShapeGroup title="Espalda" paramKey="espalda" options={catalogs.backs} draftParams={draftParams} onToggle={toggleMulti} />
@@ -270,6 +277,7 @@ export default function FilterSidebar({ brands, catalogs }: { brands: BrandOptio
                 <p className="muted">Estos rangos muestran vestidos con ese dato declarado, confirma las medidas con la vendedora.</p>
               </div>
               <CheckboxGroup title="Condición" paramKey="condicion" options={catalogs.conditions} draftParams={draftParams} onToggle={toggleMulti} />
+              </>}
             </div>
 
             <footer className="filter-modal-footer">
