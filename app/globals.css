@@ -612,3 +612,4 @@ body .step-missing-count { font-size: 11px !important; }
 @media(max-width:600px){.home-sage-detail{width:50px;margin-bottom:16px}.home-swallow-detail{width:88px;margin-bottom:18px}.catalog-blossom-detail{width:38px}.botanical-catalog-note{padding-top:46px}.botanical-about-title{gap:12px}.botanical-about-title>.botanical-detail{width:42px}.botanical-sell-heading{padding-top:72px}.sell-petal-detail{width:52px;left:calc(50% - 26px)}}
 
 .botanical-blossom{clip-path:polygon(43% 0,61% 4%,70% 13%,79% 14%,88% 21%,90% 34%,85% 42%,97% 47%,100% 62%,94% 76%,80% 80%,76% 91%,60% 100%,46% 94%,36% 97%,23% 87%,17% 79%,8% 76%,4% 66%,0% 60%,7% 48%,2% 32%,5% 21%,17% 15%,26% 11%,34% 3%)}
+.botanical-petal{clip-path:polygon(0 0,100% 0,100% 100%,40% 100%,35% 90%,30% 82%,16% 80%,0 71%,0 58%,6% 47%,0 35%)}
