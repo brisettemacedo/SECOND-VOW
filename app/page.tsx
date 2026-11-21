@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BotanicalDetail from "@/components/BotanicalDetail";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -86,7 +87,8 @@ export default async function HomePage() {
     </section>
 
     <section className="home-sell-section">
-      <div className="home-section-heading">
+      <div className="home-section-heading botanical-heading">
+        <BotanicalDetail motif="sage" className="home-sage-detail" />
         <p className="eyebrow">Vende en SECOND VOW</p>
         <h2>¿Tu vestido sigue guardado después de la boda?</h2>
         <p>Publícalo gratis para que otra novia pueda encontrarlo y tú recuperes parte de lo que invertiste.</p>
@@ -102,7 +104,8 @@ export default async function HomePage() {
     </section>
 
     <section className="home-how-it-works" aria-labelledby="how-second-vow-works">
-      <div className="home-section-heading">
+      <div className="home-section-heading botanical-heading">
+        <BotanicalDetail motif="swallows" className="home-swallow-detail" />
         <p className="eyebrow">Así funciona SECOND VOW</p>
         <h2 id="how-second-vow-works">Hablen con confianza. Acuerden con claridad.</h2>
         <p>La compradora pregunta; la vendedora responde con honestidad y prepara una oferta final con el envío ya cotizado.</p>

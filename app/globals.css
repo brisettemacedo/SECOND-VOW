@@ -591,3 +591,22 @@ body .step-missing-count { font-size: 11px !important; }
 .filter-modal-focused #filter-size-group .filter-options{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
 .filter-modal-focused .filter-check{min-height:36px}
 @media(max-width:600px){.filter-modal-focused{width:100%}.filter-modal-focused #filter-size-group .filter-options{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Small keepsakes from the supplied floral collage, decorative and non-interactive. */
+.botanical-detail{position:relative;display:block;flex:none;width:70px;overflow:hidden;pointer-events:none;user-select:none;mix-blend-mode:multiply;isolation:isolate}
+.botanical-detail>img{position:absolute;display:block;max-width:none!important;height:auto!important;object-fit:initial}
+.botanical-heading{position:relative}
+.home-sage-detail{position:absolute;left:-84px;top:-24px;width:76px;transform:rotate(-13deg)}
+.home-swallow-detail{width:108px;margin:0 auto 20px;transform:rotate(-5deg)}
+.botanical-catalog-note{position:relative;padding-top:58px}
+.catalog-blossom-detail{position:absolute;top:0;right:8px;width:48px;transform:rotate(12deg)}
+.botanical-about-title{display:flex;align-items:center;gap:18px;margin-bottom:22px}
+.botanical-about-title>.botanical-detail{width:54px;transform:rotate(-12deg)}
+.botanical-about-title h1{margin:0}
+.botanical-keepsake{position:relative;width:150px;height:120px;margin:36px auto 0;overflow:hidden}
+.keepsake-lace{position:absolute;width:124px;left:13px;top:-58px;opacity:.56;transform:rotate(-8deg)}
+.keepsake-swallows{position:absolute;width:100px;left:25px;top:42px;transform:rotate(-8deg)}
+.botanical-sell-heading{position:relative;padding-top:85px}
+.sell-petal-detail{position:absolute;width:64px;top:0;left:calc(50% - 32px);transform:rotate(16deg)}
+@media(max-width:1050px){.home-sage-detail{position:relative;left:auto;top:auto;width:60px;margin:0 auto 20px}}
+@media(max-width:600px){.home-sage-detail{width:50px;margin-bottom:16px}.home-swallow-detail{width:88px;margin-bottom:18px}.catalog-blossom-detail{width:38px}.botanical-catalog-note{padding-top:46px}.botanical-about-title{gap:12px}.botanical-about-title>.botanical-detail{width:42px}.botanical-sell-heading{padding-top:72px}.sell-petal-detail{width:52px;left:calc(50% - 26px)}}

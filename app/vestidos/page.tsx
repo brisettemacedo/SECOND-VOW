@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import BotanicalDetail from "@/components/BotanicalDetail";
 import { createClient } from "@/lib/supabase/server";
 import { searchDresses, type DressSearchParams } from "@/lib/dresses";
 import { loadDressCatalogData } from "@/lib/dressCatalogData";
@@ -53,7 +54,8 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     </div>
     <Suspense fallback={<div className="filter-trigger-placeholder" />}><CatalogFilters /></Suspense>
     <Suspense fallback={<p className="muted">Cargando vestidos...</p>}><CatalogResults searchParams={query} /></Suspense>
-    <section className="catalog-seo-copy" aria-labelledby="catalog-guide-title">
+    <section className="catalog-seo-copy botanical-catalog-note" aria-labelledby="catalog-guide-title">
+      <BotanicalDetail motif="blossom" className="catalog-blossom-detail" />
       <h2 id="catalog-guide-title">Encuentra un vestido de novia usado que se sienta hecho para ti</h2>
       <p>Compara marcas, tallas, siluetas, telas, condición y precio. Cada publicación muestra los detalles declarados por la vendedora para que puedas preguntar, negociar y decidir con más claridad.</p>
       <div>

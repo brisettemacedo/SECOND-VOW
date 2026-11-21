@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import BotanicalDetail from "@/components/BotanicalDetail";
 import Link from "next/link";
 import SellerRecoveryCalculator from "@/components/SellerRecoveryCalculator";
 
@@ -23,7 +24,8 @@ const steps = [
 
 export default function SellWeddingDressPage() {
   return <main className="seo-landing">
-    <header className="seo-landing-hero">
+    <header className="seo-landing-hero botanical-sell-heading">
+      <BotanicalDetail motif="petal" className="sell-petal-detail" />
       <p className="eyebrow">Vende en SECOND VOW</p>
       <h1>Vende tu vestido de novia</h1>
       <p>Publícalo gratis, habla con compradoras y recibe tu pago en SECOND VOW.</p>

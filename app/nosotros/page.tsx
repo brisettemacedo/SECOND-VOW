@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import BotanicalDetail from "@/components/BotanicalDetail";
 
 export const metadata: Metadata = {
   title: "SECOND VOW México: vestidos con una segunda historia",
@@ -8,14 +9,15 @@ export const metadata: Metadata = {
 
 export default function About() {
   return (
-    <main className="legal-page">
-      <h1>Quiénes somos</h1>
+    <main className="legal-page botanical-about">
+      <div className="botanical-about-title"><BotanicalDetail motif="blossom" /><h1>Quiénes somos</h1></div>
       <p><strong>Ok, hablemos de tu vestido.</strong></p>
       <p>Ese que usaste una vez, amaste con toda tu alma y ahora está guardado esperando ¿qué exactamente?</p>
       <p>Nosotros creemos que los vestidos bonitos merecen más de una historia, por eso creamos un marketplace en México donde puedes vender tu vestido de novia o encontrar el vestido de tus sueños de segunda mano (a un precio mucho más accesible de lo que imaginabas).</p>
       <p>Nosotros conectamos novias con novias en un espacio que las acompaña a darle una segunda vida a ese vestido tan especial.</p>
       <p>Queremos que todo el proceso se sienta fácil y seguro, por eso, en SECOND VOW encuentras un catálogo organizado, herramientas para comunicarte y una experiencia pensada para acompañarte durante la compra o venta.</p>
       <p>¿Sabes qué? La historia de algunos vestidos termina después del “sí, acepto”… pero otras apenas están por comenzar.</p>
+      <div className="botanical-keepsake"><BotanicalDetail motif="lace" className="keepsake-lace" /><BotanicalDetail motif="swallows" className="keepsake-swallows" /></div>
     </main>
   );
 }
